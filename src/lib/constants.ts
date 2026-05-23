@@ -1,0 +1,119 @@
+import type { QuarterRef, SidebarNavItem, WorkspaceMember } from "@/types";
+
+// ── Quarter helpers ────────────────────────
+
+export function makeQuarterRef(year: number, q: 1 | 2 | 3 | 4): QuarterRef {
+  return { year, quarter: q, label: `Q${q} ${year}` };
+}
+
+export const CURRENT_QUARTER: QuarterRef = makeQuarterRef(2026, 2);
+
+// ── Scoring framework labels ───────────────
+
+export const FRAMEWORK_LABELS = {
+  rice: "RICE",
+  moscow: "MoSCoW",
+  wsjf: "WSJF",
+  custom: "Custom",
+} as const;
+
+// ── MoSCoW labels ─────────────────────────
+
+export const MOSCOW_LABELS = {
+  must: "Must Have",
+  should: "Should Have",
+  could: "Could Have",
+  wont: "Won't Have",
+} as const;
+
+export const MOSCOW_COLORS = {
+  must: "var(--color-danger)",
+  should: "var(--color-brand)",
+  could: "var(--color-warning)",
+  wont: "var(--color-text-muted)",
+} as const;
+
+// ── Priority config ────────────────────────
+
+export const PRIORITY_CONFIG = {
+  urgent: { label: "Urgent", color: "var(--color-priority-urgent)" },
+  high:   { label: "High",   color: "var(--color-priority-high)" },
+  medium: { label: "Medium", color: "var(--color-priority-medium)" },
+  low:    { label: "Low",    color: "var(--color-priority-low)" },
+  none:   { label: "None",   color: "var(--color-priority-none)" },
+} as const;
+
+// ── Status config ──────────────────────────
+
+export const STATUS_CONFIG = {
+  backlog:     { label: "Backlog",      color: "var(--color-status-backlog)" },
+  todo:        { label: "Todo",         color: "var(--color-status-todo)" },
+  in_progress: { label: "In Progress",  color: "var(--color-status-in-progress)" },
+  done:        { label: "Done",         color: "var(--color-status-done)" },
+  canceled:    { label: "Canceled",     color: "var(--color-status-canceled)" },
+} as const;
+
+// ── Plan status config ─────────────────────
+
+export const PLAN_STATUS_CONFIG = {
+  draft:      { label: "Draft",       color: "var(--color-text-secondary)" },
+  in_review:  { label: "In Review",   color: "var(--color-warning)" },
+  approved:   { label: "Approved",    color: "var(--color-success)" },
+  locked:     { label: "Locked",      color: "var(--color-brand)" },
+} as const;
+
+// ── Sidebar navigation ─────────────────────
+
+export const SIDEBAR_NAV: SidebarNavItem[] = [
+  { id: "inbox",    label: "Inbox",     icon: "Inbox",      href: "/inbox" },
+  { id: "my",       label: "My Issues", icon: "CircleUser", href: "/my-issues" },
+  { id: "views",    label: "Views",     icon: "Layers",     href: "/views" },
+  { id: "roadmaps", label: "Roadmaps",  icon: "Map",        href: "/roadmap" },
+];
+
+export const TEAM_NAV: SidebarNavItem[] = [
+  {
+    id: "issues",
+    label: "Issues",
+    icon: "Circle",
+    href: "/inbox",
+    children: [
+      { id: "active",  label: "Active",  icon: "", href: "/inbox?tab=active" },
+      { id: "backlog", label: "Backlog", icon: "", href: "/inbox?tab=backlog" },
+    ],
+  },
+  { id: "scoring",  label: "Scoring",  icon: "BarChart2", href: "/scoring" },
+  { id: "roadmap",  label: "Roadmap",  icon: "Map",       href: "/roadmap" },
+];
+
+// ── Keyboard shortcuts ─────────────────────
+
+export const SHORTCUTS = {
+  CREATE_ISSUE:   "C",
+  CHANGE_STATUS:  "S",
+  HELP:           "?",
+  SEARCH:         "$mod+K",
+  CLOSE:          "Escape",
+  UNDO:           "$mod+Z",
+  REDO:           "$mod+Shift+Z",
+} as const;
+
+// ── Seed workspace (Phase 1 static data) ──
+
+export const DEMO_WORKSPACE = {
+  id: "ws_keel_demo",
+  name: "Keel",
+  slug: "keel",
+  avatarColor: "#5e5ce6",
+  productAreas: ["Growth", "Onboarding", "Core Product", "Platform", "Integrations"],
+  members: [] as WorkspaceMember[],
+  currentUser: {
+    id: "u_pm_01",
+    name: "Alex Chen",
+    email: "alex@keel.so",
+    avatarUrl: null,
+    avatarInitials: "AC",
+    avatarColor: "#5e5ce6",
+    role: "admin",
+  } as WorkspaceMember,
+};

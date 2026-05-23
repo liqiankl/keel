@@ -1,0 +1,22 @@
+import { Sidebar } from "@/components/layout/Sidebar";
+
+// ─────────────────────────────────────────────
+// Authenticated app shell layout.
+// All routes inside (app)/ share this shell:
+//   sidebar (fixed 176px) + content area (flex-1)
+// ─────────────────────────────────────────────
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-screen overflow-hidden bg-[var(--color-bg-base)]">
+      <Sidebar />
+      <main
+        id="main-content"
+        className="flex flex-1 flex-col overflow-hidden min-w-0"
+        tabIndex={-1}
+      >
+        {children}
+      </main>
+    </div>
+  );
+}

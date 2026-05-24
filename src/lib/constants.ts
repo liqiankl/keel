@@ -82,8 +82,20 @@ export const TEAM_NAV: SidebarNavItem[] = [
       { id: "backlog", label: "Backlog", icon: "", href: "/inbox?tab=backlog" },
     ],
   },
-  { id: "scoring",  label: "Scoring",  icon: "BarChart2", href: "/scoring" },
+  { id: "scoring",  label: "Prioritize",  icon: "BarChart2", href: "/scoring" },
   { id: "roadmap",  label: "Roadmap",  icon: "Map",       href: "/roadmap" },
+];
+
+export interface TeamConfig {
+  id: string;
+  name: string;
+  color: string;
+  slug: string;
+}
+
+export const TEAMS: TeamConfig[] = [
+  { id: "team_navigators", name: "Navigators", color: "#5e5ce6", slug: "navigators" },
+  { id: "team_hitchhiker", name: "Hitchhiker", color: "#30a46c", slug: "hitchhiker" },
 ];
 
 // ── Keyboard shortcuts ─────────────────────

@@ -78,11 +78,11 @@ Delivered:
 | Task | Notes |
 |---|---|
 | Auth shell | Login/signup pages; currently no auth gate exists |
-| `/my-issues` page | Sidebar link 404s; should filter by `DEMO_WORKSPACE.currentUser.id` |
-| `/views` page | Sidebar link 404s; saved custom filter views |
-| New initiative modal in Scoring | "Initiative" button in `ScoringView` header is a no-op; needs Radix Dialog like `NewRequestModal` |
+| ~~`/my-issues` page~~ | ✅ Done — filters by `DEMO_WORKSPACE.currentUser.name`; reuses `RequestList` + `RequestDetail` |
+| ~~`/views` page~~ | ✅ Done — empty-state stub at `/views` |
+| ~~New initiative modal in Scoring~~ | ✅ Done — `NewInitiativeModal` wired to "Initiative" button; adds to `useScoringStore` |
 | Add initiative to plan | Roadmap board shows seed data only; no UI to add new items |
-| Error boundaries | No `<ErrorBoundary>` around any route — a component crash takes down the full shell |
+| ~~Error boundaries~~ | ✅ Done — `ErrorBoundary` class component wraps `<main>` in `(app)/layout.tsx` |
 
 ### 🟡 Medium Priority (polish / power features)
 

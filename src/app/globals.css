@@ -11,7 +11,7 @@
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 
-  /* ── Dark shell colors ── */
+  /* ── Shell colors — dark defaults ── */
   --color-bg-base:       #1b1b1f;
   --color-bg-surface:    #202027;
   --color-bg-elevated:   #26262e;
@@ -19,26 +19,15 @@
   --color-bg-selected:   #26262e;
   --color-bg-overlay:    rgba(0, 0, 0, 0.55);
 
-  /* ── Light mode colors (stakeholder-facing) ── */
-  --color-bg-light:         #ffffff;
-  --color-bg-light-surface: #fafafa;
-  --color-bg-light-hover:   #f5f5f5;
-
-  /* ── Borders ── */
+  /* ── Borders — dark defaults ── */
   --color-border-subtle:    #2c2c38;
   --color-border-strong:    #3a3a48;
-  --color-border-light:     #e5e5ea;
 
-  /* ── Text — dark mode ── */
+  /* ── Text — dark defaults ── */
   --color-text-primary:   #f0f0f2;
   --color-text-secondary: #8888a0;
   --color-text-muted:     #55556a;
   --color-text-inverse:   #ffffff;
-
-  /* ── Text — light mode ── */
-  --color-text-primary-light:   #111111;
-  --color-text-secondary-light: #6b6b6b;
-  --color-text-muted-light:     #ababab;
 
   /* ── Brand ── */
   --color-brand:            #5e5ce6;
@@ -130,6 +119,57 @@
 }
 
 /* ─────────────────────────────────────────────
+   LIGHT THEME — overrides @layer theme defaults.
+   Unlayered CSS beats @layer theme in the cascade.
+   Applied via: data-theme="light" (explicit) or
+   prefers-color-scheme: light (system default).
+───────────────────────────────────────────── */
+
+html[data-theme="light"] {
+  --color-bg-base:       #f7f7f8;
+  --color-bg-surface:    #ffffff;
+  --color-bg-elevated:   #ffffff;
+  --color-bg-hover:      #f0f0f5;
+  --color-bg-selected:   #e8e8f5;
+  --color-bg-overlay:    rgba(0, 0, 0, 0.40);
+
+  --color-border-subtle: #e4e4ea;
+  --color-border-strong: #d0d0da;
+
+  --color-text-primary:   #111118;
+  --color-text-secondary: #6b6b80;
+  --color-text-muted:     #a0a0b5;
+  --color-text-inverse:   #ffffff;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+
+@media (prefers-color-scheme: light) {
+  html:not([data-theme="dark"]) {
+    --color-bg-base:       #f7f7f8;
+    --color-bg-surface:    #ffffff;
+    --color-bg-elevated:   #ffffff;
+    --color-bg-hover:      #f0f0f5;
+    --color-bg-selected:   #e8e8f5;
+    --color-bg-overlay:    rgba(0, 0, 0, 0.40);
+
+    --color-border-subtle: #e4e4ea;
+    --color-border-strong: #d0d0da;
+
+    --color-text-primary:   #111118;
+    --color-text-secondary: #6b6b80;
+    --color-text-muted:     #a0a0b5;
+    --color-text-inverse:   #ffffff;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.14);
+  }
+}
+
+/* ─────────────────────────────────────────────
    BASE RESET & DEFAULTS
 ───────────────────────────────────────────── */
 
@@ -166,7 +206,7 @@ body {
 }
 
 /* ─────────────────────────────────────────────
-   SCROLLBAR — subtle dark
+   SCROLLBAR — adapts to theme via CSS variables
 ───────────────────────────────────────────── */
 
 ::-webkit-scrollbar {
@@ -185,6 +225,15 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-muted);
+}
+
+/* Native elements (select, input) respect theme */
+:root { color-scheme: dark; }
+
+html[data-theme="light"] { color-scheme: light; }
+
+@media (prefers-color-scheme: light) {
+  html:not([data-theme="dark"]) { color-scheme: light; }
 }
 
 /* ─────────────────────────────────────────────

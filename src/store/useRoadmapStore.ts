@@ -11,7 +11,7 @@ import type {
   PlanStatus,
   CapacityConfig,
 } from "@/types";
-import { SEED_PLAN } from "@/lib/seed";
+import { SEED_PLAN, SEED_PLAN_HITCHHIKER } from "@/lib/seed";
 
 // ─────────────────────────────────────────────
 // Roadmap store — quarterly plan management.
@@ -49,7 +49,7 @@ function recomputeCommitted(plan: QuarterlyPlan): number {
 export const useRoadmapStore = create<RoadmapState>()(
   temporal(
     (set) => ({
-      plans: SEED_PLAN ? [SEED_PLAN] : [],
+      plans: [SEED_PLAN, SEED_PLAN_HITCHHIKER],
       activePlanId: SEED_PLAN?.id ?? null,
       selectedQuarter: null,
 

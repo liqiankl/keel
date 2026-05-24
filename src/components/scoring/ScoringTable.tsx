@@ -131,7 +131,7 @@ export function ScoringTable({
   };
 
   return (
-    <div role="grid" aria-label="Initiatives scoring table" className="flex flex-col flex-1 overflow-hidden">
+    <div role="grid" aria-label="Initiatives prioritization table" className="flex flex-col flex-1 overflow-hidden">
       <ScoringTableHeader
         columns={columns}
         sortColumn={sortColumn}

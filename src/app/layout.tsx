@@ -30,7 +30,15 @@ export default function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} h-full`}
       suppressHydrationWarning
     >
-      <body className="h-full antialiased">
+      <head>
+        {/* Runs synchronously before paint — prevents flash of wrong theme */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var t=localStorage.getItem('keel-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);})();`,
+          }}
+        />
+      </head>
+      <body className="h-full antialiased" suppressHydrationWarning>
         {children}
       </body>
     </html>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useStore } from "zustand";
 import { BarChart2, Plus } from "lucide-react";
 import { Header } from "@/components/layout/Header";
@@ -10,7 +10,10 @@ import { FrameworkTabs } from "./FrameworkTabs";
 import { ScoringTable } from "./ScoringTable";
 import { InitiativeDetail } from "./InitiativeDetail";
 import { CustomDimensionsModal } from "./CustomDimensionsModal";
+import { NewInitiativeModal } from "./NewInitiativeModal";
 import { useScoringStore } from "@/store/useScoringStore";
+import { useAppStore } from "@/store/useAppStore";
+import { TEAMS } from "@/lib/constants";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
 import {
   RICE_COLUMNS,
@@ -55,9 +58,24 @@ function buildCustomColumns(dims: CustomDimension[]): ColDef[] {
   ];
 }
 
-export function ScoringView() {
+interface ScoringViewProps {
+  initialTeam?: string;
+}
+
+export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [customModalOpen, setCustomModalOpen] = useState(false);
+  const [newInitiativeOpen, setNewInitiativeOpen] = useState(false);
+
+  const setActiveTeamId = useAppStore((s) => s.setActiveTeamId);
+
+  useEffect(() => {
+    if (initialTeam) {
+      const team = TEAMS.find((t) => t.slug === initialTeam);
+      if (team) setActiveTeamId(team.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTeam]);
 
   const {
     initiatives,
@@ -72,6 +90,7 @@ export function ScoringView() {
     addCustomDimension,
     removeCustomDimension,
     updateCustomScore,
+    addInitiative,
     setSortColumn,
     toggleSortDirection,
   } = useScoringStore();
@@ -105,7 +124,7 @@ export function ScoringView() {
 
   useGlobalShortcuts({
     escape: () => {
-      if (customModalOpen) return;
+      if (customModalOpen || newInitiativeOpen) return;
       if (openId) setOpenId(null);
     },
     undo: () => temporal.undo(),
@@ -118,15 +137,13 @@ export function ScoringView() {
     <div className="flex flex-col h-full overflow-hidden">
       {/* ── Header ── */}
       <Header
-        title="Scoring"
+        title="Prioritize"
         rightSlot={
           <Button
             variant="primary"
             size="sm"
             className="gap-1.5"
-            onClick={() => {
-              // Phase 4: add initiative modal; for now no-op
-            }}
+            onClick={() => setNewInitiativeOpen(true)}
             aria-label="New initiative"
           >
             <Plus size={13} />
@@ -210,6 +227,17 @@ export function ScoringView() {
         dimensions={customDimensions}
         onAdd={addCustomDimension}
         onRemove={removeCustomDimension}
+      />
+
+      {/* ── New initiative modal ── */}
+      <NewInitiativeModal
+        open={newInitiativeOpen}
+        onClose={() => setNewInitiativeOpen(false)}
+        onSubmit={(item) => {
+          addInitiative(item);
+          setNewInitiativeOpen(false);
+          setOpenId(item.id);
+        }}
       />
     </div>
   );

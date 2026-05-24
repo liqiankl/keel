@@ -1,4 +1,5 @@
 import { Sidebar } from "@/components/layout/Sidebar";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
 // ─────────────────────────────────────────────
 // Authenticated app shell layout.
@@ -15,7 +16,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         className="flex flex-1 flex-col overflow-hidden min-w-0"
         tabIndex={-1}
       >
-        {children}
+        <ErrorBoundary>{children}</ErrorBoundary>
       </main>
     </div>
   );

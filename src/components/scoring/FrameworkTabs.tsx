@@ -1,11 +1,16 @@
 "use client";
 
+import { useState, useCallback } from "react";
+import { Info } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { FrameworkInfoPopover } from "./FrameworkInfoPopover";
 import type { ScoringFramework } from "@/types";
 
 // ─────────────────────────────────────────────
 // FrameworkTabs — switches between RICE, MoSCoW,
 // WSJF, and Custom scoring frameworks.
+// Each tab has an ⓘ icon that opens an educational
+// popover explaining the framework.
 // ─────────────────────────────────────────────
 
 const FRAMEWORKS: { id: ScoringFramework; label: string; description: string }[] = [
@@ -22,60 +27,108 @@ interface FrameworkTabsProps {
 }
 
 export function FrameworkTabs({ active, onChange, onConfigureCustom }: FrameworkTabsProps) {
+  const [openPopover, setOpenPopover] = useState<ScoringFramework | null>(null);
+
+  const togglePopover = useCallback((fw: ScoringFramework) => {
+    setOpenPopover((prev) => (prev === fw ? null : fw));
+  }, []);
+
+  const closePopover = useCallback(() => setOpenPopover(null), []);
+
   return (
-    <div
-      className="flex items-center gap-0 border-b border-[var(--color-border-subtle)] px-4 h-10 flex-shrink-0"
-      role="tablist"
-      aria-label="Scoring framework"
-    >
-      {FRAMEWORKS.map((fw) => {
-        const isActive = active === fw.id;
-        return (
+    <div className="relative flex-shrink-0">
+      {/* Tab bar */}
+      <div
+        className="flex items-center gap-0 border-b border-[var(--color-border-subtle)] px-4 h-10"
+        role="tablist"
+        aria-label="Prioritization framework"
+      >
+        {FRAMEWORKS.map((fw) => {
+          const isActive        = active === fw.id;
+          const isInfoOpen      = openPopover === fw.id;
+
+          return (
+            <div key={fw.id} className="relative flex items-center h-full">
+              {/* Framework tab button */}
+              <button
+                role="tab"
+                aria-selected={isActive}
+                title={fw.description}
+                onClick={() => onChange(fw.id)}
+                className={cn(
+                  "relative flex items-center h-full px-3 text-[13px] transition-colors duration-100",
+                  "focus-visible:outline-2 focus-visible:outline-[var(--color-brand)] focus-visible:outline-offset-[-2px]",
+                  isActive
+                    ? "text-[var(--color-text-primary)] font-medium"
+                    : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]",
+                )}
+              >
+                {fw.label}
+                {isActive && (
+                  <span
+                    className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-[var(--color-brand)]"
+                    aria-hidden="true"
+                  />
+                )}
+              </button>
+
+              {/* Info icon button */}
+              <button
+                type="button"
+                aria-label={`About ${fw.label}`}
+                aria-expanded={isInfoOpen}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePopover(fw.id);
+                }}
+                className={cn(
+                  "flex h-4 w-4 items-center justify-center rounded",
+                  "-ml-1 mr-1 transition-colors duration-100",
+                  "focus-visible:outline-2 focus-visible:outline-[var(--color-brand)]",
+                  isInfoOpen
+                    ? "text-[var(--color-brand)] opacity-100"
+                    : isActive
+                      ? "text-[var(--color-text-muted)] opacity-60 hover:opacity-100 hover:text-[var(--color-brand)]"
+                      : "text-[var(--color-text-muted)] opacity-30 hover:opacity-100 hover:text-[var(--color-brand)]",
+                )}
+              >
+                <Info size={11} strokeWidth={2} />
+              </button>
+
+            </div>
+          );
+        })}
+
+        <div className="flex-1" />
+
+        {active === "custom" && (
           <button
-            key={fw.id}
-            role="tab"
-            aria-selected={isActive}
-            title={fw.description}
-            onClick={() => onChange(fw.id)}
+            type="button"
+            onClick={onConfigureCustom}
             className={cn(
-              "relative flex items-center h-full px-3 text-[13px] transition-colors duration-100",
-              "focus-visible:outline-2 focus-visible:outline-[var(--color-brand)] focus-visible:outline-offset-[-2px]",
-              isActive
-                ? "text-[var(--color-text-primary)] font-medium"
-                : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]",
+              "flex items-center gap-1 h-7 rounded-md px-2.5 text-[12px] font-medium",
+              "text-[var(--color-text-secondary)] border border-[var(--color-border-subtle)]",
+              "hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]",
+              "transition-colors focus-visible:outline-2 focus-visible:outline-[var(--color-brand)]",
             )}
           >
-            {fw.label}
-            {isActive && (
-              <span
-                className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-[var(--color-brand)]"
-                aria-hidden="true"
-              />
-            )}
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <circle cx="6" cy="6" r="1.5" fill="currentColor" />
+              <circle cx="1.5" cy="6" r="1.5" fill="currentColor" />
+              <circle cx="10.5" cy="6" r="1.5" fill="currentColor" />
+            </svg>
+            Configure dimensions
           </button>
-        );
-      })}
+        )}
+      </div>
 
-      <div className="flex-1" />
-
-      {active === "custom" && (
-        <button
-          type="button"
-          onClick={onConfigureCustom}
-          className={cn(
-            "flex items-center gap-1 h-7 rounded-md px-2.5 text-[12px] font-medium",
-            "text-[var(--color-text-secondary)] border border-[var(--color-border-subtle)]",
-            "hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]",
-            "transition-colors focus-visible:outline-2 focus-visible:outline-[var(--color-brand)]",
-          )}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <circle cx="6" cy="6" r="1.5" fill="currentColor" />
-            <circle cx="1.5" cy="6" r="1.5" fill="currentColor" />
-            <circle cx="10.5" cy="6" r="1.5" fill="currentColor" />
-          </svg>
-          Configure dimensions
-        </button>
+      {/* Single popover, rendered at tab-bar level so it positions relative to outer wrapper */}
+      {openPopover && (
+        <FrameworkInfoPopover
+          framework={openPopover}
+          open={true}
+          onClose={closePopover}
+        />
       )}
     </div>
   );

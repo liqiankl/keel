@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useStore } from "zustand";
 import { Share2, Map } from "lucide-react";
 import { Header } from "@/components/layout/Header";
@@ -14,9 +14,10 @@ import { ReviewersFooter } from "./ReviewersFooter";
 import { ShareModal } from "./ShareModal";
 import {
   useRoadmapStore,
-  selectActivePlan,
   selectCapacityPercent,
 } from "@/store/useRoadmapStore";
+import { useAppStore } from "@/store/useAppStore";
+import { TEAMS } from "@/lib/constants";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
 import type { InitiativeStatus, PlanStatus, RoadmapItem } from "@/types";
 
@@ -38,23 +39,35 @@ const VISIBLE_STATUSES: InitiativeStatus[] = [
   "canceled",
 ];
 
-export function RoadmapView() {
+interface RoadmapViewProps {
+  initialTeam?: string;
+}
+
+export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
   const [shareOpen, setShareOpen] = useState(false);
 
-  const {
-    plans,
-    activePlanId,
-    setPlanStatus,
-    lockPlan,
-    updatePlan,
-  } = useRoadmapStore();
-
+  const { plans, setPlanStatus, lockPlan, updatePlan } = useRoadmapStore();
+  const activeTeamId = useAppStore((s) => s.activeTeamId);
+  const setActiveTeamId = useAppStore((s) => s.setActiveTeamId);
   const temporal = useStore(useRoadmapStore.temporal);
 
-  // Derive active plan via useMemo to avoid unstable selector references
+  useEffect(() => {
+    if (initialTeam) {
+      const team = TEAMS.find((t) => t.slug === initialTeam);
+      if (team) setActiveTeamId(team.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTeam]);
+
+  // Derive the plan that belongs to the currently active team
   const activePlan = useMemo(
-    () => selectActivePlan({ plans, activePlanId, selectedQuarter: null } as Parameters<typeof selectActivePlan>[0]),
-    [plans, activePlanId],
+    () => plans.find((p) => p.teamId === activeTeamId) ?? plans[0] ?? null,
+    [plans, activeTeamId],
+  );
+
+  const activeTeam = useMemo(
+    () => TEAMS.find((t) => t.id === activeTeamId),
+    [activeTeamId],
   );
 
   const capacityPct = useMemo(
@@ -103,7 +116,7 @@ export function RoadmapView() {
   if (!activePlan) {
     return (
       <div className="flex flex-col h-full overflow-hidden">
-        <Header title="Roadmap" />
+        <Header title={activeTeam ? `${activeTeam.name} · Roadmap` : "Roadmap"} />
         <div className="flex flex-1 items-center justify-center">
           <EmptyState
             Icon={Map}
@@ -124,7 +137,7 @@ export function RoadmapView() {
     <div className="flex flex-col h-full overflow-hidden">
       {/* ── Header ── */}
       <Header
-        title={activePlan.quarter.label}
+        title={activeTeam ? `${activeTeam.name} · ${activePlan.quarter.label}` : activePlan.quarter.label}
         rightSlot={
           <div className="flex items-center gap-2">
             <PlanStatusBadge

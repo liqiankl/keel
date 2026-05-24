@@ -7,7 +7,9 @@ import type {
   RequestStatus,
   FilterTab,
 } from "@/types";
-import { SEED_REQUESTS } from "@/lib/seed";
+import { SEED_REQUESTS, SEED_REQUESTS_HITCHHIKER } from "@/lib/seed";
+
+const ALL_SEED_REQUESTS = [...SEED_REQUESTS, ...SEED_REQUESTS_HITCHHIKER];
 
 // ─────────────────────────────────────────────
 // Inbox store — feature requests, triage.
@@ -56,7 +58,7 @@ const DEFAULT_FILTERS: InboxFilters = {
 export const useInboxStore = create<InboxState>()(
   temporal(
     (set) => ({
-      requests: SEED_REQUESTS,
+      requests: ALL_SEED_REQUESTS,
       filters: DEFAULT_FILTERS,
       selectedIds: [],
       focusedId: null,
@@ -148,9 +150,13 @@ export const useInboxStore = create<InboxState>()(
 // without needing the full InboxState (avoids a second useStore subscription).
 export function selectFilteredRequests(
   state: Pick<InboxState, "requests" | "filters">,
+  teamId?: string,
 ): FeatureRequest[] {
   const { requests, filters } = state;
   return requests.filter((r) => {
+    // Team isolation: default to "team_navigators" for untagged legacy requests
+    const rTeam = r.teamId ?? "team_navigators";
+    if (teamId && rTeam !== teamId) return false;
     if (filters.tab === "active" && r.status === "archived") return false;
     if (filters.tab === "new" && r.status !== "new") return false;
     if (filters.tab === "triaged" && r.status !== "triaged") return false;

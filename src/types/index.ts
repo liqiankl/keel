@@ -38,6 +38,7 @@ export type ReviewDecision = "approved" | "changes_requested" | "declined";
 
 export interface FeatureRequest {
   id: string;
+  teamId?: string;           // which team's inbox this belongs to
   title: string;
   description: string;
   businessContext: string;
@@ -179,6 +180,7 @@ export interface QuarterlyPlan {
   id: string;
   quarter: QuarterRef;
   workspaceId: string;
+  teamId: string;
   status: PlanStatus;
   goals: QuarterlyGoal[];
   items: RoadmapItem[];

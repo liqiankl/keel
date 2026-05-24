@@ -34,6 +34,7 @@ interface ScoringState {
   addCustomDimension: (dim: CustomDimension) => void;
   removeCustomDimension: (dimId: string) => void;
   updateCustomScore: (id: string, dimId: string, value: number) => void;
+  addInitiative: (item: RoadmapItem) => void;
   setManualRank: (id: string, rank: number, reason: string) => void;
   setSortColumn: (col: string | null) => void;
   toggleSortDirection: () => void;
@@ -141,6 +142,9 @@ export const useScoringStore = create<ScoringState>()(
             return patchScore(item, { custom: next, framework: "custom" });
           }),
         })),
+
+      addInitiative: (item) =>
+        set((s) => ({ initiatives: [...s.initiatives, item] })),
 
       setManualRank: (id, rank, reason) =>
         set((s) => ({

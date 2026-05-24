@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { useStore } from "zustand";
 import { Plus } from "lucide-react";
 import { Header } from "@/components/layout/Header";
@@ -11,9 +11,11 @@ import { RequestList } from "./RequestList";
 import { RequestDetail } from "./RequestDetail";
 import { NewRequestModal } from "./NewRequestModal";
 import { useInboxStore, selectFilteredRequests } from "@/store/useInboxStore";
+import { useAppStore } from "@/store/useAppStore";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
 import { buildDisplayIdMap } from "@/lib/format";
-import type { RequestStatus } from "@/types";
+import { TEAMS } from "@/lib/constants";
+import type { RequestStatus, FilterTab } from "@/types";
 
 // ─────────────────────────────────────────────
 // InboxView — root client component for /inbox.
@@ -24,7 +26,14 @@ import type { RequestStatus } from "@/types";
 //   - modal state
 // ─────────────────────────────────────────────
 
-export function InboxView() {
+const VALID_TABS = new Set<FilterTab>(["active", "all", "new", "triaged", "archived"]);
+
+interface InboxViewProps {
+  initialTeam?: string;
+  initialTab?: string;
+}
+
+export function InboxView({ initialTeam, initialTab }: InboxViewProps = {}) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [newModalOpen, setNewModalOpen] = useState(false);
 
@@ -49,13 +58,29 @@ export function InboxView() {
   // Undo/redo via zundo temporal
   const temporal = useStore(useInboxStore.temporal);
 
+  // Active team — inbox is scoped per team
+  const activeTeamId = useAppStore((s) => s.activeTeamId);
+  const setActiveTeamId = useAppStore((s) => s.setActiveTeamId);
+
+  // Sync team + tab from URL search params on navigation
+  useEffect(() => {
+    if (initialTeam) {
+      const team = TEAMS.find((t) => t.slug === initialTeam);
+      if (team) setActiveTeamId(team.id);
+    }
+    if (initialTab && VALID_TABS.has(initialTab as FilterTab)) {
+      setFilter("tab", initialTab as FilterTab);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTeam, initialTab]);
+
   // ── Derived state ──
   // useMemo instead of a second useInboxStore selector — avoids the
   // useSyncExternalStore "getSnapshot must be cached" infinite loop that
   // fires when a selector always returns a new array reference.
   const filteredRequests = useMemo(
-    () => selectFilteredRequests({ requests, filters }),
-    [requests, filters],
+    () => selectFilteredRequests({ requests, filters }, activeTeamId),
+    [requests, filters, activeTeamId],
   );
 
   const displayIdMap = useMemo(() => buildDisplayIdMap(requests), [requests]);

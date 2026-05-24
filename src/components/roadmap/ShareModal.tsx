@@ -5,6 +5,8 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { X, Copy, Check, Globe, Lock } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/Button";
+import { useViewsStore } from "@/store/useViewsStore";
+import { useAppStore } from "@/store/useAppStore";
 
 // ─────────────────────────────────────────────
 // ShareModal — generates a read-only share link
@@ -20,6 +22,11 @@ interface ShareModalProps {
   onShareLinkGenerated?: (link: string) => void;
 }
 
+function generateToken() {
+  return Math.random().toString(36).slice(2, 10) +
+    Math.random().toString(36).slice(2, 10);
+}
+
 export function ShareModal({
   open,
   planId,
@@ -27,16 +34,33 @@ export function ShareModal({
   onClose,
   onShareLinkGenerated,
 }: ShareModalProps) {
+  const createView = useViewsStore((s) => s.createView);
+  const currentUser = useAppStore((s) => s.workspace.currentUser);
+
   const [copied, setCopied]       = useState(false);
   const [linkGenerated, setLinkGenerated] = useState(false);
   const [requireAuth, setRequireAuth]     = useState(false);
-
-  // Deterministic mock URL based on planId
-  const shareLink = `https://keel.so/share/${planId.slice(-8)}`;
+  const [shareLink, setShareLink]         = useState("");
 
   function handleGenerate() {
+    const token = generateToken();
+    const url = `${window.location.origin}/share/${token}`;
+    createView({
+      id: `view_${Date.now()}`,
+      planId,
+      planLabel: quarterLabel,
+      token,
+      url,
+      passwordProtected: false,
+      password: null,
+      hiddenFields: [],
+      createdAt: new Date().toISOString(),
+      createdBy: currentUser.name,
+      revokedAt: null,
+    });
+    setShareLink(url);
     setLinkGenerated(true);
-    onShareLinkGenerated?.(shareLink);
+    onShareLinkGenerated?.(url);
   }
 
   function handleCopy() {

@@ -166,7 +166,7 @@ export const useScoringStore = create<ScoringState>()(
     }),
     {
       name: "keel-scoring",
-      version: 2,
+      version: 3,
       partialize: (s) => ({
         initiatives: s.initiatives,
         activeFramework: s.activeFramework,

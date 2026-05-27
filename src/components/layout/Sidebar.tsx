@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Inbox, Layers, Map, Circle, BarChart2,
-  ChevronDown, ChevronRight, Compass, Settings,
+  ChevronDown, ChevronRight, Compass, // Settings — hidden
   PanelLeftClose, PanelLeftOpen, Sun, Moon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -114,6 +114,7 @@ export function Sidebar() {
 
           {/* ── Bottom utility ── */}
           <div className="border-t border-[var(--color-border-subtle)] py-2">
+            {/* Settings — hidden for now
             <UtilityLink
               icon={Settings}
               label="Settings"
@@ -121,6 +122,7 @@ export function Sidebar() {
               pathname={pathname}
               expanded={expanded}
             />
+            */}
 
             <button
               type="button"

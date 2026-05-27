@@ -104,7 +104,7 @@ function EmptyViews({ isGuest, onNew }: { isGuest: boolean; onNew: () => void })
           style={{ color: "var(--color-text-muted)" }}
         >
           {isGuest
-            ? "No links shared yet — once created, your shared roadmap links will appear here."
+            ? "No links created yet — build out your roadmap and share it with stakeholders in seconds."
             : "No links shared yet — create one and give your stakeholders a window into your roadmap in seconds."}
         </p>
 

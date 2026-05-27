@@ -24,7 +24,7 @@ export type ScoringFramework = "rice" | "moscow" | "wsjf" | "custom";
 
 export type MoSCoWLabel = "must" | "should" | "could" | "wont";
 
-export type RequestSource = "customer" | "internal" | "market" | "leadership";
+export type RequestSource = "customer" | "engineering" | "internal";
 
 export type PrioritySignal = "nice_to_have" | "important" | "critical";
 

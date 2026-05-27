@@ -7,10 +7,9 @@ interface SourceBadgeProps {
 }
 
 const SOURCE_CONFIG: Record<RequestSource, { label: string; color: string }> = {
-  customer:   { label: "Customer",   color: "#22c55e" },
-  internal:   { label: "Internal",   color: "#818cf8" },
-  market:     { label: "Market",     color: "#f59e0b" },
-  leadership: { label: "Leadership", color: "#ec4899" },
+  customer:    { label: "Customer",    color: "#22c55e" },
+  engineering: { label: "Engineering", color: "#f59e0b" },
+  internal:    { label: "Internal",    color: "#818cf8" },
 };
 
 export function SourceBadge({ source, className }: SourceBadgeProps) {

@@ -24,8 +24,7 @@ import {
   WSJF_COLUMNS,
   type ColDef,
 } from "./columns";
-import { SEED_PLAN } from "@/lib/seed";
-import type { CustomDimension } from "@/types";
+import type { CustomDimension, QuarterlyPlan } from "@/types";
 
 // ─────────────────────────────────────────────
 // ScoringView — root client component for /scoring.
@@ -37,7 +36,7 @@ import type { CustomDimension } from "@/types";
 //   - undo/redo via zundo
 // ─────────────────────────────────────────────
 
-const goals = SEED_PLAN.goals;
+const goals: QuarterlyPlan["goals"] = [];
 
 function buildCustomColumns(dims: CustomDimension[]): ColDef[] {
   const dimCols: ColDef[] = dims.map((d) => ({
@@ -128,16 +127,41 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
     return plan?.id ?? null;
   }, [plans, teamId]);
 
+  const { addPlan } = useRoadmapStore();
+
   const handleSendToRoadmap = useCallback((id: string) => {
     const initiative = initiatives.find((i) => i.id === id);
-    if (!initiative || !activePlanId) return;
-    const alreadyInPlan = plans.find((p) => p.id === activePlanId)?.items.some((i) => i.id === id);
-    if (!alreadyInPlan) addItemToPlan(activePlanId, initiative);
+    if (!initiative || !teamId) return;
+
+    let planId = activePlanId;
+    if (!planId) {
+      const newPlan: QuarterlyPlan = {
+        id: `plan_${teamId}_${CURRENT_QUARTER.year}q${CURRENT_QUARTER.quarter}_${Date.now()}`,
+        quarter: CURRENT_QUARTER,
+        workspaceId: "ws_01",
+        teamId,
+        status: "draft",
+        goals: [],
+        items: [],
+        capacity: { unit: "story_points", total: 80, committed: 0, warningThreshold: 0.9, byArea: {} },
+        reviewers: [],
+        lockedAt: null,
+        lockedBy: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        shareLink: null,
+      };
+      addPlan(newPlan);
+      planId = newPlan.id;
+    }
+
+    const alreadyInPlan = plans.find((p) => p.id === planId)?.items.some((i) => i.id === id);
+    if (!alreadyInPlan) addItemToPlan(planId, initiative);
     removeInitiative(id);
     setRoadmapToast(initiative.title);
     setTimeout(() => setRoadmapToast(null), 3500);
     if (phaseKey) markPhaseActed(phaseKey);
-  }, [initiatives, activePlanId, plans, addItemToPlan, removeInitiative, phaseKey, markPhaseActed]);
+  }, [initiatives, activePlanId, teamId, plans, addPlan, addItemToPlan, removeInitiative, phaseKey, markPhaseActed]);
 
   const handleToggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) =>

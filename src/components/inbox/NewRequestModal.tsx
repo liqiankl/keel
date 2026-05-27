@@ -42,10 +42,9 @@ const DEFAULT_FORM: FormState = {
 };
 
 const SOURCE_OPTIONS: { value: RequestSource; label: string }[] = [
-  { value: "customer",   label: "Customer" },
-  { value: "internal",   label: "Internal" },
-  { value: "market",     label: "Market" },
-  { value: "leadership", label: "Leadership" },
+  { value: "customer",    label: "Customer" },
+  { value: "engineering", label: "Engineering" },
+  { value: "internal",    label: "Internal" },
 ];
 
 const SIGNAL_OPTIONS: { value: PrioritySignal; label: string }[] = [

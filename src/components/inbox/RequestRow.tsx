@@ -1,12 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { ThumbsUp, BarChart2 } from "lucide-react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { ThumbsUp, BarChart2, Trash2, Layers } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { StatusDropdown } from "./StatusDropdown";
 import { SourceBadge } from "./SourceBadge";
 import { PrioritySignalBadge } from "./PrioritySignalBadge";
-import { formatRelativeDate, getInitials, avatarColor } from "@/lib/format";
+import { formatRelativeDate, formatSubmittedDate, getInitials, avatarColor } from "@/lib/format";
+import { TEAMS } from "@/lib/constants";
 import type { FeatureRequest, RequestStatus } from "@/types";
 
 // ─────────────────────────────────────────────
@@ -31,6 +33,8 @@ interface RequestRowProps {
   onCheck: (id: string) => void;
   onStatusChange: (id: string, status: RequestStatus) => void;
   onSendToPrioritize?: (id: string) => void;
+  onSendToIdeas?: (id: string, teamId: string) => void;
+  onDelete?: (id: string) => void;
   rowRef?: (el: HTMLElement | null) => void;
   allowedStatuses?: RequestStatus[];
   statusLabels?: Partial<Record<RequestStatus, string>>;
@@ -47,6 +51,8 @@ export const RequestRow = React.memo(function RequestRow({
   onCheck,
   onStatusChange,
   onSendToPrioritize,
+  onSendToIdeas,
+  onDelete,
   rowRef,
   allowedStatuses,
   statusLabels,
@@ -176,16 +182,17 @@ export const RequestRow = React.memo(function RequestRow({
         )}
       </div>
 
-      {/* ── Date (hidden at rest, revealed on hover) ── */}
+      {/* ── Submitted date ── */}
       <span
         className={cn(
-          "flex-shrink-0 text-[12px] text-[var(--color-text-muted)] w-[52px] text-right mr-2",
+          "flex-shrink-0 text-[12px] text-[var(--color-text-muted)] w-[64px] text-right mr-2",
           "opacity-0 group-hover:opacity-100 transition-opacity duration-100",
           isOpen && "opacity-100",
         )}
-        aria-label={`Submitted ${formatRelativeDate(request.submittedAt)}`}
+        aria-label={`Submitted ${formatSubmittedDate(request.submittedAt)}`}
+        title={`Submitted ${formatSubmittedDate(request.submittedAt)}`}
       >
-        {formatRelativeDate(request.submittedAt)}
+        {formatSubmittedDate(request.submittedAt)}
       </span>
 
       {/* ── Submitter avatar ── */}
@@ -203,6 +210,59 @@ export const RequestRow = React.memo(function RequestRow({
         {initials}
       </div>
 
+      {/* ── Send to Ideas (hover action) ── */}
+      {onSendToIdeas && (
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <button
+              onClick={(e) => e.stopPropagation()}
+              title="Send to Ideas"
+              aria-label="Send to Ideas"
+              className={cn(
+                "flex-shrink-0 ml-2 h-[22px] px-1.5 rounded flex items-center gap-1 text-[11px]",
+                "opacity-0 group-hover:opacity-100 transition-opacity duration-100",
+                "text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:bg-[var(--color-bg-hover)]",
+                isOpen && "opacity-100",
+              )}
+            >
+              <Layers size={12} />
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              onClick={(e) => e.stopPropagation()}
+              className={cn(
+                "z-50 min-w-[160px] rounded-lg border border-[var(--color-border-strong)]",
+                "bg-[var(--color-bg-elevated)] shadow-xl py-1",
+              )}
+              sideOffset={4}
+            >
+              <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                Send to Ideas
+              </p>
+              {TEAMS.map((team) => (
+                <DropdownMenu.Item
+                  key={team.id}
+                  onSelect={() => onSendToIdeas(request.id, team.id)}
+                  className={cn(
+                    "flex items-center gap-2.5 px-3 py-1.5 text-[13px] cursor-pointer outline-none",
+                    "text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]",
+                  )}
+                >
+                  <div
+                    className="h-4 w-4 rounded flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
+                    style={{ backgroundColor: team.color }}
+                  >
+                    {team.name.charAt(0)}
+                  </div>
+                  {team.name}
+                </DropdownMenu.Item>
+              ))}
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
+      )}
+
       {/* ── Send to Prioritization (hover action) ── */}
       {onSendToPrioritize && (
         <button
@@ -217,6 +277,23 @@ export const RequestRow = React.memo(function RequestRow({
           )}
         >
           <BarChart2 size={12} />
+        </button>
+      )}
+
+      {/* ── Delete (hover action) ── */}
+      {onDelete && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(request.id); }}
+          title="Delete idea"
+          aria-label="Delete idea"
+          className={cn(
+            "flex-shrink-0 ml-1 h-[22px] w-[22px] rounded flex items-center justify-center",
+            "opacity-0 group-hover:opacity-100 transition-opacity duration-100",
+            "text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10",
+            isOpen && "opacity-100",
+          )}
+        >
+          <Trash2 size={12} />
         </button>
       )}
     </div>

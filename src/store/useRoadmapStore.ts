@@ -12,7 +12,7 @@ import type {
   PlanStatus,
   CapacityConfig,
 } from "@/types";
-import { SEED_PLAN, SEED_PLAN_HITCHHIKER, SEED_PLAN_Q3, SEED_PLAN_HH_Q3, SEED_PLAN_Q4, SEED_PLAN_HH_Q4 } from "@/lib/seed";
+// import { SEED_PLAN, SEED_PLAN_HITCHHIKER, SEED_PLAN_Q3, SEED_PLAN_HH_Q3, SEED_PLAN_Q4, SEED_PLAN_HH_Q4 } from "@/lib/seed";
 
 // ─────────────────────────────────────────────
 // Roadmap store — quarterly plan management.
@@ -51,8 +51,8 @@ export const useRoadmapStore = create<RoadmapState>()(
   temporal(
     persist<RoadmapState, [], [], Pick<RoadmapState, "plans" | "activePlanId">>(
       (set) => ({
-        plans: [SEED_PLAN, SEED_PLAN_HITCHHIKER, SEED_PLAN_Q3, SEED_PLAN_HH_Q3, SEED_PLAN_Q4, SEED_PLAN_HH_Q4],
-        activePlanId: SEED_PLAN?.id ?? null,
+        plans: [],
+        activePlanId: null,
         selectedQuarter: null,
 
       setActivePlan: (id) => set({ activePlanId: id }),
@@ -183,6 +183,7 @@ export const useRoadmapStore = create<RoadmapState>()(
       }),
       {
         name: "keel-roadmap",
+        version: 2,
         partialize: (s) => ({ plans: s.plans, activePlanId: s.activePlanId }),
       },
     ) as any,

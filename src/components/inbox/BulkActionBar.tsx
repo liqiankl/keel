@@ -1,8 +1,10 @@
 "use client";
 
-import { X, CheckCircle, Archive, CircleDot, Tag, BarChart2 } from "lucide-react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { X, CheckCircle, Archive, CircleDot, Tag, BarChart2, Layers } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/Button";
+import { TEAMS } from "@/lib/constants";
 import type { RequestStatus } from "@/types";
 
 // ─────────────────────────────────────────────
@@ -12,10 +14,11 @@ import type { RequestStatus } from "@/types";
 
 interface BulkActionBarProps {
   selectedCount: number;
-  onBulkStatus: (status: RequestStatus) => void;
-  onBulkTag: (tag: string) => void;
+  onBulkStatus?: (status: RequestStatus) => void;
+  onBulkTag?: () => void;
   onClearSelection: () => void;
   onSendToPrioritize?: () => void;
+  onSendToIdeas?: (teamId: string) => void;
 }
 
 export function BulkActionBar({
@@ -24,6 +27,7 @@ export function BulkActionBar({
   onBulkTag,
   onClearSelection,
   onSendToPrioritize,
+  onSendToIdeas,
 }: BulkActionBarProps) {
   if (selectedCount === 0) return null;
 
@@ -46,6 +50,47 @@ export function BulkActionBar({
 
       {/* Actions */}
       <div className="flex items-center gap-1">
+        {onSendToIdeas && (
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <Button variant="primary" size="sm" className="gap-1.5 text-[12px] h-7">
+                <Layers size={13} />
+                Send to Ideas
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                className={cn(
+                  "z-50 min-w-[160px] rounded-lg border border-[var(--color-border-strong)]",
+                  "bg-[var(--color-bg-elevated)] shadow-xl py-1",
+                )}
+                sideOffset={4}
+              >
+                <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                  Choose team
+                </p>
+                {TEAMS.map((team) => (
+                  <DropdownMenu.Item
+                    key={team.id}
+                    onSelect={() => onSendToIdeas(team.id)}
+                    className={cn(
+                      "flex items-center gap-2.5 px-3 py-1.5 text-[13px] cursor-pointer outline-none",
+                      "text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]",
+                    )}
+                  >
+                    <div
+                      className="h-4 w-4 rounded flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
+                      style={{ backgroundColor: team.color }}
+                    >
+                      {team.name.charAt(0)}
+                    </div>
+                    {team.name}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+        )}
         {onSendToPrioritize && (
           <BulkButton
             icon={<BarChart2 size={13} />}
@@ -54,26 +99,32 @@ export function BulkActionBar({
             highlight
           />
         )}
-        <BulkButton
-          icon={<CircleDot size={13} />}
-          label="Mark new"
-          onClick={() => onBulkStatus("new")}
-        />
-        <BulkButton
-          icon={<CheckCircle size={13} />}
-          label="Triage"
-          onClick={() => onBulkStatus("triaged")}
-        />
-        <BulkButton
-          icon={<Archive size={13} />}
-          label="Archive"
-          onClick={() => onBulkStatus("archived")}
-        />
-        <BulkButton
-          icon={<Tag size={13} />}
-          label="Add tag"
-          onClick={() => onBulkTag("tag")}
-        />
+        {onBulkStatus && (
+          <>
+            <BulkButton
+              icon={<CircleDot size={13} />}
+              label="Mark new"
+              onClick={() => onBulkStatus("new")}
+            />
+            <BulkButton
+              icon={<CheckCircle size={13} />}
+              label="Triage"
+              onClick={() => onBulkStatus("triaged")}
+            />
+            <BulkButton
+              icon={<Archive size={13} />}
+              label="Archive"
+              onClick={() => onBulkStatus("archived")}
+            />
+          </>
+        )}
+        {onBulkTag && (
+          <BulkButton
+            icon={<Tag size={13} />}
+            label="Add tag"
+            onClick={onBulkTag}
+          />
+        )}
       </div>
 
       {/* Spacer */}

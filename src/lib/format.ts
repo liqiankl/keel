@@ -20,6 +20,15 @@ export function formatRelativeDate(isoString: string): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+export function formatSubmittedDate(isoString: string): string {
+  const date = new Date(isoString);
+  const now = new Date();
+  const diffDays = Math.floor((now.getTime() - date.getTime()) / 86_400_000);
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 export function formatFullDate(isoString: string): string {
   return new Date(isoString).toLocaleDateString("en-US", {
     month: "long",

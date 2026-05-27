@@ -83,7 +83,6 @@ export function FilterTabs({
                   {count}
                 </span>
               )}
-              {/* Active underline indicator */}
               {active && (
                 <span
                   className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-[var(--color-text-primary)]"
@@ -99,7 +98,7 @@ export function FilterTabs({
       <div className="flex-1" />
 
       {/* Inline search */}
-      <div className="relative flex items-center">
+      <div className="relative flex items-center flex-shrink-0">
         <svg
           className="absolute left-2.5 text-[var(--color-text-muted)] pointer-events-none"
           width="12" height="12" viewBox="0 0 12 12" fill="none"

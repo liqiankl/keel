@@ -8,9 +8,7 @@ import type {
   RequestStatus,
   FilterTab,
 } from "@/types";
-import { SEED_REQUESTS, SEED_REQUESTS_HITCHHIKER } from "@/lib/seed";
-
-const ALL_SEED_REQUESTS = [...SEED_REQUESTS, ...SEED_REQUESTS_HITCHHIKER];
+// import { SEED_REQUESTS, SEED_REQUESTS_HITCHHIKER } from "@/lib/seed";
 
 // ─────────────────────────────────────────────
 // Inbox store — feature requests, triage.
@@ -53,7 +51,7 @@ export const useInboxStore = create<InboxState>()(
   temporal(
     persist<InboxState, [], [], Pick<InboxState, "requests">>(
       (set) => ({
-        requests: ALL_SEED_REQUESTS,
+        requests: [],
         filters: DEFAULT_FILTERS,
         selectedIds: [],
         focusedId: null,
@@ -129,6 +127,7 @@ export const useInboxStore = create<InboxState>()(
       }),
       {
         name: "keel-inbox",
+        version: 2,
         partialize: (s) => ({ requests: s.requests }),
       },
     ) as any,
@@ -149,9 +148,10 @@ export function selectFilteredRequests(
 ): FeatureRequest[] {
   const { requests, filters } = state;
   return requests.filter((r) => {
-    // Team isolation: default to "team_navigators" for untagged legacy requests
-    const rTeam = r.teamId ?? "team_navigators";
-    if (teamId && rTeam !== teamId) return false;
+    // Global inbox: only show unassigned requests
+    if (!teamId && r.teamId != null) return false;
+    // Team ideas page: only show requests assigned to this team
+    if (teamId && r.teamId !== teamId) return false;
     if (filters.tab === "active"   && r.status === "archived") return false;
     if (filters.tab === "new"      && r.status !== "new") return false;
     if (filters.tab === "triaged"  && r.status !== "triaged") return false;

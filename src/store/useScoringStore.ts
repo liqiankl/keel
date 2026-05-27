@@ -13,7 +13,7 @@ import type {
   CustomScore,
   CustomDimension,
 } from "@/types";
-import { SEED_INITIATIVES } from "@/lib/seed";
+// import { SEED_INITIATIVES } from "@/lib/seed";
 
 // ─────────────────────────────────────────────
 // Scoring store — initiative scoring.
@@ -88,7 +88,7 @@ export const useScoringStore = create<ScoringState>()(
   temporal(
     persist<ScoringState, [], [], Pick<ScoringState, "initiatives" | "activeFramework" | "customDimensions" | "sortColumn" | "sortDirection">>(
       (set, get) => ({
-        initiatives: SEED_INITIATIVES,
+        initiatives: [],
         activeFramework: "rice",
         customDimensions: [],
         sortColumn: null,
@@ -166,6 +166,7 @@ export const useScoringStore = create<ScoringState>()(
     }),
     {
       name: "keel-scoring",
+      version: 2,
       partialize: (s) => ({
         initiatives: s.initiatives,
         activeFramework: s.activeFramework,

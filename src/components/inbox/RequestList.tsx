@@ -31,9 +31,12 @@ interface RequestListProps {
   onFocus: (id: string | null) => void;
   onAddToGroup?: (status: RequestStatus) => void;
   onSendToPrioritize?: (id: string) => void;
+  onSendToIdeas?: (id: string, teamId: string) => void;
+  onDelete?: (id: string) => void;
   allowedStatuses?: RequestStatus[];
   statusLabels?: Partial<Record<RequestStatus, string>>;
   hideStatusIcon?: boolean;
+  onSelectAll?: () => void;
 }
 
 type Group = { status: RequestStatus; items: FeatureRequest[] };
@@ -114,9 +117,12 @@ export function RequestList({
   onFocus,
   onAddToGroup,
   onSendToPrioritize,
+  onSendToIdeas,
+  onDelete,
   allowedStatuses,
   statusLabels,
   hideStatusIcon,
+  onSelectAll,
 }: RequestListProps) {
   // Stable display ID map based on all requests (not just filtered)
   const displayIdMap = useMemo(
@@ -143,18 +149,11 @@ export function RequestList({
   });
 
   if (filteredRequests.length === 0) {
-    const cfg = EMPTY_STATE_CONFIG[activeTab];
-    return (
-      <div className="flex flex-1 items-center justify-center overflow-y-auto">
-        <EmptyState
-          Icon={cfg.Icon}
-          title={cfg.title}
-          description={cfg.description}
-          action={{ label: cfg.actionLabel, onClick: () => undefined }}
-        />
-      </div>
-    );
+    return <div className="flex-1" />;
   }
+
+  const allSelected = filteredRequests.length > 0 && checkedIds.length === filteredRequests.length;
+  const someSelected = checkedIds.length > 0 && !allSelected;
 
   return (
     <div
@@ -163,6 +162,36 @@ export function RequestList({
       aria-rowcount={filteredRequests.length}
       className="flex-1 overflow-y-auto"
     >
+      {onSelectAll && filteredRequests.length > 0 && (
+        <div className="flex items-center gap-2.5 px-4 h-8 border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-base)] flex-shrink-0">
+          <button
+            onClick={onSelectAll}
+            aria-label={allSelected ? "Deselect all" : "Select all"}
+            className="flex items-center gap-2 group"
+          >
+            <div className="h-[14px] w-[14px] rounded border flex items-center justify-center flex-shrink-0 transition-colors"
+              style={{
+                backgroundColor: allSelected || someSelected ? "var(--color-brand)" : undefined,
+                borderColor: allSelected || someSelected ? "var(--color-brand)" : "var(--color-border-strong)",
+              }}
+            >
+              {allSelected && (
+                <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
+                  <path d="M1 3l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+              {someSelected && (
+                <svg width="8" height="2" viewBox="0 0 8 2" fill="none">
+                  <path d="M1 1h6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              )}
+            </div>
+            <span className="text-[12px] text-[var(--color-text-muted)] group-hover:text-[var(--color-text-secondary)] transition-colors select-none">
+              {allSelected ? "Deselect all" : someSelected ? `${checkedIds.length} selected` : "Select all"}
+            </span>
+          </button>
+        </div>
+      )}
       {groups.map((group) => (
         <div key={group.status} role="rowgroup">
           {groups.length > 1 && (
@@ -185,6 +214,8 @@ export function RequestList({
               onCheck={onCheck}
               onStatusChange={onStatusChange}
               onSendToPrioritize={onSendToPrioritize}
+              onSendToIdeas={onSendToIdeas}
+              onDelete={onDelete}
               allowedStatuses={allowedStatuses}
               statusLabels={statusLabels}
               hideStatusIcon={hideStatusIcon}

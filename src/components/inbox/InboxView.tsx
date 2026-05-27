@@ -35,10 +35,15 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
   const [openId, setOpenId] = useState<string | null>(null);
   const [newModalOpen, setNewModalOpen] = useState(false);
   const [prioritizeToast, setPrioritizeToast] = useState<string | null>(null);
-  const phasesActed    = useAppStore((s) => s.phasesActed);
+  const [ideasToast, setIdeasToast] = useState<{ title: string; team: string } | null>(null);
   const markPhaseActed = useAppStore((s) => s.markPhaseActed);
   const phaseKey       = initialTeam ? `ideas:${initialTeam}` : null;
-  const hasActed       = phaseKey ? phasesActed.includes(phaseKey) : false;
+  const allInitiatives = useScoringStore((s) => s.initiatives);
+
+  const teamId = initialTeam ? TEAMS.find((t) => t.slug === initialTeam)?.id : undefined;
+  const hasActed = !!teamId && allInitiatives.some(
+    (i) => i.teamId === teamId && !!i.featureRequestId,
+  );
 
   const { isGuest, session } = useGuestSession();
 
@@ -53,6 +58,8 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
     setStatus,
     bulkSetStatus,
     setTags,
+    updateRequest,
+    removeRequest,
     toggleSelectId,
     selectAll,
     clearSelection,
@@ -143,6 +150,21 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
     if (phaseKey) markPhaseActed(phaseKey);
   }, [requests, addInitiative, setStatus, phaseKey, markPhaseActed, initialTeam]);
 
+  const handleSendToIdeas = useCallback((id: string, teamId: string) => {
+    const request = requests.find((r) => r.id === id);
+    if (!request) return;
+    const team = TEAMS.find((t) => t.id === teamId);
+    updateRequest(id, { teamId });
+    if (openId === id) setOpenId(null);
+    setIdeasToast({ title: request.title, team: team?.name ?? teamId });
+    setTimeout(() => setIdeasToast(null), 3500);
+  }, [requests, updateRequest, openId]);
+
+  const handleBulkSendToIdeas = useCallback((teamId: string) => {
+    selectedIds.forEach((id) => handleSendToIdeas(id, teamId));
+    clearSelection();
+  }, [selectedIds, handleSendToIdeas, clearSelection]);
+
   function handleOpen(id: string) {
     setOpenId((prev) => (prev === id ? null : id));
   }
@@ -209,10 +231,11 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
 
       <BulkActionBar
         selectedCount={selectedIds.length}
-        onBulkStatus={handleBulkStatus}
-        onBulkTag={handleBulkTag}
+        onBulkStatus={initialTeam ? undefined : handleBulkStatus}
+        onBulkTag={initialTeam ? undefined : handleBulkTag}
         onClearSelection={clearSelection}
         onSendToPrioritize={initialTeam ? handleBulkSendToPrioritize : undefined}
+        onSendToIdeas={!initialTeam ? handleBulkSendToIdeas : undefined}
       />
 
       <div className="flex flex-1 overflow-hidden min-h-0">
@@ -235,9 +258,12 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
             onFocus={setFocusedId}
             onAddToGroup={() => setNewModalOpen(true)}
             onSendToPrioritize={initialTeam ? handleSendToPrioritize : undefined}
+            onSendToIdeas={!initialTeam ? handleSendToIdeas : undefined}
             allowedStatuses={initialTeam ? ["new", "triaged"] : undefined}
             statusLabels={initialTeam ? { triaged: "Backlog" } : undefined}
             hideStatusIcon={!!initialTeam}
+            onSelectAll={initialTeam ? handleSelectAll : undefined}
+            onDelete={initialTeam ? removeRequest : undefined}
           />
         </div>
 
@@ -250,8 +276,11 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
               onStatusChange={handleStatusChange}
               onTagsChange={setTags}
               onSendToPrioritize={initialTeam ? handleSendToPrioritize : undefined}
+              onSendToIdeas={!initialTeam ? handleSendToIdeas : undefined}
               allowedStatuses={initialTeam ? ["new", "triaged"] : undefined}
               statusLabels={initialTeam ? { triaged: "Backlog" } : undefined}
+              hideTags={!!initialTeam}
+              onDelete={initialTeam ? (id) => { removeRequest(id); handleCloseDetail(); } : undefined}
             />
           </div>
         )}
@@ -284,6 +313,19 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
         )}>
           <Check size={13} className="text-[var(--color-success)]" />
           <span>Sent to <span className="font-semibold text-[var(--color-text-primary)]">Prioritization</span></span>
+        </div>
+      )}
+
+      {ideasToast && (
+        <div className={cn(
+          "fixed bottom-20 left-1/2 -translate-x-1/2 z-50",
+          "flex items-center gap-2 px-4 py-2.5 rounded-lg shadow-lg",
+          "bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)]",
+          "text-[12px] text-[var(--color-text-secondary)]",
+          "animate-in fade-in slide-in-from-bottom-2 duration-200",
+        )}>
+          <Check size={13} className="text-[var(--color-success)]" />
+          <span>Sent to <span className="font-semibold text-[var(--color-text-primary)]">{ideasToast.team} Ideas</span></span>
         </div>
       )}
     </div>

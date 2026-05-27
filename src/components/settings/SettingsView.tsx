@@ -557,67 +557,11 @@ function WorkspaceSection() {
           <SettingsInput value={name} onChange={setName} placeholder="My workspace" />
         </SettingsRow>
 
+        {/* Slug row — hidden for now
         <SettingsRow label="Slug" description="Used in shared links · keel.so/{slug}">
-          <div className="flex flex-col items-end gap-1">
-            <div className="flex items-center gap-2">
-              {slugEditing ? (
-                <>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--color-text-muted)] select-none pointer-events-none">
-                      /
-                    </span>
-                    <input
-                      type="text"
-                      value={slug}
-                      onChange={(e) => handleSlugChange(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") setSlugEditing(false);
-                        if (e.key === "Escape") { setSlug(workspace.slug); setSlugEditing(false); setSlugError(""); }
-                      }}
-                      autoFocus
-                      placeholder="my-workspace"
-                      className={cn(
-                        "h-8 pl-6 pr-3 rounded-md border text-sm w-48",
-                        "bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)]",
-                        "focus:outline-none focus:ring-1 focus:ring-[var(--color-brand)]",
-                        "placeholder:text-[var(--color-text-muted)]",
-                        slugError ? "border-[var(--color-danger)]" : "border-[var(--color-border-strong)]",
-                      )}
-                    />
-                  </div>
-                  <button
-                    onClick={() => { setSlug(workspace.slug); setSlugEditing(false); setSlugError(""); }}
-                    className="text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
-                    aria-label="Cancel slug edit"
-                  >
-                    <X size={14} />
-                  </button>
-                </>
-              ) : (
-                <>
-                  <SettingsInput value={slug} readOnly />
-                  <button
-                    onClick={() => setSlugEditing(true)}
-                    className="text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
-                    aria-label="Edit slug"
-                  >
-                    <Pencil size={13} />
-                  </button>
-                  <button
-                    onClick={copySlug}
-                    className="text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
-                    aria-label="Copy slug"
-                  >
-                    {copied ? <Check size={14} className="text-[var(--color-success)]" /> : <Copy size={14} />}
-                  </button>
-                </>
-              )}
-            </div>
-            {slugError && (
-              <p className="text-[11px] text-[var(--color-danger)]">{slugError}</p>
-            )}
-          </div>
+          ...
         </SettingsRow>
+        */}
 
         <SettingsRow label="Accent color" description="Used in avatars and highlights" last>
           <div className="flex items-center gap-1.5">

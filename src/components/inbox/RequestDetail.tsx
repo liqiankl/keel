@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
   X,
   Maximize2,
@@ -12,15 +13,19 @@ import {
   Target,
   ExternalLink,
   BarChart2,
+  Trash2,
 } from "lucide-react";
+import { TEAMS } from "@/lib/constants";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/Button";
+import { useAppStore } from "@/store/useAppStore";
 import { StatusDropdown } from "./StatusDropdown";
 import { SourceBadge } from "./SourceBadge";
 import { PrioritySignalBadge } from "./PrioritySignalBadge";
 import { formatFullDate, formatRelativeDate, getInitials, avatarColor } from "@/lib/format";
-import type { FeatureRequest, RequestStatus } from "@/types";
+import type { FeatureRequest, RequestStatus, PrioritySignal } from "@/types";
 import { PRIORITY_CONFIG } from "@/lib/constants";
+import { useInboxStore } from "@/store/useInboxStore";
 
 // ─────────────────────────────────────────────
 // RequestDetail — right-hand slide-in panel.
@@ -35,8 +40,11 @@ interface RequestDetailProps {
   onStatusChange: (id: string, status: RequestStatus) => void;
   onTagsChange: (id: string, tags: string[]) => void;
   onSendToPrioritize?: (id: string) => void;
+  onSendToIdeas?: (id: string, teamId: string) => void;
+  onDelete?: (id: string) => void;
   allowedStatuses?: RequestStatus[];
   statusLabels?: Partial<Record<RequestStatus, string>>;
+  hideTags?: boolean;
 }
 
 export function RequestDetail({
@@ -46,10 +54,19 @@ export function RequestDetail({
   onStatusChange,
   onTagsChange,
   onSendToPrioritize,
+  onSendToIdeas,
+  onDelete,
   allowedStatuses,
   statusLabels,
+  hideTags = false,
 }: RequestDetailProps) {
   const [newTag, setNewTag] = useState("");
+  const workspaceName = useAppStore((s) => s.workspace.name);
+  const updateRequest = useInboxStore((s) => s.updateRequest);
+
+  function handlePriorityChange(signal: PrioritySignal) {
+    updateRequest(request.id, { prioritySignal: signal });
+  }
 
   function handleAddTag(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key !== "Enter" && e.key !== ",") return;
@@ -80,7 +97,7 @@ export function RequestDetail({
       <div className="keel-topbar-height flex items-center gap-2 px-4 border-b border-[var(--color-border-subtle)] flex-shrink-0">
         {/* Breadcrumb */}
         <span className="text-[13px] text-[var(--color-text-muted)] flex items-center gap-1.5">
-          <span className="font-medium text-[var(--color-brand)]">Keel</span>
+          <span className="font-medium text-[var(--color-brand)]">{workspaceName}</span>
           <span>›</span>
           <span className="font-mono">{displayId}</span>
         </span>
@@ -122,20 +139,16 @@ export function RequestDetail({
 
           {/* Status + source row */}
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 bg-[var(--color-bg-elevated)] rounded-md border border-[var(--color-border-subtle)] h-7 px-2">
-              <StatusDropdown
-                requestId={request.id}
-                currentStatus={request.status}
-                onChange={onStatusChange}
-                allowedStatuses={allowedStatuses}
-                statusLabels={statusLabels}
-              />
-              <span className="text-[13px] text-[var(--color-text-secondary)] capitalize">
-                {statusLabels?.[request.status] ?? request.status}
-              </span>
-            </div>
+            {/* <StatusDropdown
+              requestId={request.id}
+              currentStatus={request.status}
+              onChange={onStatusChange}
+              allowedStatuses={allowedStatuses}
+              statusLabels={statusLabels}
+              showLabel
+            /> */}
             <SourceBadge source={request.source} />
-            <PrioritySignalBadge signal={request.prioritySignal} showLabel />
+            <PrioritySignalBadge signal={request.prioritySignal} showLabel onChange={handlePriorityChange} />
           </div>
         </div>
 
@@ -175,43 +188,45 @@ export function RequestDetail({
             </span>
           </MetaRow>
 
-          <MetaRow icon={<Tag size={18} />} label="Tags">
-            <div className="flex flex-wrap gap-1.5 items-center">
-              {request.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className={cn(
-                    "inline-flex items-center gap-1 rounded px-2 h-[20px]",
-                    "text-[12px] bg-[var(--color-bg-elevated)]",
-                    "border border-[var(--color-border-subtle)]",
-                    "text-[var(--color-text-secondary)]",
-                  )}
-                >
-                  {tag}
-                  <button
-                    onClick={() => handleRemoveTag(tag)}
-                    aria-label={`Remove tag ${tag}`}
-                    className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] ml-0.5"
+          {!hideTags && (
+            <MetaRow icon={<Tag size={18} />} label="Tags">
+              <div className="flex flex-wrap gap-1.5 items-center">
+                {request.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded px-2 h-[20px]",
+                      "text-[12px] bg-[var(--color-bg-elevated)]",
+                      "border border-[var(--color-border-subtle)]",
+                      "text-[var(--color-text-secondary)]",
+                    )}
                   >
-                    <X size={14} />
-                  </button>
-                </span>
-              ))}
-              <input
-                type="text"
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                onKeyDown={handleAddTag}
-                placeholder="Add tag…"
-                className={cn(
-                  "h-[20px] text-[11px] bg-transparent border-none outline-none",
-                  "text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)]",
-                  "min-w-[60px] w-[80px]",
-                )}
-                aria-label="Add a tag, press Enter to confirm"
-              />
-            </div>
-          </MetaRow>
+                    {tag}
+                    <button
+                      onClick={() => handleRemoveTag(tag)}
+                      aria-label={`Remove tag ${tag}`}
+                      className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] ml-0.5"
+                    >
+                      <X size={14} />
+                    </button>
+                  </span>
+                ))}
+                <input
+                  type="text"
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  onKeyDown={handleAddTag}
+                  placeholder="Add tag…"
+                  className={cn(
+                    "h-[20px] text-[11px] bg-transparent border-none outline-none",
+                    "text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)]",
+                    "min-w-[60px] w-[80px]",
+                  )}
+                  aria-label="Add a tag, press Enter to confirm"
+                />
+              </div>
+            </MetaRow>
+          )}
         </div>
 
         {/* Description */}
@@ -305,6 +320,48 @@ export function RequestDetail({
 
       {/* ── Footer actions ── */}
       <div className="flex-shrink-0 px-4 py-3 border-t border-[var(--color-border-subtle)] flex gap-2">
+        {onSendToIdeas && request.status !== "archived" && (
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <Button variant="primary" size="sm" className="flex-1 gap-1.5">
+                <Layers size={15} />
+                Send to Ideas
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                className={cn(
+                  "z-50 min-w-[170px] rounded-lg border border-[var(--color-border-strong)]",
+                  "bg-[var(--color-bg-elevated)] shadow-xl py-1",
+                )}
+                sideOffset={6}
+                align="start"
+              >
+                <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+                  Choose team
+                </p>
+                {TEAMS.map((team) => (
+                  <DropdownMenu.Item
+                    key={team.id}
+                    onSelect={() => onSendToIdeas(request.id, team.id)}
+                    className={cn(
+                      "flex items-center gap-2.5 px-3 py-2 text-[13px] cursor-pointer outline-none",
+                      "text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]",
+                    )}
+                  >
+                    <div
+                      className="h-5 w-5 rounded flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
+                      style={{ backgroundColor: team.color }}
+                    >
+                      {team.name.charAt(0)}
+                    </div>
+                    {team.name}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+        )}
         {onSendToPrioritize && request.status !== "archived" && (
           <Button
             variant="primary"
@@ -344,6 +401,19 @@ export function RequestDetail({
           >
             Restore
           </Button>
+        )}
+        {onDelete && (
+          <button
+            onClick={() => onDelete(request.id)}
+            title="Delete idea"
+            className={cn(
+              "flex h-7 w-7 items-center justify-center rounded-md flex-shrink-0",
+              "text-[var(--color-text-muted)] hover:text-[var(--color-danger)]",
+              "hover:bg-[var(--color-danger)]/10 transition-colors",
+            )}
+          >
+            <Trash2 size={14} />
+          </button>
         )}
       </div>
     </aside>

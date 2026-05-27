@@ -201,6 +201,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "keel-app-preferences",
+      version: 2,
       partialize: (s) => ({
         phasesActed: s.phasesActed,
         sidebarCollapsed: s.sidebarCollapsed,

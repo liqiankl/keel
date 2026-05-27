@@ -146,7 +146,7 @@ export default function WorkspacePage() {
           className="text-[15px] max-w-sm leading-relaxed mb-10"
           style={{ color: "var(--color-text-muted)" }}
         >
-          Your product planning hub — where ideas become shipped features.
+          Your product planning Olympus hub — where ideas become shipped features.
         </p>
 
         {/* CTA */}

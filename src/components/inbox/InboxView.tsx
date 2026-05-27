@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { useStore } from "zustand";
 import { Header } from "@/components/layout/Header";
 import { FilterTabs } from "./FilterTabs";
@@ -215,6 +215,19 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
   }
 
   const hasDetail = openRequest !== null;
+  const detailPanelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!openId) return;
+    function handleClick(e: MouseEvent) {
+      const target = e.target as HTMLElement;
+      if (detailPanelRef.current?.contains(target)) return;
+      if (target.closest('[role="row"]')) return;
+      setOpenId(null);
+    }
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, [openId]);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -277,7 +290,7 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
         </div>
 
         {hasDetail && (
-          <div className="flex flex-col overflow-hidden flex-1 md:[flex:0_0_45%]">
+          <div ref={detailPanelRef} className="flex flex-col overflow-hidden flex-1 md:[flex:0_0_45%]">
             <RequestDetail
               request={openRequest}
               displayId={displayIdMap[openRequest.id] ?? "KEL-???"}

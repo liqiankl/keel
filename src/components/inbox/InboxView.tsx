@@ -152,6 +152,7 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
     });
     setStatus(id, "triaged");
     setOpenId(null);
+    clearSelection();
     setPrioritizeToast(request.title);
     setTimeout(() => setPrioritizeToast(null), 3500);
     if (phaseKey) markPhaseActed(phaseKey);

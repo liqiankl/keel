@@ -65,7 +65,10 @@ export const useInboxStore = create<InboxState>()(
         })),
 
       removeRequest: (id) =>
-        set((s) => ({ requests: s.requests.filter((r) => r.id !== id) })),
+        set((s) => ({
+          requests: s.requests.filter((r) => r.id !== id),
+          selectedIds: s.selectedIds.filter((sid) => sid !== id),
+        })),
 
       mergeRequests: (primaryId, sourceIds) =>
         set((s) => {

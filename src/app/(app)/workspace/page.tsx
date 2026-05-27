@@ -24,7 +24,7 @@ export default function WorkspacePage() {
   const totalRequests = useMemo(() => requests.length, [requests]);
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg-base)] flex flex-col">
+    <div className="h-full bg-[var(--color-bg-base)] flex flex-col overflow-y-auto">
 
       {/* ── Hero band ── */}
       <div

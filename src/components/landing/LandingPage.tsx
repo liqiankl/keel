@@ -36,7 +36,7 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen bg-[#0d0d10] text-[#f0f0f2] overflow-x-hidden">
-      <Nav scrolled={scrolled} onGetStarted={handleGetStarted} launching={launching} />
+      <Nav scrolled={scrolled} />
       <Hero onGetStarted={handleGetStarted} launching={launching} />
       <Features />
       <HowItWorks />
@@ -48,15 +48,7 @@ export function LandingPage() {
 
 // ── Nav ────────────────────────────────────────
 
-function Nav({
-  scrolled,
-  onGetStarted,
-  launching,
-}: {
-  scrolled: boolean;
-  onGetStarted: () => void;
-  launching: boolean;
-}) {
+function Nav({ scrolled }: { scrolled: boolean }) {
   return (
     <header
       className={cn(
@@ -93,20 +85,6 @@ function Nav({
           })}
         </nav>
 
-        {/* CTA */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onGetStarted}
-            disabled={launching}
-            className={cn(
-              "inline-flex items-center gap-1.5 h-8 px-4 rounded-full text-sm font-medium transition-all",
-              "bg-white text-[#0d0d10] hover:bg-white/90 disabled:opacity-70",
-            )}
-          >
-            {launching ? <Loader2 size={13} className="animate-spin" /> : <ChevronRight size={13} />}
-            Get started
-          </button>
-        </div>
       </div>
     </header>
   );
@@ -136,7 +114,6 @@ function Hero({
       <div className="inline-flex items-center gap-2 mb-6 h-7 px-3 rounded-full border border-[#5e5ce6]/30 bg-[#5e5ce6]/10 text-xs text-[#a8a8f0]">
         <span className="flex h-1.5 w-1.5 rounded-full bg-[#5e5ce6]" />
         Introducing Keel — Product planning, reimagined
-        <ArrowRight size={11} />
       </div>
 
       {/* Headline */}
@@ -154,7 +131,7 @@ function Hero({
 
       {/* Subheadline */}
       <p className="mx-auto mt-6 max-w-xl text-lg text-[#8888a0] leading-relaxed">
-        Inbox requests, prioritize with RICE or MoSCoW, plan your quarter, and share
+        Inbox requests, prioritize with RICE, MoSCoW, or WSJF, plan your quarter, and share
         beautiful roadmaps — all in one focused tool.
       </p>
 
@@ -186,7 +163,7 @@ function Hero({
 
       {/* Trust line */}
       <p className="mt-6 text-xs text-[#55556a]">
-        No credit card required &nbsp;·&nbsp; Free to use &nbsp;·&nbsp; Set up in 2 minutes
+        No credit card required &nbsp;·&nbsp; Free to use
       </p>
 
       {/* App UI Mockup */}

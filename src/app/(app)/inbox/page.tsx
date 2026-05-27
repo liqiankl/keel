@@ -6,7 +6,7 @@ import { Header } from "@/components/layout/Header";
 import { WorkflowBar } from "@/components/workflow/WorkflowBar";
 import { NextPhaseBar } from "@/components/workflow/NextPhaseBar";
 import { SourceBadge } from "@/components/inbox/SourceBadge";
-import { Check, ArrowRightCircle, Trash2, Search, X, Minus, ThumbsUp, Folder, FolderOpen, ExternalLink } from "lucide-react";
+import { Check, ArrowRightCircle, Trash2, Search, X, Minus, ThumbsUp, Folder, FolderOpen, ExternalLink, Clock, Zap } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useInboxStore } from "@/store/useInboxStore";
 import { useAppStore } from "@/store/useAppStore";
@@ -677,82 +677,164 @@ export default function InboxPage() {
                     </td>
                   </tr>
 
-                  {/* ── Expanded detail row ── */}
-                  {expandedId === feature.id && (
-                    <tr>
-                      <td colSpan={8} className="px-0 pb-0">
-                        <div className={cn(
-                          "mx-4 mb-3 rounded-lg border border-[var(--color-border-subtle)]",
-                          "bg-[var(--color-bg-elevated)] p-5 grid grid-cols-2 gap-x-8 gap-y-5",
-                        )}>
-                          {/* Description */}
-                          <div className="col-span-2">
-                            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-1.5">
-                              Description
-                            </p>
-                            <p className="text-[13px] text-[var(--color-text-secondary)] leading-relaxed">
-                              {feature.description}
-                            </p>
-                          </div>
+                  {/* ── Expanded decision panel ── */}
+                  {expandedId === feature.id && (() => {
+                    const cfg = PRIORITY_CONFIG[feature.prioritySignal];
+                    return (
+                      <tr>
+                        <td colSpan={8} className="px-0 pb-0" onClick={(e) => e.stopPropagation()}>
+                          <div className={cn(
+                            "mx-4 mb-3 rounded-xl border border-[var(--color-border-subtle)]",
+                            "bg-[var(--color-bg-elevated)] overflow-hidden",
+                            "shadow-[0_4px_24px_rgba(0,0,0,0.08)]",
+                            "animate-in fade-in slide-in-from-top-1 duration-150",
+                          )}>
+                            {/* Priority accent bar */}
+                            <div className="h-[3px]" style={{ backgroundColor: cfg.color }} />
 
-                          {/* Business Context */}
-                          <div>
-                            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-1.5">
-                              Business Context
-                            </p>
-                            <p className="text-[13px] text-[var(--color-text-secondary)] leading-relaxed">
-                              {feature.businessContext}
-                            </p>
-                          </div>
+                            <div className="p-5">
+                              {/* ── Hero metrics row ── */}
+                              <div className="flex items-center gap-4 mb-5">
+                                {/* Priority badge */}
+                                <span
+                                  className="inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-[12px] font-semibold border"
+                                  style={{ color: cfg.color, backgroundColor: `${cfg.color}15`, borderColor: `${cfg.color}40` }}
+                                >
+                                  <Zap size={11} fill={cfg.color} />
+                                  {cfg.label}
+                                </span>
 
-                          {/* Priority Signal + Supporting Links */}
-                          <div className="flex flex-col gap-4">
-                            <div>
-                              <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-1.5">
-                                Priority Signal
-                              </p>
-                              {(() => {
-                                const cfg = PRIORITY_CONFIG[feature.prioritySignal];
-                                return (
-                                  <span
-                                    className="inline-flex items-center gap-1.5 h-[22px] px-2.5 rounded-full text-[12px] font-medium border"
-                                    style={{ color: cfg.color, backgroundColor: `${cfg.color}18`, borderColor: `${cfg.color}33` }}
-                                  >
-                                    <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: cfg.color }} />
-                                    {cfg.label}
+                                {/* Vote count — prominent */}
+                                {feature.votes > 0 && (
+                                  <div className="flex items-center gap-1.5">
+                                    <ThumbsUp size={14} className="text-[var(--color-text-muted)]" />
+                                    <span className="text-[15px] font-bold text-[var(--color-text-primary)] tabular-nums leading-none">
+                                      {feature.votes}
+                                    </span>
+                                    <span className="text-[12px] text-[var(--color-text-muted)]">votes</span>
+                                  </div>
+                                )}
+
+                                {/* Waiting time */}
+                                <div className="flex items-center gap-1.5">
+                                  <Clock size={13} className={waitUrgent ? "text-[var(--color-warning)]" : "text-[var(--color-text-muted)]"} />
+                                  <span className={cn(
+                                    "text-[12px] font-medium",
+                                    waitUrgent ? "text-[var(--color-warning)]" : "text-[var(--color-text-muted)]",
+                                  )}>
+                                    {waitLabel} waiting
                                   </span>
-                                );
-                              })()}
-                            </div>
+                                </div>
 
-                            {feature.supportingLinks.length > 0 && (
-                              <div>
-                                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-1.5">
-                                  Supporting Links
-                                </p>
-                                <ul className="space-y-1">
-                                  {feature.supportingLinks.map((link, i) => (
-                                    <li key={i}>
-                                      <a
-                                        href={link}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="inline-flex items-center gap-1.5 text-[12px] text-[var(--color-brand)] hover:underline"
-                                      >
-                                        <ExternalLink size={11} />
-                                        {link.replace(/^https?:\/\//, "")}
-                                      </a>
-                                    </li>
-                                  ))}
-                                </ul>
+                                <div className="flex-1" />
+
+                                {/* Submitter */}
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className="h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
+                                    style={{ backgroundColor: avatarColor(feature.submittedBy) }}
+                                  >
+                                    {getInitials(feature.submittedBy)}
+                                  </div>
+                                  <span className="text-[12px] text-[var(--color-text-secondary)]">{feature.submittedBy}</span>
+                                </div>
                               </div>
-                            )}
+
+                              {/* ── Content cards ── */}
+                              <div className="grid grid-cols-2 gap-3 mb-4">
+                                <div className="rounded-lg bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] p-4">
+                                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)] mb-2">
+                                    Description
+                                  </p>
+                                  <p className="text-[13px] text-[var(--color-text-secondary)] leading-relaxed">
+                                    {feature.description}
+                                  </p>
+                                </div>
+                                <div className="rounded-lg border p-4" style={{ backgroundColor: `${cfg.color}08`, borderColor: `${cfg.color}25` }}>
+                                  <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: cfg.color }}>
+                                    Business Context
+                                  </p>
+                                  <p className="text-[13px] text-[var(--color-text-secondary)] leading-relaxed">
+                                    {feature.businessContext}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* ── Supporting links ── */}
+                              {feature.supportingLinks.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                  {feature.supportingLinks.map((link, i) => (
+                                    <a
+                                      key={i}
+                                      href={link}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className={cn(
+                                        "inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-[12px]",
+                                        "bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)]",
+                                        "text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/40",
+                                        "transition-colors",
+                                      )}
+                                    >
+                                      <ExternalLink size={11} />
+                                      {link.replace(/^https?:\/\//, "").split("/")[0]}
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* ── Decision footer ── */}
+                              <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border-subtle)]">
+                                <button
+                                  onClick={() => handleDelete(feature.id)}
+                                  className={cn(
+                                    "inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-[12px] font-medium",
+                                    "text-[var(--color-text-muted)] border border-[var(--color-border-subtle)]",
+                                    "hover:text-[var(--color-danger)] hover:border-[var(--color-danger)]/40 hover:bg-[var(--color-danger)]/6",
+                                    "transition-colors",
+                                  )}
+                                >
+                                  <Trash2 size={13} />
+                                  Dismiss
+                                </button>
+
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[11px] text-[var(--color-text-muted)] mr-1">Send to →</span>
+                                  {TEAMS.map((team) => (
+                                    <button
+                                      key={team.id}
+                                      onClick={() => { moveFeatures([feature.id], team.id); setExpandedId(null); }}
+                                      className={cn(
+                                        "inline-flex items-center gap-2 h-8 px-3.5 rounded-lg text-[12px] font-semibold",
+                                        "border transition-all duration-150",
+                                        "hover:scale-[1.03] active:scale-[0.98]",
+                                      )}
+                                      style={{
+                                        color: team.color,
+                                        backgroundColor: `${team.color}12`,
+                                        borderColor: `${team.color}40`,
+                                      }}
+                                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = `${team.color}22`; }}
+                                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = `${team.color}12`; }}
+                                    >
+                                      <span
+                                        className="h-4 w-4 rounded flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
+                                        style={{ backgroundColor: team.color }}
+                                      >
+                                        {team.name[0]}
+                                      </span>
+                                      {team.name}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
+                        </td>
+                      </tr>
+                    );
+                  })()}
                   </React.Fragment>
                 );
               })}

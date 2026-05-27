@@ -270,6 +270,7 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
             hideStatusIcon={!!initialTeam}
             onSelectAll={initialTeam ? handleSelectAll : undefined}
             onDelete={initialTeam ? removeRequest : undefined}
+            teamSlug={initialTeam}
           />
         </div>
 

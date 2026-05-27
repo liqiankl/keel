@@ -2,13 +2,14 @@
 
 import { useMemo } from "react";
 import { type LucideProps } from "lucide-react";
-import { Inbox, CheckCircle, Archive, Layers } from "lucide-react";
+import { Inbox, CheckCircle, Archive, Layers, ArrowRight, Sparkles } from "lucide-react";
 import type { ForwardRefExoticComponent, RefAttributes } from "react";
 import { RequestRow } from "./RequestRow";
 import { RequestGroupHeader } from "./RequestGroupHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { buildDisplayIdMap } from "@/lib/format";
 import { useKeyboardNav } from "@/hooks/useKeyboardNav";
+import { cn } from "@/lib/cn";
 import type { FeatureRequest, RequestStatus, FilterTab } from "@/types";
 
 // ─────────────────────────────────────────────
@@ -37,6 +38,7 @@ interface RequestListProps {
   statusLabels?: Partial<Record<RequestStatus, string>>;
   hideStatusIcon?: boolean;
   onSelectAll?: () => void;
+  teamSlug?: string;
 }
 
 type Group = { status: RequestStatus; items: FeatureRequest[] };
@@ -123,6 +125,7 @@ export function RequestList({
   statusLabels,
   hideStatusIcon,
   onSelectAll,
+  teamSlug,
 }: RequestListProps) {
   // Stable display ID map based on all requests (not just filtered)
   const displayIdMap = useMemo(
@@ -149,6 +152,49 @@ export function RequestList({
   });
 
   if (filteredRequests.length === 0) {
+    if (teamSlug) {
+      return (
+        <div className="flex-1 flex items-center justify-center py-20 px-8">
+          <div className="flex flex-col items-center text-center max-w-[360px] gap-6">
+            {/* Icon */}
+            <div className="relative">
+              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[var(--color-brand)]/20 to-[var(--color-brand)]/5 border border-[var(--color-brand)]/20 flex items-center justify-center">
+                <Sparkles size={28} className="text-[var(--color-brand)]" />
+              </div>
+            </div>
+
+            {/* Copy */}
+            <div className="space-y-2.5">
+              <p className="text-[17px] font-bold text-[var(--color-text-primary)] leading-snug tracking-tight">
+                Fresh canvas. Time to fill it.
+              </p>
+              <p className="text-[13px] text-[var(--color-text-secondary)] leading-relaxed">
+                Your inbox is stacked with feature requests waiting for a verdict.
+                Pull in the ones worth building — your team is ready to execute.
+              </p>
+            </div>
+
+            {/* CTA */}
+            <a
+              href="/inbox"
+              className={cn(
+                "inline-flex items-center gap-2 h-9 px-5 rounded-lg text-[13px] font-semibold",
+                "bg-[var(--color-brand)] text-white",
+                "hover:opacity-90 active:scale-[0.98] transition-all duration-150",
+                "shadow-[0_2px_12px_var(--color-brand)/30]",
+              )}
+            >
+              Browse Inbox
+              <ArrowRight size={14} />
+            </a>
+
+            <p className="text-[11px] text-[var(--color-text-muted)]">
+              Open any request · hit <kbd className="font-mono bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded px-1 py-0.5">Send to Ideas</kbd> · done.
+            </p>
+          </div>
+        </div>
+      );
+    }
     return <div className="flex-1" />;
   }
 

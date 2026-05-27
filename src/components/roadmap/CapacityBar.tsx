@@ -2,17 +2,12 @@
 
 import { cn } from "@/lib/cn";
 
-// ─────────────────────────────────────────────
-// CapacityBar — visual meter showing committed
-// vs total story points. Color shifts at 75%
-// (amber) and at warningThreshold (red).
-// ─────────────────────────────────────────────
-
 interface CapacityBarProps {
   committed: number;
   total: number;
-  warningThreshold?: number; // 0–1, default 0.9
+  warningThreshold?: number;
   unit?: string;
+  itemCount?: number;
 }
 
 export function CapacityBar({
@@ -20,28 +15,36 @@ export function CapacityBar({
   total,
   warningThreshold = 0.9,
   unit = "pts",
+  itemCount,
 }: CapacityBarProps) {
-  const pct = total === 0 ? 0 : committed / total;
+  const pct        = total === 0 ? 0 : committed / total;
   const displayPct = Math.min(Math.round(pct * 100), 100);
-  const isWarning = pct >= warningThreshold * 0.85; // amber at 85% of threshold
-  const isOver    = pct >= warningThreshold;         // red at threshold
+  const isWarning  = pct >= warningThreshold * 0.85;
+  const isOver     = pct >= warningThreshold;
 
   const fillColor = isOver
     ? "var(--color-danger)"
     : isWarning
     ? "var(--color-warning)"
-    : "var(--color-success)";
+    : "var(--color-brand)";
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 border-b border-[var(--color-border-subtle)] flex-shrink-0">
-      {/* Label */}
+    <div className="flex items-center gap-3 px-4 h-9 border-b border-[var(--color-border-subtle)] flex-shrink-0">
+      {itemCount != null && (
+        <>
+          <span className="text-[12px] font-medium text-[var(--color-text-secondary)] whitespace-nowrap">
+            {itemCount} {itemCount === 1 ? "initiative" : "initiatives"}
+          </span>
+          <span className="h-3 w-px bg-[var(--color-border-subtle)]" />
+        </>
+      )}
+
       <span className="text-[12px] text-[var(--color-text-muted)] whitespace-nowrap flex-shrink-0">
         Capacity
       </span>
 
-      {/* Bar track */}
       <div
-        className="flex-1 h-1.5 rounded-full bg-[var(--color-bg-hover)] overflow-hidden"
+        className="w-24 h-1 rounded-full bg-[var(--color-bg-hover)] overflow-hidden flex-shrink-0"
         role="progressbar"
         aria-valuenow={displayPct}
         aria-valuemin={0}
@@ -54,37 +57,22 @@ export function CapacityBar({
         />
       </div>
 
-      {/* Stats */}
-      <div className="flex items-center gap-1.5 flex-shrink-0">
+      <div className="flex items-center gap-1 flex-shrink-0">
         <span
           className={cn(
-            "text-[12px] font-mono font-medium tabular-nums",
-            isOver    ? "text-[var(--color-danger)]"  :
-            isWarning ? "text-[var(--color-warning)]" :
-                        "text-[var(--color-text-primary)]",
-          )}
-        >
-          {committed}
-        </span>
-        <span className="text-[12px] text-[var(--color-text-muted)]">
-          / {total} {unit}
-        </span>
-        <span
-          className={cn(
-            "text-[11px] font-medium tabular-nums ml-0.5",
-            isOver    ? "text-[var(--color-danger)]"  :
-            isWarning ? "text-[var(--color-warning)]" :
+            "text-[12px] font-mono tabular-nums",
+            isOver    ? "text-[var(--color-danger)] font-medium"  :
+            isWarning ? "text-[var(--color-warning)] font-medium" :
                         "text-[var(--color-text-secondary)]",
           )}
         >
-          ({displayPct}%)
+          {committed}/{total} {unit}
+        </span>
+        <span className="text-[12px] text-[var(--color-text-muted)] tabular-nums">
+          · {displayPct}%
         </span>
         {isOver && (
-          <span
-            className="ml-0.5 text-[var(--color-danger)]"
-            title="Over capacity warning threshold"
-            aria-label="Over capacity"
-          >
+          <span className="ml-0.5 text-[var(--color-danger)]" aria-label="Over capacity">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
               <path d="M6 1L11 10H1L6 1Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
               <path d="M6 5V7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />

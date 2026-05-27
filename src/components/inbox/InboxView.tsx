@@ -1,43 +1,47 @@
 "use client";
 
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { useStore } from "zustand";
-import { Plus } from "lucide-react";
 import { Header } from "@/components/layout/Header";
-import { Button } from "@/components/ui/Button";
 import { FilterTabs } from "./FilterTabs";
 import { BulkActionBar } from "./BulkActionBar";
 import { RequestList } from "./RequestList";
 import { RequestDetail } from "./RequestDetail";
 import { NewRequestModal } from "./NewRequestModal";
+import { WorkflowBar } from "@/components/workflow/WorkflowBar";
+import { NextPhaseBar } from "@/components/workflow/NextPhaseBar";
 import { useInboxStore, selectFilteredRequests } from "@/store/useInboxStore";
 import { useAppStore } from "@/store/useAppStore";
+import { useScoringStore } from "@/store/useScoringStore";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
+import { useGuestSession } from "@/context/GuestSessionContext";
 import { buildDisplayIdMap } from "@/lib/format";
-import { TEAMS } from "@/lib/constants";
-import type { RequestStatus, FilterTab } from "@/types";
+import { TEAMS, CURRENT_QUARTER } from "@/lib/constants";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Inbox, Check } from "lucide-react";
+import { cn } from "@/lib/cn";
+import type { RequestStatus, FilterTab, FeatureRequest } from "@/types";
 
-// ─────────────────────────────────────────────
-// InboxView — root client component for /inbox.
-// Orchestrates:
-//   - store reads/writes
-//   - split-view layout (list | detail)
-//   - keyboard shortcuts
-//   - modal state
-// ─────────────────────────────────────────────
-
-const VALID_TABS = new Set<FilterTab>(["active", "all", "new", "triaged", "archived"]);
+const VALID_TABS = new Set<FilterTab>(["active", "all", "new", "triaged", "archived", "backlog"]);
 
 interface InboxViewProps {
   initialTeam?: string;
   initialTab?: string;
+  title?: string;
+  visibleTabs?: FilterTab[];
 }
 
-export function InboxView({ initialTeam, initialTab }: InboxViewProps = {}) {
+export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTabs }: InboxViewProps = {}) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [newModalOpen, setNewModalOpen] = useState(false);
+  const [prioritizeToast, setPrioritizeToast] = useState<string | null>(null);
+  const phasesActed    = useAppStore((s) => s.phasesActed);
+  const markPhaseActed = useAppStore((s) => s.markPhaseActed);
+  const phaseKey       = initialTeam ? `ideas:${initialTeam}` : null;
+  const hasActed       = phaseKey ? phasesActed.includes(phaseKey) : false;
 
-  // ── Store reads ──
+  const { isGuest, session } = useGuestSession();
+
   const {
     requests,
     filters,
@@ -52,17 +56,14 @@ export function InboxView({ initialTeam, initialTab }: InboxViewProps = {}) {
     toggleSelectId,
     selectAll,
     clearSelection,
-    resetFilters,
   } = useInboxStore();
 
-  // Undo/redo via zundo temporal
   const temporal = useStore(useInboxStore.temporal);
 
-  // Active team — inbox is scoped per team
   const activeTeamId = useAppStore((s) => s.activeTeamId);
   const setActiveTeamId = useAppStore((s) => s.setActiveTeamId);
+  const addInitiative = useScoringStore((s) => s.addInitiative);
 
-  // Sync team + tab from URL search params on navigation
   useEffect(() => {
     if (initialTeam) {
       const team = TEAMS.find((t) => t.slug === initialTeam);
@@ -74,10 +75,6 @@ export function InboxView({ initialTeam, initialTab }: InboxViewProps = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialTeam, initialTab]);
 
-  // ── Derived state ──
-  // useMemo instead of a second useInboxStore selector — avoids the
-  // useSyncExternalStore "getSnapshot must be cached" infinite loop that
-  // fires when a selector always returns a new array reference.
   const filteredRequests = useMemo(
     () => selectFilteredRequests({ requests, filters }, activeTeamId),
     [requests, filters, activeTeamId],
@@ -87,7 +84,63 @@ export function InboxView({ initialTeam, initialTab }: InboxViewProps = {}) {
 
   const openRequest = openId ? requests.find((r) => r.id === openId) ?? null : null;
 
-  // ── Event handlers ──
+  useGlobalShortcuts({
+    c: () => setNewModalOpen(true),
+    escape: () => {
+      if (newModalOpen) return;
+      if (openId) { setOpenId(null); return; }
+      if (selectedIds.length > 0) { clearSelection(); return; }
+    },
+    undo: () => temporal.undo(),
+    redo: () => temporal.redo(),
+  });
+
+  if (isGuest && !initialTeam) {
+    return (
+      <div className="flex flex-col h-full overflow-hidden">
+        <Header title={title} />
+        <div className="flex flex-1 items-center justify-center">
+          <EmptyState
+            Icon={Inbox}
+            title="Your inbox is empty"
+            description={`Welcome to ${session?.workspaceName ?? "the workspace"}! Feature requests submitted across teams will appear here once you start contributing.`}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  const handleSendToPrioritize = useCallback((id: string) => {
+    const request = requests.find((r) => r.id === id);
+    if (!request) return;
+    const priority =
+      request.prioritySignal === "critical" ? "urgent" :
+      request.prioritySignal === "important" ? "high" : "low";
+    addInitiative({
+      id:                `init_${id}_${Date.now()}`,
+      featureRequestId:  id,
+      title:             request.title,
+      description:       request.description,
+      assignedPmId:      "u_pm_01",
+      goalIds:           request.goalIds,
+      productArea:       request.productArea ?? "",
+      status:            "backlog",
+      priority,
+      effort:            { unit: "story_points", points: null, tshirt: null, weeks: null },
+      quarter:           CURRENT_QUARTER,
+      score:             null,
+      dependencies:      [],
+      jiraEpicId:        null,
+      linearProjectId:   null,
+      createdAt:         new Date().toISOString(),
+      updatedAt:         new Date().toISOString(),
+    });
+    setStatus(id, "triaged");
+    setPrioritizeToast(request.title);
+    setTimeout(() => setPrioritizeToast(null), 3500);
+    if (phaseKey) markPhaseActed(phaseKey);
+  }, [requests, addInitiative, setStatus, phaseKey, markPhaseActed]);
+
   function handleOpen(id: string) {
     setOpenId((prev) => (prev === id ? null : id));
   }
@@ -105,8 +158,12 @@ export function InboxView({ initialTeam, initialTab }: InboxViewProps = {}) {
     clearSelection();
   }
 
+  function handleBulkSendToPrioritize() {
+    selectedIds.forEach((id) => handleSendToPrioritize(id));
+    clearSelection();
+  }
+
   function handleBulkTag() {
-    // Phase 2: simple tag prompt; Phase 3 will use a proper tag picker
     const tag = window.prompt("Add tag to selected requests:");
     if (tag?.trim()) {
       selectedIds.forEach((id) => {
@@ -127,42 +184,13 @@ export function InboxView({ initialTeam, initialTab }: InboxViewProps = {}) {
     }
   }
 
-  // ── Global keyboard shortcuts ──
-  useGlobalShortcuts({
-    c: () => setNewModalOpen(true),
-    escape: () => {
-      if (newModalOpen) return;
-      if (openId) { setOpenId(null); return; }
-      if (selectedIds.length > 0) { clearSelection(); return; }
-    },
-    undo: () => temporal.undo(),
-    redo: () => temporal.redo(),
-  });
-
   const hasDetail = openRequest !== null;
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* ── Top header ── */}
-      <Header
-        title="Active issues"
-        rightSlot={
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setNewModalOpen(true)}
-            className="gap-1.5"
-            aria-label="Create new request (C)"
-            title="Create request (C)"
-          >
-            <Plus size={13} />
-            New request
-          </Button>
-        }
-        showViewToggle
-      />
+      <Header title={title} />
+      {initialTeam && <WorkflowBar currentStage="ideas" teamSlug={initialTeam} />}
 
-      {/* ── Filter tabs + search ── */}
       <FilterTabs
         activeTab={filters.tab}
         requests={requests}
@@ -173,19 +201,19 @@ export function InboxView({ initialTeam, initialTab }: InboxViewProps = {}) {
         }}
         searchValue={filters.search}
         onSearchChange={(v) => setFilter("search", v)}
+        visibleTabs={visibleTabs}
+        searchPlaceholder={initialTeam ? "Search ideas…" : "Search requests…"}
       />
 
-      {/* ── Bulk action bar (conditional) ── */}
       <BulkActionBar
         selectedCount={selectedIds.length}
         onBulkStatus={handleBulkStatus}
         onBulkTag={handleBulkTag}
         onClearSelection={clearSelection}
+        onSendToPrioritize={initialTeam ? handleBulkSendToPrioritize : undefined}
       />
 
-      {/* ── Main content: list + detail split view ── */}
       <div className="flex flex-1 overflow-hidden min-h-0">
-        {/* Request list — shrinks when detail is open */}
         <div
           className="flex flex-col overflow-hidden transition-all duration-200"
           style={{ flex: hasDetail ? "0 0 55%" : "1 1 0%" }}
@@ -202,10 +230,12 @@ export function InboxView({ initialTeam, initialTab }: InboxViewProps = {}) {
             onStatusChange={handleStatusChange}
             onFocus={setFocusedId}
             onAddToGroup={() => setNewModalOpen(true)}
+            onSendToPrioritize={initialTeam ? handleSendToPrioritize : undefined}
+            allowedStatuses={initialTeam ? ["new", "triaged"] : undefined}
+            statusLabels={initialTeam ? { triaged: "Backlog" } : undefined}
           />
         </div>
 
-        {/* Detail panel — slides in from right */}
         {hasDetail && (
           <div
             className="flex flex-col overflow-hidden"
@@ -217,12 +247,14 @@ export function InboxView({ initialTeam, initialTab }: InboxViewProps = {}) {
               onClose={handleCloseDetail}
               onStatusChange={handleStatusChange}
               onTagsChange={setTags}
+              onSendToPrioritize={initialTeam ? handleSendToPrioritize : undefined}
+              allowedStatuses={initialTeam ? ["new", "triaged"] : undefined}
+              statusLabels={initialTeam ? { triaged: "Backlog" } : undefined}
             />
           </div>
         )}
       </div>
 
-      {/* ── New request modal ── */}
       <NewRequestModal
         open={newModalOpen}
         onClose={() => setNewModalOpen(false)}
@@ -231,6 +263,27 @@ export function InboxView({ initialTeam, initialTab }: InboxViewProps = {}) {
           setOpenId(req.id);
         }}
       />
+
+      {/* ── Next phase bar ── */}
+      {initialTeam && hasActed && (
+        <NextPhaseBar
+          nextPhase="Prioritization"
+          options={[{ label: "Prioritization", href: `/team/${initialTeam}/prioritization` }]}
+        />
+      )}
+
+      {prioritizeToast && (
+        <div className={cn(
+          "fixed bottom-20 left-1/2 -translate-x-1/2 z-50",
+          "flex items-center gap-2 px-4 py-2.5 rounded-lg shadow-lg",
+          "bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)]",
+          "text-[12px] text-[var(--color-text-secondary)]",
+          "animate-in fade-in slide-in-from-bottom-2 duration-200",
+        )}>
+          <Check size={13} className="text-[var(--color-success)]" />
+          <span>Sent to <span className="font-semibold text-[var(--color-text-primary)]">Prioritization</span></span>
+        </div>
+      )}
     </div>
   );
 }

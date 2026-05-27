@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { temporal } from "zundo";
 import type {
   FeatureRequest,
@@ -20,9 +21,6 @@ const ALL_SEED_REQUESTS = [...SEED_REQUESTS, ...SEED_REQUESTS_HITCHHIKER];
 interface InboxFilters {
   tab: FilterTab;
   search: string;
-  tags: string[];
-  productArea: string | null;
-  source: string | null;
 }
 
 interface InboxState {
@@ -44,24 +42,21 @@ interface InboxState {
   clearSelection: () => void;
   setFocusedId: (id: string | null) => void;
   setFilter: <K extends keyof InboxFilters>(key: K, value: InboxFilters[K]) => void;
-  resetFilters: () => void;
 }
 
 const DEFAULT_FILTERS: InboxFilters = {
   tab: "active",
   search: "",
-  tags: [],
-  productArea: null,
-  source: null,
 };
 
 export const useInboxStore = create<InboxState>()(
   temporal(
-    (set) => ({
-      requests: ALL_SEED_REQUESTS,
-      filters: DEFAULT_FILTERS,
-      selectedIds: [],
-      focusedId: null,
+    persist<InboxState, [], [], Pick<InboxState, "requests">>(
+      (set) => ({
+        requests: ALL_SEED_REQUESTS,
+        filters: DEFAULT_FILTERS,
+        selectedIds: [],
+        focusedId: null,
 
       addRequest: (req) =>
         set((s) => ({ requests: [req, ...s.requests] })),
@@ -131,15 +126,15 @@ export const useInboxStore = create<InboxState>()(
 
       setFilter: (key, value) =>
         set((s) => ({ filters: { ...s.filters, [key]: value } })),
-
-      resetFilters: () => set({ filters: DEFAULT_FILTERS }),
-    }),
+      }),
+      {
+        name: "keel-inbox",
+        partialize: (s) => ({ requests: s.requests }),
+      },
+    ) as any,
     {
       limit: 50,
-      // Don't track filter/selection changes in history — only data mutations
-      partialize: (s) => ({
-        requests: s.requests,
-      }),
+      partialize: (s) => ({ requests: s.requests }),
     },
   ),
 );
@@ -157,19 +152,16 @@ export function selectFilteredRequests(
     // Team isolation: default to "team_navigators" for untagged legacy requests
     const rTeam = r.teamId ?? "team_navigators";
     if (teamId && rTeam !== teamId) return false;
-    if (filters.tab === "active" && r.status === "archived") return false;
-    if (filters.tab === "new" && r.status !== "new") return false;
-    if (filters.tab === "triaged" && r.status !== "triaged") return false;
+    if (filters.tab === "active"   && r.status === "archived") return false;
+    if (filters.tab === "new"      && r.status !== "new") return false;
+    if (filters.tab === "triaged"  && r.status !== "triaged") return false;
     if (filters.tab === "archived" && r.status !== "archived") return false;
+    if (filters.tab === "backlog"  && r.status !== "triaged") return false;
     if (filters.search) {
       const q = filters.search.toLowerCase();
       if (!r.title.toLowerCase().includes(q) && !r.description.toLowerCase().includes(q))
         return false;
     }
-    if (filters.tags.length > 0 && !filters.tags.every((t) => r.tags.includes(t)))
-      return false;
-    if (filters.productArea && r.productArea !== filters.productArea) return false;
-    if (filters.source && r.source !== filters.source) return false;
     return true;
   });
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { temporal } from "zundo";
 import type {
   RoadmapItem,
@@ -84,13 +85,14 @@ function patchScore(item: RoadmapItem, patch: Partial<PrioritizationScore>): Roa
 
 export const useScoringStore = create<ScoringState>()(
   temporal(
-    (set, get) => ({
-      initiatives: SEED_INITIATIVES,
-      activeFramework: "rice",
-      customDimensions: [],
-      sortColumn: null,
-      sortDirection: "desc",
-      editingCell: null,
+    persist<ScoringState, [], [], Pick<ScoringState, "initiatives" | "activeFramework" | "customDimensions" | "sortColumn" | "sortDirection">>(
+      (set, get) => ({
+        initiatives: SEED_INITIATIVES,
+        activeFramework: "rice",
+        customDimensions: [],
+        sortColumn: null,
+        sortDirection: "desc",
+        editingCell: null,
 
       setActiveFramework: (f) => set({ activeFramework: f }),
 
@@ -159,8 +161,19 @@ export const useScoringStore = create<ScoringState>()(
       setEditingCell: (cell) => set({ editingCell: cell }),
     }),
     {
-      limit: 100,
-      partialize: (s) => ({ initiatives: s.initiatives, customDimensions: s.customDimensions }),
+      name: "keel-scoring",
+      partialize: (s) => ({
+        initiatives: s.initiatives,
+        activeFramework: s.activeFramework,
+        customDimensions: s.customDimensions,
+        sortColumn: s.sortColumn,
+        sortDirection: s.sortDirection,
+      }),
     },
+  ) as any,
+  {
+    limit: 100,
+    partialize: (s) => ({ initiatives: s.initiatives, customDimensions: s.customDimensions }),
+  },
   ),
 );

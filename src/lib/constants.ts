@@ -46,11 +46,13 @@ export const PRIORITY_CONFIG = {
 // ── Status config ──────────────────────────
 
 export const STATUS_CONFIG = {
-  backlog:     { label: "Backlog",      color: "var(--color-status-backlog)" },
-  todo:        { label: "Todo",         color: "var(--color-status-todo)" },
-  in_progress: { label: "In Progress",  color: "var(--color-status-in-progress)" },
-  done:        { label: "Done",         color: "var(--color-status-done)" },
-  canceled:    { label: "Canceled",     color: "var(--color-status-canceled)" },
+  backlog:     { label: "Backlog",     color: "var(--color-status-backlog)" },
+  todo:        { label: "Todo",        color: "var(--color-status-todo)" },
+  in_progress: { label: "In Progress", color: "var(--color-status-in-progress)" },
+  in_review:   { label: "In Review",   color: "var(--color-status-in-review)" },
+  closed:      { label: "Closed",      color: "var(--color-status-closed)" },
+  done:        { label: "Done",        color: "var(--color-status-done)" },
+  canceled:    { label: "Canceled",    color: "var(--color-status-canceled)" },
 } as const;
 
 // ── Plan status config ─────────────────────
@@ -66,24 +68,13 @@ export const PLAN_STATUS_CONFIG = {
 
 export const SIDEBAR_NAV: SidebarNavItem[] = [
   { id: "inbox",    label: "Inbox",     icon: "Inbox",      href: "/inbox" },
-  { id: "my",       label: "My Issues", icon: "CircleUser", href: "/my-issues" },
   { id: "views",    label: "Views",     icon: "Layers",     href: "/views" },
-  { id: "roadmaps", label: "Roadmaps",  icon: "Map",        href: "/roadmap" },
 ];
 
 export const TEAM_NAV: SidebarNavItem[] = [
-  {
-    id: "issues",
-    label: "Issues",
-    icon: "Circle",
-    href: "/inbox",
-    children: [
-      { id: "active",  label: "Active",  icon: "", href: "/inbox?tab=active" },
-      { id: "backlog", label: "Backlog", icon: "", href: "/inbox?tab=backlog" },
-    ],
-  },
-  { id: "scoring",  label: "Prioritize",  icon: "BarChart2", href: "/scoring" },
-  { id: "roadmap",  label: "Roadmap",  icon: "Map",       href: "/roadmap" },
+  { id: "ideas", label: "Ideas", icon: "Layers", href: "/team/:teamSlug/ideas" },
+  { id: "scoring",  label: "Prioritization",  icon: "BarChart2", href: "/team/:teamSlug/prioritization" },
+  { id: "roadmap",  label: "Roadmap",  icon: "Map",       href: "/team/:teamSlug/roadmap" },
 ];
 
 export interface TeamConfig {
@@ -94,8 +85,8 @@ export interface TeamConfig {
 }
 
 export const TEAMS: TeamConfig[] = [
-  { id: "team_navigators", name: "Navigators", color: "#5e5ce6", slug: "navigators" },
-  { id: "team_hitchhiker", name: "Hitchhiker", color: "#30a46c", slug: "hitchhiker" },
+  { id: "team_navigators", name: "Navigators Team", color: "#5e5ce6", slug: "navigators" },
+  { id: "team_hitchhiker", name: "Hitchhikers Team", color: "#30a46c", slug: "hitchhiker" },
 ];
 
 // ── Keyboard shortcuts ─────────────────────

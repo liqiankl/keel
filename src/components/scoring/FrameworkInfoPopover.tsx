@@ -168,9 +168,11 @@ interface FrameworkInfoPopoverProps {
   framework: ScoringFramework;
   open: boolean;
   onClose: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
-export function FrameworkInfoPopover({ framework, open, onClose }: FrameworkInfoPopoverProps) {
+export function FrameworkInfoPopover({ framework, open, onClose, onMouseEnter, onMouseLeave }: FrameworkInfoPopoverProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const content  = FRAMEWORK_CONTENT[framework];
 
@@ -186,15 +188,6 @@ export function FrameworkInfoPopover({ framework, open, onClose }: FrameworkInfo
   return (
     <AnimatePresence>
       {open && (
-        <>
-          {/* Click-outside backdrop — transparent, below the panel */}
-          <div
-            className="fixed inset-0 z-40"
-            aria-hidden="true"
-            onClick={onClose}
-          />
-
-          {/* Floating panel */}
           <motion.div
             ref={panelRef}
             role="dialog"
@@ -204,6 +197,8 @@ export function FrameworkInfoPopover({ framework, open, onClose }: FrameworkInfo
             animate={{ opacity: 1, scale: 1,    y: 0 }}
             exit={{    opacity: 0, scale: 0.96, y: -6 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
             className={cn(
               "absolute right-0 top-[calc(100%+6px)] z-50",
               "w-[308px] rounded-xl",
@@ -212,7 +207,6 @@ export function FrameworkInfoPopover({ framework, open, onClose }: FrameworkInfo
               "shadow-[0_8px_32px_rgba(0,0,0,0.18),0_2px_8px_rgba(0,0,0,0.10)]",
               "overflow-hidden",
             )}
-            onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 pt-4 pb-3">
@@ -278,7 +272,6 @@ export function FrameworkInfoPopover({ framework, open, onClose }: FrameworkInfo
               </div>
             </div>
           </motion.div>
-        </>
       )}
     </AnimatePresence>
   );

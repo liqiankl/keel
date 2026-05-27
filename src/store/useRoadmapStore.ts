@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { temporal } from "zundo";
 import type {
   QuarterlyPlan,
@@ -11,7 +12,7 @@ import type {
   PlanStatus,
   CapacityConfig,
 } from "@/types";
-import { SEED_PLAN, SEED_PLAN_HITCHHIKER } from "@/lib/seed";
+import { SEED_PLAN, SEED_PLAN_HITCHHIKER, SEED_PLAN_Q3, SEED_PLAN_HH_Q3, SEED_PLAN_Q4, SEED_PLAN_HH_Q4 } from "@/lib/seed";
 
 // ─────────────────────────────────────────────
 // Roadmap store — quarterly plan management.
@@ -48,10 +49,11 @@ function recomputeCommitted(plan: QuarterlyPlan): number {
 
 export const useRoadmapStore = create<RoadmapState>()(
   temporal(
-    (set) => ({
-      plans: [SEED_PLAN, SEED_PLAN_HITCHHIKER],
-      activePlanId: SEED_PLAN?.id ?? null,
-      selectedQuarter: null,
+    persist<RoadmapState, [], [], Pick<RoadmapState, "plans" | "activePlanId">>(
+      (set) => ({
+        plans: [SEED_PLAN, SEED_PLAN_HITCHHIKER, SEED_PLAN_Q3, SEED_PLAN_HH_Q3, SEED_PLAN_Q4, SEED_PLAN_HH_Q4],
+        activePlanId: SEED_PLAN?.id ?? null,
+        selectedQuarter: null,
 
       setActivePlan: (id) => set({ activePlanId: id }),
 
@@ -178,7 +180,12 @@ export const useRoadmapStore = create<RoadmapState>()(
         })),
 
       setSelectedQuarter: (q) => set({ selectedQuarter: q }),
-    }),
+      }),
+      {
+        name: "keel-roadmap",
+        partialize: (s) => ({ plans: s.plans, activePlanId: s.activePlanId }),
+      },
+    ) as any,
     {
       limit: 50,
       partialize: (s) => ({ plans: s.plans }),

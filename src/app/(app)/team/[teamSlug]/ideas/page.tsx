@@ -12,5 +12,5 @@ export default async function TeamIdeasPage({ params, searchParams }: Props) {
   const tab = typeof p.tab === "string" ? p.tab : undefined;
   const team = TEAMS.find((t) => t.slug === teamSlug);
   const title = team ? `${team.name} · Ideas` : "Ideas";
-  return <InboxView title={title} initialTeam={teamSlug} initialTab="all" visibleTabs={["all"]} />;
+  return <InboxView title={title} initialTeam={teamSlug} initialTab="new" visibleTabs={["new"]} />;
 }

@@ -6,24 +6,27 @@ interface SourceBadgeProps {
   className?: string;
 }
 
-const SOURCE_CONFIG: Record<RequestSource, { label: string; classes: string }> = {
-  customer:   { label: "Customer",    classes: "bg-[#1a3a2e] text-[#4ade80] border-[#1f5c3e]" },
-  internal:   { label: "Internal",    classes: "bg-[#1e1e3a] text-[#8888d0] border-[#2c2c50]" },
-  market:     { label: "Market",      classes: "bg-[#2a2010] text-[#f5a623] border-[#4a3818]" },
-  leadership: { label: "Leadership",  classes: "bg-[#2a1020] text-[#e06090] border-[#4a1a38]" },
+const SOURCE_CONFIG: Record<RequestSource, { label: string; color: string }> = {
+  customer:   { label: "Customer",   color: "#22c55e" },
+  internal:   { label: "Internal",   color: "#818cf8" },
+  market:     { label: "Market",     color: "#f59e0b" },
+  leadership: { label: "Leadership", color: "#ec4899" },
 };
 
 export function SourceBadge({ source, className }: SourceBadgeProps) {
-  const { label, classes } = SOURCE_CONFIG[source];
+  const { label, color } = SOURCE_CONFIG[source];
   return (
     <span
       className={cn(
         "inline-flex items-center h-[18px] rounded px-1.5",
-        "text-[10px] font-medium leading-none",
-        "border",
-        classes,
+        "text-[11px] font-medium leading-none border",
         className,
       )}
+      style={{
+        color,
+        backgroundColor: `${color}18`,
+        borderColor: `${color}33`,
+      }}
     >
       {label}
     </span>

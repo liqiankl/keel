@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import { Map } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { RankBadge } from "./RankBadge";
 import { GoalTag } from "./GoalTag";
@@ -41,11 +42,14 @@ interface ScoringRowProps {
   goals: QuarterlyGoal[];
   customDimensions: CustomDimension[];
   isOpen: boolean;
+  isSelected: boolean;
   onOpen: (id: string) => void;
+  onSelect: (id: string) => void;
   onUpdateRICE: (id: string, patch: Partial<RICEScore>) => void;
   onUpdateMoSCoW: (id: string, label: MoSCoWLabel) => void;
   onUpdateWSJF: (id: string, patch: Partial<WSJFScore>) => void;
   onUpdateCustom: (id: string, dimId: string, value: number) => void;
+  onSendToRoadmap?: (id: string) => void;
 }
 
 export function ScoringRow({
@@ -56,11 +60,14 @@ export function ScoringRow({
   goals,
   customDimensions,
   isOpen,
+  isSelected,
   onOpen,
+  onSelect,
   onUpdateRICE,
   onUpdateMoSCoW,
   onUpdateWSJF,
   onUpdateCustom,
+  onSendToRoadmap,
 }: ScoringRowProps) {
   const score = initiative.score;
   const rice  = score?.rice;
@@ -113,7 +120,7 @@ export function ScoringRow({
               {initiative.title}
             </span>
             {initiative.productArea && (
-              <span className="text-[11px] text-[var(--color-text-muted)] truncate">
+              <span className="text-[12px] text-[var(--color-text-muted)] truncate">
                 {initiative.productArea}
               </span>
             )}
@@ -251,13 +258,13 @@ export function ScoringRow({
               <>
                 <GoalTag goal={initiativeGoals[0]} />
                 {initiativeGoals.length > 1 && (
-                  <span className="text-[10px] text-[var(--color-text-muted)] flex-shrink-0">
+                  <span className="text-[12px] text-[var(--color-text-muted)] flex-shrink-0">
                     +{initiativeGoals.length - 1}
                   </span>
                 )}
               </>
             ) : (
-              <span className="text-[11px] text-[var(--color-text-muted)]">—</span>
+              <span className="text-[12px] text-[var(--color-text-muted)]">—</span>
             )}
           </div>
         );
@@ -295,13 +302,53 @@ export function ScoringRow({
       className={cn(
         "keel-row group flex items-center border-b border-[var(--color-border-subtle)] px-2",
         "cursor-pointer select-none transition-colors",
-        isOpen
+        isOpen || isSelected
           ? "bg-[var(--color-bg-selected)]"
           : "hover:bg-[var(--color-bg-hover)]",
         "focus-visible:outline-2 focus-visible:outline-[var(--color-brand)] focus-visible:outline-offset-[-2px]",
       )}
     >
+      {/* Checkbox */}
+      <div
+        className="flex-shrink-0 flex items-center justify-center w-5 mr-1"
+        onClick={(e) => { e.stopPropagation(); onSelect(initiative.id); }}
+        role="button"
+        aria-label={isSelected ? "Deselect" : "Select"}
+        tabIndex={-1}
+      >
+        <div
+          className={cn(
+            "h-[14px] w-[14px] rounded border flex items-center justify-center transition-all duration-100",
+            isSelected
+              ? "bg-[var(--color-brand)] border-[var(--color-brand)]"
+              : "border-[var(--color-border-strong)] opacity-0 group-hover:opacity-100",
+          )}
+        >
+          {isSelected && (
+            <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
+              <path d="M1 3l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </div>
+      </div>
+
       {columns.map((col) => renderCell(col))}
+
+      {onSendToRoadmap && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onSendToRoadmap(initiative.id); }}
+          title="Send to Roadmap"
+          aria-label="Send to Roadmap"
+          className={cn(
+            "flex-shrink-0 ml-1 h-[22px] w-[22px] rounded flex items-center justify-center",
+            "opacity-0 group-hover:opacity-100 transition-opacity duration-100",
+            "text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:bg-[var(--color-bg-hover)]",
+            isOpen && "opacity-100",
+          )}
+        >
+          <Map size={12} />
+        </button>
+      )}
     </div>
   );
 }

@@ -1,13 +1,12 @@
 "use client";
 
-import { Sun, Moon, Monitor } from "lucide-react";
+import { Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useTheme, type Theme } from "@/hooks/useTheme";
 
 const CONFIG: Record<Theme, { Icon: typeof Sun; label: string }> = {
-  system: { Icon: Monitor, label: "System" },
-  light:  { Icon: Sun,     label: "Light"  },
-  dark:   { Icon: Moon,    label: "Dark"   },
+  light: { Icon: Sun,  label: "Light" },
+  dark:  { Icon: Moon, label: "Dark"  },
 };
 
 export function ThemeToggle() {

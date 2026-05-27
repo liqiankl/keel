@@ -11,6 +11,7 @@ import {
   Layers,
   Target,
   ExternalLink,
+  BarChart2,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/Button";
@@ -33,6 +34,9 @@ interface RequestDetailProps {
   onClose: () => void;
   onStatusChange: (id: string, status: RequestStatus) => void;
   onTagsChange: (id: string, tags: string[]) => void;
+  onSendToPrioritize?: (id: string) => void;
+  allowedStatuses?: RequestStatus[];
+  statusLabels?: Partial<Record<RequestStatus, string>>;
 }
 
 export function RequestDetail({
@@ -41,6 +45,9 @@ export function RequestDetail({
   onClose,
   onStatusChange,
   onTagsChange,
+  onSendToPrioritize,
+  allowedStatuses,
+  statusLabels,
 }: RequestDetailProps) {
   const [newTag, setNewTag] = useState("");
 
@@ -72,7 +79,7 @@ export function RequestDetail({
       {/* ── Panel header ── */}
       <div className="keel-topbar-height flex items-center gap-2 px-4 border-b border-[var(--color-border-subtle)] flex-shrink-0">
         {/* Breadcrumb */}
-        <span className="text-[12px] text-[var(--color-text-muted)] flex items-center gap-1.5">
+        <span className="text-[13px] text-[var(--color-text-muted)] flex items-center gap-1.5">
           <span className="font-medium text-[var(--color-brand)]">Keel</span>
           <span>›</span>
           <span className="font-mono">{displayId}</span>
@@ -89,7 +96,7 @@ export function RequestDetail({
           aria-label="Expand to full page"
           title="Expand"
         >
-          <Maximize2 size={13} />
+          <Maximize2 size={18} />
         </button>
         <button
           onClick={onClose}
@@ -101,7 +108,7 @@ export function RequestDetail({
           )}
           aria-label="Close detail panel"
         >
-          <X size={14} />
+          <X size={19} />
         </button>
       </div>
 
@@ -109,7 +116,7 @@ export function RequestDetail({
       <div className="flex-1 overflow-y-auto">
         {/* Title section */}
         <div className="px-5 pt-5 pb-4 border-b border-[var(--color-border-subtle)]">
-          <h2 className="text-[15px] font-semibold text-[var(--color-text-primary)] leading-snug mb-3">
+          <h2 className="text-[16px] font-semibold text-[var(--color-text-primary)] leading-snug mb-3">
             {request.title}
           </h2>
 
@@ -120,9 +127,11 @@ export function RequestDetail({
                 requestId={request.id}
                 currentStatus={request.status}
                 onChange={onStatusChange}
+                allowedStatuses={allowedStatuses}
+                statusLabels={statusLabels}
               />
-              <span className="text-[12px] text-[var(--color-text-secondary)] capitalize">
-                {request.status}
+              <span className="text-[13px] text-[var(--color-text-secondary)] capitalize">
+                {statusLabels?.[request.status] ?? request.status}
               </span>
             </div>
             <SourceBadge source={request.source} />
@@ -132,48 +141,48 @@ export function RequestDetail({
 
         {/* Metadata grid */}
         <div className="px-5 py-4 space-y-3 border-b border-[var(--color-border-subtle)]">
-          <MetaRow icon={<User size={13} />} label="Submitted by">
+          <MetaRow icon={<User size={18} />} label="Submitted by">
             <div className="flex items-center gap-2">
               <div
-                className="h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-semibold text-white flex-shrink-0"
+                className="h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-semibold text-white flex-shrink-0"
                 style={{ backgroundColor: avatarColor(request.submittedBy) }}
               >
                 {getInitials(request.submittedBy)}
               </div>
-              <span className="text-[13px] text-[var(--color-text-primary)]">
+              <span className="text-[14px] text-[var(--color-text-primary)]">
                 {request.submittedBy}
               </span>
             </div>
           </MetaRow>
 
-          <MetaRow icon={<Clock size={13} />} label="Submitted">
-            <span className="text-[13px] text-[var(--color-text-primary)]">
+          <MetaRow icon={<Clock size={18} />} label="Submitted">
+            <span className="text-[14px] text-[var(--color-text-primary)]">
               {formatFullDate(request.submittedAt)}
             </span>
           </MetaRow>
 
           {request.productArea && (
-            <MetaRow icon={<Layers size={13} />} label="Product area">
-              <span className="text-[13px] text-[var(--color-text-primary)]">
+            <MetaRow icon={<Layers size={18} />} label="Product area">
+              <span className="text-[14px] text-[var(--color-text-primary)]">
                 {request.productArea}
               </span>
             </MetaRow>
           )}
 
-          <MetaRow icon={<ThumbsUp size={13} />} label="Votes">
-            <span className="text-[13px] text-[var(--color-text-primary)]">
+          <MetaRow icon={<ThumbsUp size={18} />} label="Votes">
+            <span className="text-[14px] text-[var(--color-text-primary)]">
               {voteCount} {voteCount === 1 ? "vote" : "votes"}
             </span>
           </MetaRow>
 
-          <MetaRow icon={<Tag size={13} />} label="Tags">
+          <MetaRow icon={<Tag size={18} />} label="Tags">
             <div className="flex flex-wrap gap-1.5 items-center">
               {request.tags.map((tag) => (
                 <span
                   key={tag}
                   className={cn(
                     "inline-flex items-center gap-1 rounded px-2 h-[20px]",
-                    "text-[11px] bg-[var(--color-bg-elevated)]",
+                    "text-[12px] bg-[var(--color-bg-elevated)]",
                     "border border-[var(--color-border-subtle)]",
                     "text-[var(--color-text-secondary)]",
                   )}
@@ -184,7 +193,7 @@ export function RequestDetail({
                     aria-label={`Remove tag ${tag}`}
                     className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] ml-0.5"
                   >
-                    <X size={9} />
+                    <X size={14} />
                   </button>
                 </span>
               ))}
@@ -208,10 +217,10 @@ export function RequestDetail({
         {/* Description */}
         {request.description && (
           <section className="px-5 py-4 border-b border-[var(--color-border-subtle)]">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
+            <h3 className="text-[12px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
               Description
             </h3>
-            <p className="text-[13px] text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-wrap">
+            <p className="text-[14px] text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-wrap">
               {request.description}
             </p>
           </section>
@@ -220,10 +229,10 @@ export function RequestDetail({
         {/* Business context */}
         {request.businessContext && (
           <section className="px-5 py-4 border-b border-[var(--color-border-subtle)]">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
+            <h3 className="text-[12px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
               Business Context
             </h3>
-            <p className="text-[13px] text-[var(--color-text-secondary)] leading-relaxed">
+            <p className="text-[14px] text-[var(--color-text-secondary)] leading-relaxed">
               {request.businessContext}
             </p>
           </section>
@@ -232,14 +241,14 @@ export function RequestDetail({
         {/* Votes breakdown */}
         {request.votes.length > 0 && (
           <section className="px-5 py-4 border-b border-[var(--color-border-subtle)]">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-3">
+            <h3 className="text-[12px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-3">
               Stakeholder Votes · {voteCount}
             </h3>
             <ul className="space-y-3" role="list">
               {request.votes.map((vote, idx) => (
                 <li key={idx} className="flex items-start gap-2.5">
                   <div
-                    className="h-[22px] w-[22px] rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-semibold text-white mt-0.5"
+                    className="h-[22px] w-[22px] rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-semibold text-white mt-0.5"
                     style={{ backgroundColor: avatarColor(vote.stakeholderName) }}
                     aria-hidden="true"
                   >
@@ -247,15 +256,15 @@ export function RequestDetail({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-[12px] font-medium text-[var(--color-text-primary)]">
+                      <span className="text-[13px] font-medium text-[var(--color-text-primary)]">
                         {vote.stakeholderName}
                       </span>
-                      <span className="text-[11px] text-[var(--color-text-muted)]">
+                      <span className="text-[12px] text-[var(--color-text-muted)]">
                         {formatRelativeDate(vote.votedAt)}
                       </span>
                     </div>
                     {vote.comment && (
-                      <p className="text-[12px] text-[var(--color-text-secondary)] mt-0.5 leading-relaxed">
+                      <p className="text-[13px] text-[var(--color-text-secondary)] mt-0.5 leading-relaxed">
                         {vote.comment}
                       </p>
                     )}
@@ -269,7 +278,7 @@ export function RequestDetail({
         {/* Supporting links */}
         {request.supportingLinks.length > 0 && (
           <section className="px-5 py-4 border-b border-[var(--color-border-subtle)]">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
+            <h3 className="text-[12px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-2">
               Links
             </h3>
             <ul className="space-y-1.5">
@@ -279,9 +288,9 @@ export function RequestDetail({
                     href={link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-[12px] text-[var(--color-brand)] hover:underline"
+                    className="flex items-center gap-1.5 text-[13px] text-[var(--color-brand)] hover:underline"
                   >
-                    <ExternalLink size={11} />
+                    <ExternalLink size={16} />
                     {link}
                   </a>
                 </li>
@@ -296,7 +305,18 @@ export function RequestDetail({
 
       {/* ── Footer actions ── */}
       <div className="flex-shrink-0 px-4 py-3 border-t border-[var(--color-border-subtle)] flex gap-2">
-        {request.status === "new" && (
+        {onSendToPrioritize && request.status !== "archived" && (
+          <Button
+            variant="primary"
+            size="sm"
+            className="flex-1 gap-1.5"
+            onClick={() => onSendToPrioritize(request.id)}
+          >
+            <BarChart2 size={18} />
+            Send to Prioritization
+          </Button>
+        )}
+        {!onSendToPrioritize && request.status === "new" && (
           <Button
             variant="primary"
             size="sm"
@@ -306,11 +326,10 @@ export function RequestDetail({
             Move to Triaged
           </Button>
         )}
-        {request.status !== "archived" && (
+        {request.status !== "archived" && (!allowedStatuses || allowedStatuses.includes("archived")) && (
           <Button
             variant="ghost"
             size="sm"
-            className={request.status === "new" ? "" : "flex-1"}
             onClick={() => onStatusChange(request.id, "archived")}
           >
             Archive
@@ -348,7 +367,7 @@ function MetaRow({
         <span className="text-[var(--color-text-muted)]" aria-hidden="true">
           {icon}
         </span>
-        <span className="text-[12px] text-[var(--color-text-muted)]">{label}</span>
+        <span className="text-[13px] text-[var(--color-text-muted)]">{label}</span>
       </div>
       <div className="flex-1 min-w-0">{children}</div>
     </div>

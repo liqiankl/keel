@@ -44,9 +44,6 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
             {[
               { label: "Product",   href: "/product"   },
               { label: "Changelog", href: "/changelog" },
-              { label: "Docs",      href: "/docs"      },
-              { label: "Privacy",   href: "/privacy"   },
-              { label: "Terms",     href: "/terms"     },
             ].map(({ label, href }) => (
               <Link
                 key={label}

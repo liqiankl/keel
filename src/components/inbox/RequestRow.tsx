@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ThumbsUp } from "lucide-react";
+import { ThumbsUp, BarChart2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { StatusDropdown } from "./StatusDropdown";
 import { SourceBadge } from "./SourceBadge";
@@ -30,7 +30,11 @@ interface RequestRowProps {
   onOpen: (id: string) => void;
   onCheck: (id: string) => void;
   onStatusChange: (id: string, status: RequestStatus) => void;
+  onSendToPrioritize?: (id: string) => void;
   rowRef?: (el: HTMLElement | null) => void;
+  allowedStatuses?: RequestStatus[];
+  statusLabels?: Partial<Record<RequestStatus, string>>;
+  hideStatusIcon?: boolean;
 }
 
 export const RequestRow = React.memo(function RequestRow({
@@ -42,7 +46,11 @@ export const RequestRow = React.memo(function RequestRow({
   onOpen,
   onCheck,
   onStatusChange,
+  onSendToPrioritize,
   rowRef,
+  allowedStatuses,
+  statusLabels,
+  hideStatusIcon,
 }: RequestRowProps) {
   const voteCount = request.votes.length;
   const initials = getInitials(request.submittedBy);
@@ -117,18 +125,22 @@ export const RequestRow = React.memo(function RequestRow({
       <PrioritySignalBadge signal={request.prioritySignal} className="mr-2 flex-shrink-0" />
 
       {/* ── Display ID ── */}
-      <span className="font-mono text-[11px] text-[var(--color-text-muted)] w-[60px] flex-shrink-0 tabular-nums">
+      <span className="font-mono text-[12px] text-[var(--color-text-muted)] w-[60px] flex-shrink-0 tabular-nums">
         {displayId}
       </span>
 
       {/* ── Status icon (dropdown) ── */}
-      <div className="flex-shrink-0 h-full flex items-center mr-2 w-6">
-        <StatusDropdown
-          requestId={request.id}
-          currentStatus={request.status}
-          onChange={onStatusChange}
-        />
-      </div>
+      {!hideStatusIcon && (
+        <div className="flex-shrink-0 h-full flex items-center mr-2 w-6">
+          <StatusDropdown
+            requestId={request.id}
+            currentStatus={request.status}
+            onChange={onStatusChange}
+            allowedStatuses={allowedStatuses}
+            statusLabels={statusLabels}
+          />
+        </div>
+      )}
 
       {/* ── Title ── */}
       <span
@@ -155,19 +167,19 @@ export const RequestRow = React.memo(function RequestRow({
         {voteCount > 0 ? (
           <>
             <ThumbsUp size={10} className="text-[var(--color-text-muted)]" />
-            <span className="text-[11px] text-[var(--color-text-muted)] tabular-nums">
+            <span className="text-[12px] text-[var(--color-text-muted)] tabular-nums">
               {voteCount}
             </span>
           </>
         ) : (
-          <span className="text-[11px] text-transparent tabular-nums">0</span>
+          <span className="text-[12px] text-transparent tabular-nums">0</span>
         )}
       </div>
 
       {/* ── Date (hidden at rest, revealed on hover) ── */}
       <span
         className={cn(
-          "flex-shrink-0 text-[11px] text-[var(--color-text-muted)] w-[52px] text-right mr-2",
+          "flex-shrink-0 text-[12px] text-[var(--color-text-muted)] w-[52px] text-right mr-2",
           "opacity-0 group-hover:opacity-100 transition-opacity duration-100",
           isOpen && "opacity-100",
         )}
@@ -180,7 +192,7 @@ export const RequestRow = React.memo(function RequestRow({
       <div
         className={cn(
           "flex-shrink-0 h-[20px] w-[20px] rounded-full flex items-center justify-center",
-          "text-[9px] font-semibold text-white",
+          "text-[10px] font-semibold text-white",
           "opacity-0 group-hover:opacity-100 transition-opacity duration-100",
           isOpen && "opacity-100",
         )}
@@ -190,6 +202,23 @@ export const RequestRow = React.memo(function RequestRow({
       >
         {initials}
       </div>
+
+      {/* ── Send to Prioritization (hover action) ── */}
+      {onSendToPrioritize && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onSendToPrioritize(request.id); }}
+          title="Send to Prioritization"
+          aria-label="Send to Prioritization"
+          className={cn(
+            "flex-shrink-0 ml-2 h-[22px] w-[22px] rounded flex items-center justify-center",
+            "opacity-0 group-hover:opacity-100 transition-opacity duration-100",
+            "text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:bg-[var(--color-bg-hover)]",
+            isOpen && "opacity-100",
+          )}
+        >
+          <BarChart2 size={12} />
+        </button>
+      )}
     </div>
   );
 });

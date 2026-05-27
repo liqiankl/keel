@@ -13,6 +13,8 @@ export type InitiativeStatus =
   | "backlog"
   | "todo"
   | "in_progress"
+  | "in_review"
+  | "closed"
   | "done"
   | "canceled";
 
@@ -138,6 +140,7 @@ export interface QuarterlyGoal {
 
 export interface RoadmapItem {
   id: string;
+  teamId?: string;
   featureRequestId: string | null;  // linked intake request
   title: string;
   description: string;
@@ -257,4 +260,4 @@ export interface SidebarNavItem {
 
 export type ViewMode = "list" | "board" | "timeline";
 
-export type FilterTab = "active" | "all" | "new" | "triaged" | "archived";
+export type FilterTab = "active" | "all" | "new" | "triaged" | "archived" | "backlog";

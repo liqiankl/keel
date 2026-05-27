@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useEffect } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { ColDef } from "./columns";
@@ -8,15 +9,29 @@ interface ScoringTableHeaderProps {
   columns: ColDef[];
   sortColumn: string | null;
   sortDirection: "asc" | "desc";
+  allSelected: boolean;
+  someSelected: boolean;
   onSort: (colId: string) => void;
+  onSelectAll: () => void;
 }
 
 export function ScoringTableHeader({
   columns,
   sortColumn,
   sortDirection,
+  allSelected,
+  someSelected,
   onSort,
+  onSelectAll,
 }: ScoringTableHeaderProps) {
+  const checkRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (checkRef.current) {
+      checkRef.current.indeterminate = someSelected && !allSelected;
+    }
+  }, [someSelected, allSelected]);
+
   return (
     <div
       role="row"
@@ -27,6 +42,21 @@ export function ScoringTableHeader({
         "h-8 flex-shrink-0 px-2",
       )}
     >
+      {/* Select-all checkbox — mirrors per-row checkbox slot */}
+      <div className="flex-shrink-0 flex items-center justify-center w-5 mr-1">
+        <input
+          ref={checkRef}
+          type="checkbox"
+          checked={allSelected}
+          onChange={onSelectAll}
+          aria-label="Select all initiatives"
+          className={cn(
+            "h-[14px] w-[14px] rounded border cursor-pointer accent-[var(--color-brand)]",
+            !allSelected && !someSelected && "opacity-0 group-hover:opacity-100",
+          )}
+        />
+      </div>
+
       {columns.map((col) => {
         const isActive = sortColumn === col.id;
         const sortable = col.type === "score" || col.type === "number" || col.type === "rank" || col.type === "moscow";
@@ -64,7 +94,7 @@ export function ScoringTableHeader({
                 type="button"
                 onClick={() => onSort(col.id)}
                 className={cn(
-                  "flex items-center gap-0.5 text-[11px] font-medium",
+                  "flex items-center gap-0.5 text-[12px] font-medium",
                   "transition-colors hover:text-[var(--color-text-primary)]",
                   "focus-visible:outline-2 focus-visible:outline-[var(--color-brand)] rounded",
                   isActive
@@ -88,7 +118,7 @@ export function ScoringTableHeader({
             ) : (
               <span
                 className={cn(
-                  "text-[11px] font-medium text-[var(--color-text-muted)] select-none",
+                  "text-[12px] font-medium text-[var(--color-text-muted)] select-none",
                   col.type === "rank" && "w-full text-center",
                 )}
               >

@@ -30,6 +30,10 @@ interface RequestListProps {
   onStatusChange: (id: string, status: RequestStatus) => void;
   onFocus: (id: string | null) => void;
   onAddToGroup?: (status: RequestStatus) => void;
+  onSendToPrioritize?: (id: string) => void;
+  allowedStatuses?: RequestStatus[];
+  statusLabels?: Partial<Record<RequestStatus, string>>;
+  hideStatusIcon?: boolean;
 }
 
 type Group = { status: RequestStatus; items: FeatureRequest[] };
@@ -45,7 +49,9 @@ function groupRequests(tab: FilterTab, requests: FeatureRequest[]): Group[] {
   }
   // Other tabs: one group with the current status as header
   const status: RequestStatus =
-    tab === "new" ? "new" : tab === "triaged" ? "triaged" : "archived";
+    tab === "new" ? "new"
+    : (tab === "triaged" || tab === "backlog") ? "triaged"
+    : "archived";
   return requests.length > 0 ? [{ status, items: requests }] : [];
 }
 
@@ -87,6 +93,12 @@ const EMPTY_STATE_CONFIG: Record<FilterTab, {
     description: "Requests you've closed or deprioritised will appear here.",
     actionLabel: "New request",
   },
+  backlog: {
+    Icon: Layers,
+    title: "Backlog is empty",
+    description: "Triaged ideas waiting to be picked up will appear here.",
+    actionLabel: "Go to New",
+  },
 };
 
 export function RequestList({
@@ -101,6 +113,10 @@ export function RequestList({
   onStatusChange,
   onFocus,
   onAddToGroup,
+  onSendToPrioritize,
+  allowedStatuses,
+  statusLabels,
+  hideStatusIcon,
 }: RequestListProps) {
   // Stable display ID map based on all requests (not just filtered)
   const displayIdMap = useMemo(
@@ -149,11 +165,14 @@ export function RequestList({
     >
       {groups.map((group) => (
         <div key={group.status} role="rowgroup">
-          <RequestGroupHeader
-            status={group.status}
-            count={group.items.length}
-            onAddToGroup={onAddToGroup ? () => onAddToGroup(group.status) : undefined}
-          />
+          {groups.length > 1 && (
+            <RequestGroupHeader
+              status={group.status}
+              count={group.items.length}
+              onAddToGroup={onAddToGroup ? () => onAddToGroup(group.status) : undefined}
+              statusLabels={statusLabels}
+            />
+          )}
           {group.items.map((request) => (
             <RequestRow
               key={request.id}
@@ -165,6 +184,10 @@ export function RequestList({
               onOpen={onOpen}
               onCheck={onCheck}
               onStatusChange={onStatusChange}
+              onSendToPrioritize={onSendToPrioritize}
+              allowedStatuses={allowedStatuses}
+              statusLabels={statusLabels}
+              hideStatusIcon={hideStatusIcon}
               rowRef={registerRef(request.id)}
             />
           ))}

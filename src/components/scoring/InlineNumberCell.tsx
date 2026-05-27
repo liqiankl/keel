@@ -119,7 +119,7 @@ export function InlineNumberCell({
     >
       <span>{value}</span>
       {suffix && (
-        <span className="text-[10px] text-[var(--color-text-muted)]">{suffix}</span>
+        <span className="text-[11px] text-[var(--color-text-muted)]">{suffix}</span>
       )}
     </button>
   );

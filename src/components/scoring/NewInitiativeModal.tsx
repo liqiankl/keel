@@ -151,7 +151,7 @@ export function NewInitiativeModal({ open, onClose, onSubmit }: NewInitiativeMod
           {/* Header breadcrumb */}
           <div className="flex items-center gap-2 px-4 pt-4 pb-2">
             <div
-              className="flex h-[18px] w-[18px] items-center justify-center rounded text-[9px] font-bold text-white flex-shrink-0"
+              className="flex h-[18px] w-[18px] items-center justify-center rounded text-[10px] font-bold text-white flex-shrink-0"
               style={{ backgroundColor: DEMO_WORKSPACE.avatarColor }}
               aria-hidden="true"
             >

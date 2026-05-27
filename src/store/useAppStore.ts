@@ -43,12 +43,15 @@ interface AppState {
   pendingInvites: PendingInvite[];
 
   setWorkspace: (ws: Workspace) => void;
+  updateWorkspace: (patch: Partial<Pick<Workspace, "name" | "slug" | "avatarColor">>) => void;
   updateCurrentUser: (patch: Partial<Pick<WorkspaceMember, "name" | "avatarColor" | "email">>) => void;
   addMember: (member: Omit<WorkspaceMember, "avatarUrl" | "avatarInitials"> & { avatarUrl?: string | null }) => void;
   removeMember: (id: string) => void;
   updateMemberRole: (id: string, role: WorkspaceMember["role"]) => void;
   addPendingInvite: (invite: Omit<PendingInvite, "id">) => void;
   removePendingInvite: (id: string) => void;
+  phasesActed: string[];
+  markPhaseActed: (key: string) => void;
   toggleSidebar: () => void;
   setSidebarCollapsed: (v: boolean) => void;
   setActiveTeamId: (id: string) => void;
@@ -86,6 +89,7 @@ export const useAppStore = create<AppState>()(
         members: SEED_MEMBERS,
       },
       pendingInvites: [],
+      phasesActed: [],
       sidebarCollapsed: false,
       activeTeamId: "team_navigators",
       viewMode: "list",
@@ -94,6 +98,9 @@ export const useAppStore = create<AppState>()(
       workspaceTags: SEED_WORKSPACE_TAGS,
 
       setWorkspace: (ws) => set({ workspace: ws }),
+
+      updateWorkspace: (patch) =>
+        set((s) => ({ workspace: { ...s.workspace, ...patch } })),
 
       addMember: (member) =>
         set((s) => {
@@ -155,6 +162,10 @@ export const useAppStore = create<AppState>()(
             },
           };
         }),
+      markPhaseActed: (key) =>
+        set((s) =>
+          s.phasesActed.includes(key) ? s : { phasesActed: [...s.phasesActed, key] },
+        ),
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setSidebarCollapsed: (v) => set({ sidebarCollapsed: v }),
       setActiveTeamId: (id) => set({ activeTeamId: id }),
@@ -185,6 +196,7 @@ export const useAppStore = create<AppState>()(
     {
       name: "keel-app-preferences",
       partialize: (s) => ({
+        phasesActed: s.phasesActed,
         sidebarCollapsed: s.sidebarCollapsed,
         viewMode: s.viewMode,
         activeTeamId: s.activeTeamId,

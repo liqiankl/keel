@@ -92,12 +92,16 @@ interface ScoringTableProps {
   sortColumn: string | null;
   sortDirection: "asc" | "desc";
   openId: string | null;
+  selectedIds: string[];
   onSort: (col: string) => void;
   onOpen: (id: string) => void;
+  onSelect: (id: string) => void;
+  onSelectAll: () => void;
   onUpdateRICE: (id: string, patch: Partial<RICEScore>) => void;
   onUpdateMoSCoW: (id: string, label: MoSCoWLabel) => void;
   onUpdateWSJF: (id: string, patch: Partial<WSJFScore>) => void;
   onUpdateCustom: (id: string, dimId: string, value: number) => void;
+  onSendToRoadmap?: (id: string) => void;
 }
 
 export function ScoringTable({
@@ -109,12 +113,16 @@ export function ScoringTable({
   sortColumn,
   sortDirection,
   openId,
+  selectedIds,
   onSort,
   onOpen,
+  onSelect,
+  onSelectAll,
   onUpdateRICE,
   onUpdateMoSCoW,
   onUpdateWSJF,
   onUpdateCustom,
+  onSendToRoadmap,
 }: ScoringTableProps) {
   const sorted = useMemo(
     () => sortInitiatives(initiatives, framework, sortColumn, sortDirection),
@@ -136,7 +144,10 @@ export function ScoringTable({
         columns={columns}
         sortColumn={sortColumn}
         sortDirection={sortDirection}
+        allSelected={sorted.length > 0 && selectedIds.length === sorted.length}
+        someSelected={selectedIds.length > 0 && selectedIds.length < sorted.length}
         onSort={handleSort}
+        onSelectAll={onSelectAll}
       />
       <div role="rowgroup" className="flex-1 overflow-y-auto">
         {sorted.map((item, idx) => (
@@ -149,11 +160,14 @@ export function ScoringTable({
             goals={goals}
             customDimensions={customDimensions}
             isOpen={openId === item.id}
+            isSelected={selectedIds.includes(item.id)}
             onOpen={onOpen}
+            onSelect={onSelect}
             onUpdateRICE={onUpdateRICE}
             onUpdateMoSCoW={onUpdateMoSCoW}
             onUpdateWSJF={onUpdateWSJF}
             onUpdateCustom={onUpdateCustom}
+            onSendToRoadmap={onSendToRoadmap}
           />
         ))}
       </div>

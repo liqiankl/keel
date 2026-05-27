@@ -28,7 +28,7 @@ function ReviewerAvatar({ name, decision }: { name: string; decision: string | n
   return (
     <div className="relative flex-shrink-0" title={`${name}: ${decision ?? "pending"}`}>
       <div
-        className="h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-semibold text-white"
+        className="h-7 w-7 rounded-full flex items-center justify-center text-[11px] font-semibold text-white"
         style={{ backgroundColor: bg }}
         aria-label={name}
       >

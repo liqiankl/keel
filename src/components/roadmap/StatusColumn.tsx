@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { InitiativeCard } from "./InitiativeCard";
 import { STATUS_CONFIG } from "@/lib/constants";
+import { Tooltip } from "@/components/ui/Tooltip";
 import type { RoadmapItem, InitiativeStatus, QuarterlyGoal } from "@/types";
 
 interface StatusColumnProps {
@@ -55,12 +56,14 @@ export function StatusColumn({ status, items, goals, planId, openId, onDropItem,
         <span className="text-[12px] font-medium text-[var(--color-text-secondary)]">
           {cfg.label}
         </span>
-        <span
-          className="ml-auto text-[12px] tabular-nums text-[var(--color-text-muted)]"
-          title={totalPts > 0 ? `${totalPts} story points` : undefined}
+        <Tooltip
+          content={totalPts > 0 ? `${items.length} cards · ${totalPts} story points` : `${items.length} cards`}
+          placement="top"
         >
-          {items.length}
-        </span>
+          <span className="ml-auto text-[12px] tabular-nums text-[var(--color-text-muted)] cursor-default">
+            {items.length}
+          </span>
+        </Tooltip>
       </div>
 
       {/* Drop zone / Cards */}

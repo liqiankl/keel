@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useStore } from "zustand";
-import { BarChart2, Plus } from "lucide-react";
+import { BarChart2, Check, Map, X } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -10,11 +10,14 @@ import { FrameworkTabs } from "./FrameworkTabs";
 import { ScoringTable } from "./ScoringTable";
 import { InitiativeDetail } from "./InitiativeDetail";
 import { CustomDimensionsModal } from "./CustomDimensionsModal";
-import { NewInitiativeModal } from "./NewInitiativeModal";
+import { WorkflowBar } from "@/components/workflow/WorkflowBar";
+import { NextPhaseBar } from "@/components/workflow/NextPhaseBar";
 import { useScoringStore } from "@/store/useScoringStore";
+import { useRoadmapStore } from "@/store/useRoadmapStore";
 import { useAppStore } from "@/store/useAppStore";
-import { TEAMS } from "@/lib/constants";
+import { TEAMS, CURRENT_QUARTER } from "@/lib/constants";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
+import { cn } from "@/lib/cn";
 import {
   RICE_COLUMNS,
   MOSCOW_COLUMNS,
@@ -64,8 +67,13 @@ interface ScoringViewProps {
 
 export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
   const [openId, setOpenId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [customModalOpen, setCustomModalOpen] = useState(false);
-  const [newInitiativeOpen, setNewInitiativeOpen] = useState(false);
+  const [roadmapToast, setRoadmapToast] = useState<string | null>(null);
+  const phasesActed    = useAppStore((s) => s.phasesActed);
+  const markPhaseActed = useAppStore((s) => s.markPhaseActed);
+  const phaseKey       = initialTeam ? `prioritize:${initialTeam}` : null;
+  const hasActed       = phaseKey ? phasesActed.includes(phaseKey) : false;
 
   const setActiveTeamId = useAppStore((s) => s.setActiveTeamId);
 
@@ -78,7 +86,7 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
   }, [initialTeam]);
 
   const {
-    initiatives,
+    initiatives: allInitiatives,
     activeFramework,
     customDimensions,
     sortColumn,
@@ -90,10 +98,63 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
     addCustomDimension,
     removeCustomDimension,
     updateCustomScore,
-    addInitiative,
+    removeInitiative,
     setSortColumn,
     toggleSortDirection,
   } = useScoringStore();
+
+  const { plans, addItemToPlan } = useRoadmapStore();
+
+  // Derive the team ID and filter initiatives to only this team's items
+  const teamId = useMemo(
+    () => initialTeam ? TEAMS.find((t) => t.slug === initialTeam)?.id : undefined,
+    [initialTeam],
+  );
+
+  const initiatives = useMemo(
+    () => teamId ? allInitiatives.filter((i) => i.teamId === teamId) : allInitiatives,
+    [allInitiatives, teamId],
+  );
+
+  // Find the active plan for this team's current quarter
+  const activePlanId = useMemo(() => {
+    if (!teamId) return null;
+    const plan = plans.find(
+      (p) =>
+        p.teamId === teamId &&
+        p.quarter.year === CURRENT_QUARTER.year &&
+        p.quarter.quarter === CURRENT_QUARTER.quarter,
+    );
+    return plan?.id ?? null;
+  }, [plans, teamId]);
+
+  const handleSendToRoadmap = useCallback((id: string) => {
+    const initiative = initiatives.find((i) => i.id === id);
+    if (!initiative || !activePlanId) return;
+    const alreadyInPlan = plans.find((p) => p.id === activePlanId)?.items.some((i) => i.id === id);
+    if (!alreadyInPlan) addItemToPlan(activePlanId, initiative);
+    removeInitiative(id);
+    setRoadmapToast(initiative.title);
+    setTimeout(() => setRoadmapToast(null), 3500);
+    if (phaseKey) markPhaseActed(phaseKey);
+  }, [initiatives, activePlanId, plans, addItemToPlan, removeInitiative, phaseKey, markPhaseActed]);
+
+  const handleToggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    setSelectedIds((prev) =>
+      prev.length === initiatives.length ? [] : initiatives.map((i) => i.id),
+    );
+  }, [initiatives]);
+
+  const handleBulkSendToRoadmap = useCallback(() => {
+    selectedIds.forEach((id) => handleSendToRoadmap(id));
+    setSelectedIds([]);
+  }, [selectedIds, handleSendToRoadmap]);
 
   const temporal = useStore(useScoringStore.temporal);
 
@@ -124,7 +185,7 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
 
   useGlobalShortcuts({
     escape: () => {
-      if (customModalOpen || newInitiativeOpen) return;
+      if (customModalOpen) return;
       if (openId) setOpenId(null);
     },
     undo: () => temporal.undo(),
@@ -137,21 +198,50 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
     <div className="flex flex-col h-full overflow-hidden">
       {/* ── Header ── */}
       <Header
-        title="Prioritize"
-        rightSlot={
+        title="Prioritization"
+        showViewToggle
+      />
+
+      {/* ── Workflow bar ── */}
+      {initialTeam && <WorkflowBar currentStage="prioritize" teamSlug={initialTeam} />}
+
+      {/* ── Bulk selection bar ── */}
+      {selectedIds.length > 0 && (
+        <div className={cn(
+          "flex items-center gap-3 px-4 py-2 flex-shrink-0",
+          "border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-elevated)]",
+        )}>
+          <span className="text-[13px] font-medium text-[var(--color-text-primary)] min-w-max">
+            {selectedIds.length} selected
+          </span>
+          {selectedIds.length < initiatives.length && (
+            <button
+              onClick={handleSelectAll}
+              className="text-[12px] text-[var(--color-brand)] hover:underline transition-colors whitespace-nowrap"
+            >
+              Select all {initiatives.length}
+            </button>
+          )}
+          <div className="h-4 w-px bg-[var(--color-border-subtle)]" />
           <Button
             variant="primary"
             size="sm"
-            className="gap-1.5"
-            onClick={() => setNewInitiativeOpen(true)}
-            aria-label="New initiative"
+            className="gap-1.5 h-7 text-[12px]"
+            onClick={handleBulkSendToRoadmap}
           >
-            <Plus size={13} />
-            Initiative
+            <Map size={13} />
+            Send to Roadmap
           </Button>
-        }
-        showViewToggle
-      />
+          <div className="flex-1" />
+          <button
+            onClick={() => setSelectedIds([])}
+            className="flex items-center gap-1.5 text-[12px] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
+          >
+            <X size={12} />
+            Clear
+          </button>
+        </div>
+      )}
 
       {/* ── Framework tabs ── */}
       <FrameworkTabs
@@ -174,9 +264,12 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
             <div className="flex flex-1 items-center justify-center">
               <EmptyState
                 Icon={BarChart2}
-                title="No initiatives"
-                description="Add initiatives to your quarterly plan to start scoring them."
-                action={{ label: "Add initiative", onClick: () => undefined }}
+                title="Nothing to prioritize yet"
+                description="Head to your team's Ideas and send a few to prioritization — then come back here to score and rank them."
+                action={initialTeam ? {
+                  label: "Go to Ideas",
+                  onClick: () => { window.location.href = `/team/${initialTeam}/ideas`; },
+                } : undefined}
               />
             </div>
           ) : (
@@ -189,12 +282,16 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
               sortColumn={sortColumn}
               sortDirection={sortDirection}
               openId={openId}
+              selectedIds={selectedIds}
               onSort={handleSort}
               onOpen={handleOpen}
+              onSelect={handleToggleSelect}
+              onSelectAll={handleSelectAll}
               onUpdateRICE={updateRICE}
               onUpdateMoSCoW={updateMoSCoW}
               onUpdateWSJF={updateWSJF}
               onUpdateCustom={updateCustomScore}
+              onSendToRoadmap={initialTeam ? handleSendToRoadmap : undefined}
             />
           )}
         </div>
@@ -215,6 +312,7 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
               onUpdateMoSCoW={updateMoSCoW}
               onUpdateWSJF={updateWSJF}
               onUpdateCustom={updateCustomScore}
+              onSendToRoadmap={initialTeam ? handleSendToRoadmap : undefined}
             />
           </div>
         )}
@@ -229,16 +327,27 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
         onRemove={removeCustomDimension}
       />
 
-      {/* ── New initiative modal ── */}
-      <NewInitiativeModal
-        open={newInitiativeOpen}
-        onClose={() => setNewInitiativeOpen(false)}
-        onSubmit={(item) => {
-          addInitiative(item);
-          setNewInitiativeOpen(false);
-          setOpenId(item.id);
-        }}
-      />
+      {/* ── Next phase bar ── */}
+      {initialTeam && hasActed && (
+        <NextPhaseBar
+          nextPhase="Roadmap"
+          options={[{ label: "Roadmap", href: `/team/${initialTeam}/roadmap` }]}
+        />
+      )}
+
+      {/* ── Roadmap toast ── */}
+      {roadmapToast && (
+        <div className={cn(
+          "fixed bottom-20 left-1/2 -translate-x-1/2 z-50",
+          "flex items-center gap-2 px-4 py-2.5 rounded-lg shadow-lg",
+          "bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)]",
+          "text-[12px] text-[var(--color-text-secondary)]",
+          "animate-in fade-in slide-in-from-bottom-2 duration-200",
+        )}>
+          <Check size={13} className="text-[var(--color-success)]" />
+          <span>Sent to <span className="font-semibold text-[var(--color-text-primary)]">Roadmap</span></span>
+        </div>
+      )}
     </div>
   );
 }

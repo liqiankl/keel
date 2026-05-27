@@ -35,13 +35,13 @@ const STEPS: TourStep[] = [
     id: "teams-section",
     target: "teams-section",
     title: "Your teams",
-    body: "Keel organises everything by team. You have two teams in this workspace — each with fully independent issues, prioritization, and quarterly plans.",
+    body: "Keel organises everything by team. You have two teams in this workspace — each with fully independent ideas, prioritization, and quarterly plans.",
     placement: "right",
   },
   {
     id: "team-navigators",
     target: "team-navigators",
-    title: "Navigators",
+    title: "Navigators Team",
     body: "The Navigators team owns product strategy and roadmap planning. Their Q2 2026 plan has 5 active initiatives across Core Product, Growth, and Integrations.",
     placement: "right",
     chip: { label: "N", color: "#5e5ce6" },
@@ -49,7 +49,7 @@ const STEPS: TourStep[] = [
   {
     id: "team-hitchhiker",
     target: "team-hitchhiker",
-    title: "Hitchhiker",
+    title: "Hitchhikers Team",
     body: "The Hitchhiker team focuses on platform reliability and developer experience. Their Q2 2026 plan is in review — 80 story points of capacity, 5 initiatives.",
     placement: "right",
     chip: { label: "H", color: "#30a46c" },
@@ -64,7 +64,7 @@ const STEPS: TourStep[] = [
   {
     id: "prioritize",
     target: "nav-prioritize",
-    title: "Prioritize",
+    title: "Prioritization",
     body: "Score your initiatives using RICE, MoSCoW, WSJF, or a custom weighted framework. Click the ⓘ icon beside each tab to understand the formula.",
     placement: "right",
   },
@@ -247,7 +247,7 @@ export function TourGuide({ open, onClose }: TourGuideProps) {
               {current.chip && (
                 <div className="flex items-center gap-2 px-4 pt-4 pb-0">
                   <div
-                    className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-[10px] font-bold text-white"
+                    className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-[11px] font-bold text-white"
                     style={{ backgroundColor: current.chip.color }}
                   >
                     {current.chip.label}

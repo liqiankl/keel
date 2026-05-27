@@ -13,13 +13,10 @@ import {
   ChevronRight,
   Layers,
   Zap,
-  Users,
   Target,
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { TOUR_FORCE_KEY } from "@/components/tour/TourGuide";
-
 export function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const [launching, setLaunching] = useState(false);
@@ -34,9 +31,7 @@ export function LandingPage() {
   const handleGetStarted = useCallback(() => {
     if (launching) return;
     setLaunching(true);
-    sessionStorage.setItem(TOUR_FORCE_KEY, "1");
-    // Brief pause so the button animation plays before navigation
-    setTimeout(() => router.push("/inbox"), 420);
+    setTimeout(() => router.push("/workspace"), 420);
   }, [launching, router]);
 
   return (
@@ -159,7 +154,7 @@ function Hero({
 
       {/* Subheadline */}
       <p className="mx-auto mt-6 max-w-xl text-lg text-[#8888a0] leading-relaxed">
-        Collect requests, prioritize with RICE or MoSCoW, plan your quarter, and share
+        Inbox requests, prioritize with RICE or MoSCoW, plan your quarter, and share
         beautiful roadmaps — all in one focused tool.
       </p>
 
@@ -221,118 +216,159 @@ function AppMockup() {
           <div className="h-2.5 w-2.5 rounded-full bg-[#27c93f]" />
         </div>
         <div className="flex-1 mx-4">
-          <div className="mx-auto h-5 w-40 rounded bg-white/5 flex items-center justify-center">
-            <span className="text-[9px] text-[#55556a]">app.keel.so/inbox</span>
+          <div className="mx-auto h-5 w-44 rounded bg-white/5 flex items-center justify-center">
+            <span className="text-[10px] text-[#55556a]">keel-kappa.vercel.app/inbox</span>
           </div>
         </div>
       </div>
 
       {/* App shell */}
-      <div className="flex" style={{ height: 380 }}>
-        {/* Sidebar */}
-        <div className="w-36 border-r border-white/5 bg-[#17171a] flex flex-col py-3 px-2 gap-1 flex-shrink-0">
-          <div className="flex items-center gap-2 px-2 py-1 mb-1">
-            <div className="h-4 w-4 rounded bg-[#5e5ce6]" />
-            <div className="h-2 w-12 rounded bg-white/20" />
+      <div className="flex" style={{ height: 400 }}>
+
+        {/* ── Sidebar ── */}
+        <div className="w-[148px] border-r border-white/5 bg-[#17171a] flex flex-col py-2 flex-shrink-0">
+          {/* Workspace */}
+          <div className="flex items-center gap-2 px-3 h-9 border-b border-white/5 mb-1">
+            <div className="h-5 w-5 rounded-md bg-[#5e5ce6] flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0">K</div>
+            <span className="text-[11px] font-semibold text-white/80 truncate">Keel</span>
           </div>
-          {[
-            { label: "Inbox", active: true },
-            { label: "My Issues" },
-            { label: "Views" },
-            { label: "Roadmaps" },
-          ].map(({ label, active }) => (
-            <div
-              key={label}
-              className={cn(
-                "flex items-center gap-2 h-6 px-2 rounded text-[10px]",
-                active ? "bg-white/8 text-white" : "text-[#55556a]",
-              )}
-            >
-              <div className={cn("h-1.5 w-1.5 rounded-full", active ? "bg-[#5e5ce6]" : "bg-white/10")} />
-              {label}
-            </div>
-          ))}
-          <div className="mt-2 px-2">
-            <div className="h-px bg-white/5 mb-2" />
-            <div className="text-[8px] text-[#3a3a4a] uppercase tracking-widest mb-1">Teams</div>
-            {["Navigators", "Hitchhiker"].map((t) => (
-              <div key={t} className="flex items-center gap-1.5 h-5 text-[10px] text-[#55556a]">
-                <div className="h-3 w-3 rounded bg-[#5e5ce6]/60 flex items-center justify-center text-[6px] font-bold text-white">{t[0]}</div>
-                {t}
+          {/* Primary nav */}
+          <div className="px-1.5 flex flex-col gap-0.5 mb-2">
+            {[
+              { label: "Inbox", active: true },
+              { label: "Views", active: false },
+            ].map(({ label, active }) => (
+              <div key={label} className={cn("flex items-center gap-2 h-7 px-2 rounded text-[11px]", active ? "bg-[#5e5ce6] text-white" : "text-[#55556a]")}>
+                <div className={cn("h-3.5 w-3.5 rounded-sm border flex-shrink-0", active ? "bg-white/20 border-white/20" : "border-white/10")} />
+                {label}
+              </div>
+            ))}
+          </div>
+          {/* Divider */}
+          <div className="mx-3 border-t border-white/5 mb-1" />
+          {/* Teams */}
+          <div className="text-[8px] font-semibold uppercase tracking-widest text-[#3a3a4a] px-3 mb-1">Teams</div>
+          <div className="px-1.5 flex flex-col gap-0.5">
+            {[
+              { name: "Navigators",   color: "#5e5ce6", open: true  },
+              { name: "Hitchhikers",  color: "#30a46c", open: false },
+            ].map(({ name, color, open }) => (
+              <div key={name}>
+                <div className="flex items-center gap-1.5 h-6 px-2 text-[11px] text-white/50">
+                  <div className="h-3.5 w-3.5 rounded flex items-center justify-center text-[7px] font-bold text-white flex-shrink-0" style={{ backgroundColor: color }}>{name[0]}</div>
+                  <span className="truncate">{name}</span>
+                </div>
+                {open && (
+                  <div className="pl-6 flex flex-col">
+                    {["Ideas", "Prioritize", "Roadmap"].map((s) => (
+                      <div key={s} className="h-5 flex items-center text-[10px] text-[#3a3a4a] px-1">{s}</div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </div>
 
-        {/* Main content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Topbar */}
-          <div className="flex items-center justify-between px-4 h-9 border-b border-white/5">
-            <span className="text-[11px] font-medium text-white/80">Active issues</span>
-            <div className="h-5 w-20 rounded-full bg-[#5e5ce6] flex items-center justify-center">
-              <span className="text-[8px] font-semibold text-white">+ New request</span>
-            </div>
+        {/* ── Main ── */}
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+
+          {/* Header */}
+          <div className="flex items-center px-4 h-10 border-b border-white/5 flex-shrink-0">
+            <span className="text-[12px] font-semibold text-white/90">Inbox</span>
           </div>
 
-          {/* Filter tabs */}
-          <div className="flex items-center gap-3 px-4 border-b border-white/5 h-8">
-            {["Active", "New", "Triaged", "Archived"].map((tab, i) => (
-              <span
-                key={tab}
-                className={cn(
-                  "text-[10px] pb-0.5",
-                  i === 0
-                    ? "text-white border-b border-[#5e5ce6]"
-                    : "text-[#55556a]",
-                )}
-              >
-                {tab}
+          {/* View tabs */}
+          <div className="flex items-center gap-0 border-b border-white/5 flex-shrink-0">
+            {[
+              { label: "Inbox",         active: true  },
+              { label: "Ideas",         active: false },
+              { label: "Prioritization",active: false },
+              { label: "Roadmap",       active: false },
+            ].map(({ label, active }) => (
+              <span key={label} className={cn("text-[10px] h-8 flex items-center px-3 border-b-[1.5px]", active ? "text-white border-[#5e5ce6]" : "text-[#3a3a4a] border-transparent")}>
+                {label}
               </span>
             ))}
           </div>
 
-          {/* Request rows */}
-          <div className="flex-1 overflow-hidden py-1">
-            {MOCK_REQUESTS.map((r, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "flex items-center gap-3 px-4 h-9 border-b border-white/3",
-                  i === 1 && "bg-[#5e5ce6]/5",
-                )}
-              >
-                <div
-                  className="h-2 w-2 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: r.color }}
-                />
-                <span className="text-[11px] text-white/70 flex-1 truncate">{r.title}</span>
-                <div className="flex items-center gap-1.5">
-                  <span
-                    className="text-[8px] px-1.5 py-0.5 rounded-full"
-                    style={{ backgroundColor: `${r.tagColor}20`, color: r.tagColor }}
-                  >
-                    {r.tag}
-                  </span>
-                  <div className="h-4 w-4 rounded-full bg-white/10 flex items-center justify-center text-[7px] text-white/40">
-                    {r.votes}
-                  </div>
-                </div>
-              </div>
-            ))}
+          {/* Group: New */}
+          <div className="flex items-center gap-2 px-4 h-7 bg-[#17171a]/60 flex-shrink-0">
+            <span className="text-[9px] font-semibold uppercase tracking-widest text-[#55556a]">New</span>
+            <span className="text-[9px] text-[#3a3a4a]">· 3</span>
           </div>
+
+          {/* New rows */}
+          {NEW_ROWS.map((r, i) => (
+            <MockRow key={i} row={r} highlight={i === 0} />
+          ))}
+
+          {/* Group: Triaged */}
+          <div className="flex items-center gap-2 px-4 h-7 bg-[#17171a]/60 flex-shrink-0">
+            <span className="text-[9px] font-semibold uppercase tracking-widest text-[#55556a]">Triaged</span>
+            <span className="text-[9px] text-[#3a3a4a]">· 2</span>
+          </div>
+
+          {/* Triaged rows */}
+          {TRIAGED_ROWS.map((r, i) => (
+            <MockRow key={i} row={r} highlight={false} />
+          ))}
         </div>
       </div>
     </div>
   );
 }
 
-const MOCK_REQUESTS = [
-  { title: "Bulk triage from inbox view",         color: "#e5484d", tag: "triage",    tagColor: "#e5484d", votes: 8  },
-  { title: "RICE scoring for initiatives",        color: "#5e5ce6", tag: "scoring",   tagColor: "#5e5ce6", votes: 12 },
-  { title: "Shareable roadmap links",             color: "#30a46c", tag: "roadmap",   tagColor: "#30a46c", votes: 6  },
-  { title: "Jira / Linear sync integration",     color: "#f97316", tag: "integrations", tagColor: "#f97316", votes: 9 },
-  { title: "Quarterly capacity planning",         color: "#3b82f6", tag: "planning",  tagColor: "#3b82f6", votes: 5  },
-  { title: "Stakeholder voting rounds",           color: "#8b5cf6", tag: "voting",    tagColor: "#8b5cf6", votes: 7  },
+interface MockRowData {
+  id: string;
+  title: string;
+  signal: string;
+  source: string;
+  sourceColor: string;
+  votes: number;
+  date: string;
+  initials: string;
+  avatarColor: string;
+}
+
+function MockRow({ row, highlight }: { row: MockRowData; highlight: boolean }) {
+  return (
+    <div className={cn("flex items-center gap-2 px-4 h-8 border-b border-white/[0.03] flex-shrink-0", highlight && "bg-white/[0.03]")}>
+      {/* Priority dot */}
+      <div className={cn("h-1.5 w-1.5 rounded-full flex-shrink-0", row.signal === "critical" ? "bg-[#e5484d]" : row.signal === "important" ? "bg-[#f97316]" : "bg-[#3a3a4a]")} />
+      {/* ID */}
+      <span className="text-[9px] text-[#3a3a4a] w-10 flex-shrink-0 font-mono">{row.id}</span>
+      {/* Status circle */}
+      <div className="h-3 w-3 rounded-full border border-white/15 flex-shrink-0" />
+      {/* Title */}
+      <span className="text-[11px] text-white/70 flex-1 truncate">{row.title}</span>
+      {/* Source */}
+      <span className="text-[8px] px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: `${row.sourceColor}18`, color: row.sourceColor }}>
+        {row.source}
+      </span>
+      {/* Votes */}
+      <div className="flex items-center gap-0.5 text-[9px] text-[#3a3a4a] flex-shrink-0 w-5">
+        <span>↑</span><span>{row.votes}</span>
+      </div>
+      {/* Date */}
+      <span className="text-[9px] text-[#3a3a4a] flex-shrink-0 w-10 text-right">{row.date}</span>
+      {/* Avatar */}
+      <div className="h-4 w-4 rounded-full flex items-center justify-center text-[7px] font-bold text-white flex-shrink-0" style={{ backgroundColor: row.avatarColor }}>
+        {row.initials}
+      </div>
+    </div>
+  );
+}
+
+const NEW_ROWS: MockRowData[] = [
+  { id: "REQ-001", title: "Bulk status update for feature requests", signal: "important", source: "internal", sourceColor: "#5e5ce6", votes: 2, date: "May 20", initials: "SK", avatarColor: "#5e5ce6" },
+  { id: "REQ-004", title: "Export roadmap to PDF / CSV",             signal: "critical",  source: "customer", sourceColor: "#30a46c", votes: 6, date: "May 15", initials: "AR", avatarColor: "#30a46c" },
+  { id: "REQ-006", title: "Stakeholder voting rounds",               signal: "low",       source: "internal", sourceColor: "#5e5ce6", votes: 1, date: "May 12", initials: "LM", avatarColor: "#f97316" },
+];
+
+const TRIAGED_ROWS: MockRowData[] = [
+  { id: "REQ-002", title: "WSJF scoring framework support",          signal: "important", source: "internal", sourceColor: "#5e5ce6", votes: 1, date: "May 18", initials: "JR", avatarColor: "#8b5cf6" },
+  { id: "REQ-005", title: "Quarterly capacity planning board",       signal: "critical",  source: "customer", sourceColor: "#30a46c", votes: 5, date: "May 10", initials: "PN", avatarColor: "#ec4899" },
 ];
 
 // ── Logo strip ─────────────────────────────────
@@ -487,14 +523,14 @@ const STEPS = [
     n: "01",
     icon: Inbox,
     color: "#5e5ce6",
-    title: "Collect",
+    title: "Inbox",
     body: "Feature requests land in your team's inbox from any source — customers, internal Slack, support tickets, or leadership. Every signal in one place.",
   },
   {
     n: "02",
     icon: BarChart2,
     color: "#30a46c",
-    title: "Prioritize",
+    title: "Prioritization",
     body: "Score each initiative using your preferred framework. RICE gives you a formula; MoSCoW gives you speed. Either way, the ranking is defensible.",
   },
   {
@@ -542,7 +578,7 @@ function HowItWorks() {
                 >
                   <Icon size={16} style={{ color: s.color }} />
                 </div>
-                <div className="text-[10px] font-mono text-[#3a3a4a] mb-1">{s.n}</div>
+                <div className="text-[11px] font-mono text-[#3a3a4a] mb-1">{s.n}</div>
                 <h3 className="text-base font-semibold text-white mb-2">{s.title}</h3>
                 <p className="text-sm text-[#8888a0] leading-relaxed">{s.body}</p>
               </div>
@@ -596,10 +632,6 @@ function FinalCta({ onGetStarted, launching }: { onGetStarted?: () => void; laun
               <>Open Keel free <ArrowRight size={17} /></>
             )}
           </button>
-          <div className="flex items-center gap-3 text-sm text-[#55556a]">
-            <Users size={14} />
-            <span>Join 1,200+ product managers</span>
-          </div>
         </div>
       </div>
     </section>
@@ -623,9 +655,6 @@ function Footer() {
           {[
             { label: "Product",   href: "/product"   },
             { label: "Changelog", href: "/changelog" },
-            { label: "Docs",      href: "/docs"      },
-            { label: "Privacy",   href: "/privacy"   },
-            { label: "Terms",     href: "/terms"     },
           ].map(({ label, href }) => (
             <Link key={label} href={href} className="text-xs text-[#3a3a4a] hover:text-[#8888a0] transition-colors">
               {label}

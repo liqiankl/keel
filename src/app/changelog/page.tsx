@@ -127,12 +127,12 @@ export default function ChangelogPage() {
             <div className="flex items-center gap-3 mb-1">
               <span className="text-lg font-bold text-white">v{release.version}</span>
               {release.tag === "latest" && (
-                <span className="text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full bg-[#5e5ce6]/20 text-[#a8a8f0]">
+                <span className="text-[11px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full bg-[#5e5ce6]/20 text-[#a8a8f0]">
                   Latest
                 </span>
               )}
               {release.tag === "beta" && (
-                <span className="text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full bg-white/5 text-[#55556a]">
+                <span className="text-[11px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full bg-white/5 text-[#55556a]">
                   Beta
                 </span>
               )}
@@ -146,7 +146,7 @@ export default function ChangelogPage() {
                 return (
                   <li key={i} className="flex items-start gap-3 text-sm">
                     <span
-                      className="mt-0.5 flex-shrink-0 text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded"
+                      className="mt-0.5 flex-shrink-0 text-[11px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded"
                       style={{ backgroundColor: `${s.color}18`, color: s.color }}
                     >
                       {s.label}

@@ -1,6 +1,6 @@
 "use client";
 
-import { X, ExternalLink, Clock } from "lucide-react";
+import { X, ExternalLink, Clock, Map } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/Button";
 import { MoSCoWBadge } from "./MoSCoWCell";
@@ -33,15 +33,16 @@ interface InitiativeDetailProps {
   onUpdateMoSCoW: (id: string, label: MoSCoWLabel) => void;
   onUpdateWSJF: (id: string, patch: Partial<WSJFScore>) => void;
   onUpdateCustom: (id: string, dimId: string, value: number) => void;
+  onSendToRoadmap?: (id: string) => void;
 }
 
 function MetaRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-3 py-2 border-b border-[var(--color-border-subtle)] last:border-0">
-      <span className="w-28 flex-shrink-0 text-[12px] text-[var(--color-text-muted)] pt-0.5">
+      <span className="w-28 flex-shrink-0 text-[13px] text-[var(--color-text-muted)] pt-0.5">
         {label}
       </span>
-      <div className="flex-1 text-[13px] text-[var(--color-text-primary)]">{children}</div>
+      <div className="flex-1 text-[14px] text-[var(--color-text-primary)]">{children}</div>
     </div>
   );
 }
@@ -52,7 +53,7 @@ function ScoreDisplay({ label, value, large }: { label: string; value: number | 
       <span
         className={cn(
           "font-mono font-bold tabular-nums",
-          large ? "text-[28px]" : "text-[20px]",
+          large ? "text-[30px]" : "text-[22px]",
           value != null && value > 0
             ? "text-[var(--color-brand)]"
             : "text-[var(--color-text-muted)]",
@@ -60,7 +61,7 @@ function ScoreDisplay({ label, value, large }: { label: string; value: number | 
       >
         {value ?? "—"}
       </span>
-      <span className="text-[11px] text-[var(--color-text-muted)]">{label}</span>
+      <span className="text-[12px] text-[var(--color-text-muted)]">{label}</span>
     </div>
   );
 }
@@ -75,6 +76,7 @@ export function InitiativeDetail({
   onUpdateMoSCoW,
   onUpdateWSJF,
   onUpdateCustom,
+  onSendToRoadmap,
 }: InitiativeDetailProps) {
   const score = initiative.score;
   const rice  = score?.rice;
@@ -86,10 +88,10 @@ export function InitiativeDetail({
       {/* Header */}
       <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-[var(--color-border-subtle)] flex-shrink-0">
         <div className="min-w-0">
-          <h2 className="text-[14px] font-semibold text-[var(--color-text-primary)] leading-snug">
+          <h2 className="text-[15px] font-semibold text-[var(--color-text-primary)] leading-snug">
             {initiative.title}
           </h2>
-          <p className="text-[12px] text-[var(--color-text-muted)] mt-0.5">
+          <p className="text-[13px] text-[var(--color-text-muted)] mt-0.5">
             {initiative.productArea}
           </p>
         </div>
@@ -103,7 +105,7 @@ export function InitiativeDetail({
             "focus-visible:outline-2 focus-visible:outline-[var(--color-brand)]",
           )}
         >
-          <X size={14} />
+          <X size={19} />
         </button>
       </div>
 
@@ -133,7 +135,7 @@ export function InitiativeDetail({
 
         {framework === "moscow" && (
           <div className="flex flex-col items-center gap-2">
-            <p className="text-[11px] text-[var(--color-text-muted)]">MoSCoW Priority</p>
+            <p className="text-[12px] text-[var(--color-text-muted)]">MoSCoW Priority</p>
             <MoSCoWBadge value={score?.moscow ?? null} />
           </div>
         )}
@@ -150,7 +152,7 @@ export function InitiativeDetail({
         {/* ── RICE inputs ── */}
         {framework === "rice" && (
           <section>
-            <h3 className="text-[11px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-3">
+            <h3 className="text-[12px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-3">
               RICE Inputs
             </h3>
             <div className="space-y-2">
@@ -209,7 +211,7 @@ export function InitiativeDetail({
         {/* ── WSJF inputs ── */}
         {framework === "wsjf" && (
           <section>
-            <h3 className="text-[11px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-3">
+            <h3 className="text-[12px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-3">
               WSJF Inputs
             </h3>
             <div className="space-y-2">
@@ -238,11 +240,11 @@ export function InitiativeDetail({
         {/* ── Custom dimension inputs ── */}
         {framework === "custom" && (
           <section>
-            <h3 className="text-[11px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-3">
+            <h3 className="text-[12px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-3">
               Custom Scores
             </h3>
             {customDimensions.length === 0 ? (
-              <p className="text-[12px] text-[var(--color-text-muted)]">
+              <p className="text-[13px] text-[var(--color-text-muted)]">
                 No custom dimensions configured. Use "Configure dimensions" to add some.
               </p>
             ) : (
@@ -270,13 +272,13 @@ export function InitiativeDetail({
 
         {/* ── Metadata ── */}
         <section>
-          <h3 className="text-[11px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-3">
+          <h3 className="text-[12px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-3">
             Details
           </h3>
           <div>
             {initiative.description && (
               <MetaRow label="Description">
-                <span className="text-[var(--color-text-secondary)] leading-relaxed text-[12px]">
+                <span className="text-[var(--color-text-secondary)] leading-relaxed text-[13px]">
                   {initiative.description}
                 </span>
               </MetaRow>
@@ -291,12 +293,12 @@ export function InitiativeDetail({
               )}
             </MetaRow>
             <MetaRow label="Status">
-              <span className="capitalize text-[12px]">
+              <span className="capitalize text-[13px]">
                 {initiative.status.replace("_", " ")}
               </span>
             </MetaRow>
             <MetaRow label="Effort">
-              <span className="text-[12px] font-mono">
+              <span className="text-[13px] font-mono">
                 {initiative.effort.points != null
                   ? `${initiative.effort.points} pts`
                   : "—"}
@@ -304,8 +306,8 @@ export function InitiativeDetail({
             </MetaRow>
             {score?.scoredAt && (
               <MetaRow label="Last scored">
-                <span className="flex items-center gap-1.5 text-[12px] text-[var(--color-text-secondary)]">
-                  <Clock size={11} />
+                <span className="flex items-center gap-1.5 text-[13px] text-[var(--color-text-secondary)]">
+                  <Clock size={16} />
                   {new Date(score.scoredAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                 </span>
               </MetaRow>
@@ -314,9 +316,9 @@ export function InitiativeDetail({
               <MetaRow label="Jira Epic">
                 <a
                   href={`#jira/${initiative.jiraEpicId}`}
-                  className="flex items-center gap-1 text-[12px] text-[var(--color-brand)] hover:underline"
+                  className="flex items-center gap-1 text-[13px] text-[var(--color-brand)] hover:underline"
                 >
-                  {initiative.jiraEpicId} <ExternalLink size={10} />
+                  {initiative.jiraEpicId} <ExternalLink size={15} />
                 </a>
               </MetaRow>
             )}
@@ -325,7 +327,18 @@ export function InitiativeDetail({
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[var(--color-border-subtle)] flex-shrink-0">
+      <div className="flex items-center gap-2 px-5 py-3 border-t border-[var(--color-border-subtle)] flex-shrink-0">
+        {onSendToRoadmap && (
+          <Button
+            variant="primary"
+            size="sm"
+            className="flex-1 gap-1.5"
+            onClick={() => onSendToRoadmap(initiative.id)}
+          >
+            <Map size={18} />
+            Send to Roadmap
+          </Button>
+        )}
         <Button variant="ghost" size="sm" onClick={onClose}>
           Close
         </Button>
@@ -338,8 +351,8 @@ function InputRow({ label, hint, children }: { label: string; hint?: string; chi
   return (
     <div className="flex items-center gap-3">
       <div className="w-32 flex-shrink-0">
-        <p className="text-[12px] text-[var(--color-text-secondary)]">{label}</p>
-        {hint && <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">{hint}</p>}
+        <p className="text-[13px] text-[var(--color-text-secondary)]">{label}</p>
+        {hint && <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">{hint}</p>}
       </div>
       <div className="flex-1">{children}</div>
     </div>

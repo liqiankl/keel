@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { NewShareLinkModal } from "./NewShareLinkModal";
 import { useViewsStore, type ShareableView } from "@/store/useViewsStore";
+import { useGuestSession } from "@/context/GuestSessionContext";
 import { cn } from "@/lib/cn";
 
 // ─────────────────────────────────────────────
@@ -28,35 +29,44 @@ import { cn } from "@/lib/cn";
 export function ViewsView() {
   const { views, revokeView, restoreView, deleteView } = useViewsStore();
   const [modalOpen, setModalOpen] = useState(false);
+  const { isGuest } = useGuestSession();
 
-  const liveViews = views.filter((v) => !v.revokedAt);
-  const revokedViews = views.filter((v) => v.revokedAt);
+  // Guests see an empty views list — they haven't created any share links yet.
+  const effectiveViews = isGuest ? [] : views;
+  const liveViews = effectiveViews.filter((v) => !v.revokedAt);
+  const revokedViews = effectiveViews.filter((v) => v.revokedAt);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <Header
         title="Views"
         rightSlot={
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setModalOpen(true)}
-            className="gap-1.5"
-          >
-            <Plus size={13} />
-            New share link
-          </Button>
+          isGuest ? undefined : (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setModalOpen(true)}
+              className="gap-1.5"
+            >
+              <Plus size={13} />
+              New share link
+            </Button>
+          )
         }
       />
 
       <div className="flex-1 overflow-y-auto">
-        {views.length === 0 ? (
+        {effectiveViews.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <EmptyState
               Icon={Share2}
-              title="No shareable views yet"
-              description="Generate a read-only link to your roadmap for stakeholders who don't have access. Links stay live and always reflect the current plan."
-              action={{ label: "New share link", onClick: () => setModalOpen(true) }}
+              title={isGuest ? "No views yet" : "No shareable views yet"}
+              description={
+                isGuest
+                  ? "Share links you create will appear here. Admins can generate read-only roadmap links for stakeholders."
+                  : "Generate a read-only link to your roadmap for stakeholders who don't have access. Links stay live and always reflect the current plan."
+              }
+              action={isGuest ? undefined : { label: "New share link", onClick: () => setModalOpen(true) }}
             />
           </div>
         ) : (
@@ -274,7 +284,7 @@ function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
         variant === "success" &&
           "bg-[var(--color-success)]/10 text-[var(--color-success)]",
         variant === "muted" &&

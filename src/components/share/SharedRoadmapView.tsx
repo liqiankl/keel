@@ -13,19 +13,23 @@ import type { InitiativeStatus, RoadmapItem } from "@/types";
 // ─────────────────────────────────────────────
 
 const STATUS_LABEL: Record<InitiativeStatus, string> = {
-  backlog: "Backlog",
-  todo: "Planned",
+  backlog:     "Backlog",
+  todo:        "Planned",
   in_progress: "In Progress",
-  done: "Done",
-  canceled: "Canceled",
+  in_review:   "In Review",
+  closed:      "Closed",
+  done:        "Done",
+  canceled:    "Canceled",
 };
 
 const STATUS_DOT: Record<InitiativeStatus, string> = {
-  backlog: "bg-[#6b7280]",
-  todo: "bg-[#3b82f6]",
+  backlog:     "bg-[#6b7280]",
+  todo:        "bg-[#3b82f6]",
   in_progress: "bg-[#f59e0b]",
-  done: "bg-[#22c55e]",
-  canceled: "bg-[#ef4444]",
+  in_review:   "bg-[#9b59b6]",
+  closed:      "bg-[#2ecc71]",
+  done:        "bg-[#22c55e]",
+  canceled:    "bg-[#ef4444]",
 };
 
 const VISIBLE_STATUSES: InitiativeStatus[] = [
@@ -206,7 +210,7 @@ function InitiativeCard({ item, goals, showEffort }: InitiativeCardProps) {
 
         {/* Effort */}
         {showEffort && item.effort.points != null && (
-          <span className="text-[10px] text-white/40 border border-white/10 rounded px-1.5 py-0.5">
+          <span className="text-[11px] text-white/40 border border-white/10 rounded px-1.5 py-0.5">
             {item.effort.points} pts
           </span>
         )}
@@ -236,7 +240,7 @@ function PriorityBadge({ priority }: { priority: string }) {
   const p = map[priority] ?? map.none;
   return (
     <span
-      className="text-[10px] font-medium rounded px-1.5 py-0.5"
+      className="text-[11px] font-medium rounded px-1.5 py-0.5"
       style={{ color: p.color, backgroundColor: p.color + "22" }}
     >
       {p.label}

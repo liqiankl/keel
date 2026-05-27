@@ -10,7 +10,9 @@ import type { FilterTab, FeatureRequest } from "@/types";
 
 const TABS: { id: FilterTab; label: string }[] = [
   { id: "active",   label: "Active" },
+  { id: "all",      label: "All" },
   { id: "new",      label: "New" },
+  { id: "backlog",  label: "Backlog" },
   { id: "triaged",  label: "Triaged" },
   { id: "archived", label: "Archived" },
 ];
@@ -22,6 +24,7 @@ function countForTab(tab: FilterTab, requests: FeatureRequest[]): number {
     case "new":      return requests.filter((r) => r.status === "new").length;
     case "triaged":  return requests.filter((r) => r.status === "triaged").length;
     case "archived": return requests.filter((r) => r.status === "archived").length;
+    case "backlog":  return requests.filter((r) => r.status === "triaged").length;
     default:         return 0;
   }
 }
@@ -32,6 +35,8 @@ interface FilterTabsProps {
   onTabChange: (tab: FilterTab) => void;
   searchValue: string;
   onSearchChange: (v: string) => void;
+  visibleTabs?: FilterTab[];
+  searchPlaceholder?: string;
 }
 
 export function FilterTabs({
@@ -40,12 +45,16 @@ export function FilterTabs({
   onTabChange,
   searchValue,
   onSearchChange,
+  visibleTabs,
+  searchPlaceholder = "Search requests…",
 }: FilterTabsProps) {
+  const tabs = visibleTabs ? TABS.filter((t) => visibleTabs.includes(t.id)) : TABS;
+
   return (
     <div className="flex items-center border-b border-[var(--color-border-subtle)] px-4 gap-0 flex-shrink-0 h-10">
       {/* Tabs */}
       <div className="flex items-center gap-0 h-full" role="tablist" aria-label="Filter requests">
-        {TABS.map((tab) => {
+        {tabs.map((tab) => {
           const count = countForTab(tab.id, requests);
           const active = activeTab === tab.id;
           return (
@@ -67,7 +76,7 @@ export function FilterTabs({
               {count > 0 && (
                 <span
                   className={cn(
-                    "text-[11px] tabular-nums",
+                    "text-[12px] tabular-nums",
                     active ? "text-[var(--color-text-secondary)]" : "text-[var(--color-text-muted)]",
                   )}
                 >
@@ -101,11 +110,11 @@ export function FilterTabs({
         </svg>
         <input
           type="search"
-          placeholder="Search requests…"
+          placeholder={searchPlaceholder}
           value={searchValue}
           onChange={(e) => onSearchChange(e.target.value)}
           className={cn(
-            "h-7 w-48 rounded-md pl-7 pr-3 text-[12px]",
+            "h-7 w-48 rounded-md pl-7 pr-3 text-[13px]",
             "bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)]",
             "text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)]",
             "focus:outline-none focus:border-[var(--color-brand)]",

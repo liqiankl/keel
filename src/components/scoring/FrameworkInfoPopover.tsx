@@ -200,7 +200,7 @@ export function FrameworkInfoPopover({ framework, open, onClose, onMouseEnter, o
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
             className={cn(
-              "absolute right-0 top-[calc(100%+6px)] z-50",
+              "absolute left-0 top-[calc(100%+6px)] z-50",
               "w-[308px] rounded-xl",
               "border border-[var(--color-border-subtle)]",
               "bg-[var(--color-bg-elevated)]",

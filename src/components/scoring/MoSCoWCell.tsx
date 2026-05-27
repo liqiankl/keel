@@ -35,7 +35,7 @@ export function MoSCoWBadge({ value, small = false }: MoSCoWBadgeProps) {
     return (
       <span className={cn(
         "inline-flex items-center rounded px-1.5 font-medium",
-        small ? "py-0.5 text-[10px]" : "py-1 text-[11px]",
+        small ? "py-0.5 text-[11px]" : "py-1 text-[11px]",
         "text-[var(--color-text-muted)] border border-[var(--color-border-subtle)]",
       )}>
         —
@@ -46,7 +46,7 @@ export function MoSCoWBadge({ value, small = false }: MoSCoWBadgeProps) {
     <span
       className={cn(
         "inline-flex items-center rounded px-1.5 font-medium whitespace-nowrap",
-        small ? "py-0.5 text-[10px]" : "py-1 text-[11px]",
+        small ? "py-0.5 text-[11px]" : "py-1 text-[11px]",
       )}
       style={{ backgroundColor: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}
     >

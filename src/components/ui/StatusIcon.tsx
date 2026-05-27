@@ -66,6 +66,15 @@ function renderShape(status: Status) {
       );
 
     case "new":
+      return (
+        <rect
+          x="2" y="2" width="10" height="10" rx="2.5"
+          stroke="var(--color-status-todo)"
+          strokeWidth="1.5"
+          fill="none"
+        />
+      );
+
     case "todo":
       return (
         <circle

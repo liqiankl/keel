@@ -36,6 +36,7 @@ interface ScoringState {
   removeCustomDimension: (dimId: string) => void;
   updateCustomScore: (id: string, dimId: string, value: number) => void;
   addInitiative: (item: RoadmapItem) => void;
+  removeInitiative: (id: string) => void;
   setManualRank: (id: string, rank: number, reason: string) => void;
   setSortColumn: (col: string | null) => void;
   toggleSortDirection: () => void;
@@ -148,6 +149,9 @@ export const useScoringStore = create<ScoringState>()(
       addInitiative: (item) =>
         set((s) => ({ initiatives: [...s.initiatives, item] })),
 
+      removeInitiative: (id) =>
+        set((s) => ({ initiatives: s.initiatives.filter((i) => i.id !== id) })),
+
       setManualRank: (id, rank, reason) =>
         set((s) => ({
           initiatives: s.initiatives.map((item) =>
@@ -169,6 +173,13 @@ export const useScoringStore = create<ScoringState>()(
         sortColumn: s.sortColumn,
         sortDirection: s.sortDirection,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.initiatives = state.initiatives.map(
+            (i) => i.teamId ? i : { ...i, teamId: "team_navigators" },
+          );
+        }
+      },
     },
   ) as any,
   {

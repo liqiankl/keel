@@ -34,7 +34,7 @@ export default function RootLayout({
         {/* Runs synchronously before paint — prevents flash of wrong theme */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var t=localStorage.getItem('keel-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);})();`,
+            __html: `(function(){var t=localStorage.getItem('keel-theme');document.documentElement.setAttribute('data-theme',(t==='light'||t==='dark')?t:'dark');})();`,
           }}
         />
       </head>

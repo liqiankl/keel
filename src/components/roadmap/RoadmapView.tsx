@@ -11,15 +11,15 @@ import { CapacityBar } from "./CapacityBar";
 import { GoalsStrip } from "./GoalsStrip";
 import { PlanStatusBadge } from "./PlanStatusBadge";
 import { StatusColumn } from "./StatusColumn";
-import { ReviewersFooter } from "./ReviewersFooter";
 import { ShareModal } from "./ShareModal";
 import { RoadmapItemDetail } from "./RoadmapItemDetail";
+import { useToast } from "@/components/ui/Toast";
 import {
   useRoadmapStore,
   selectCapacityPercent,
 } from "@/store/useRoadmapStore";
 import { useAppStore } from "@/store/useAppStore";
-import { TEAMS } from "@/lib/constants";
+import { TEAMS, STATUS_CONFIG } from "@/lib/constants";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
 import { cn } from "@/lib/cn";
 import type { InitiativeStatus, PlanStatus, QuarterlyPlan, RoadmapItem } from "@/types";
@@ -60,6 +60,7 @@ export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
   const [shareOpen, setShareOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<QuarterTab>("q2");
   const [openItemId, setOpenItemId] = useState<string | null>(null);
+  const { showToast, ToastContainer } = useToast();
 
   const { plans, setPlanStatus, lockPlan, updatePlan, updateItemInPlan } = useRoadmapStore();
   const activeTeamId = useAppStore((s) => s.activeTeamId);
@@ -122,6 +123,12 @@ export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
   }
 
   function handleDropItem(itemId: string, dropPlanId: string, newStatus: InitiativeStatus) {
+    const plan = plans.find((p) => p.id === dropPlanId);
+    const item = plan?.items.find((i) => i.id === itemId);
+    if (item && item.status !== newStatus) {
+      const label = STATUS_CONFIG[newStatus]?.label ?? newStatus;
+      showToast(`"${item.title}" → ${label}`);
+    }
     updateItemInPlan(dropPlanId, itemId, { status: newStatus });
   }
 
@@ -130,6 +137,12 @@ export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
   }
 
   function handleItemStatusChange(itemId: string, planId: string, status: InitiativeStatus) {
+    const plan = plans.find((p) => p.id === planId);
+    const item = plan?.items.find((i) => i.id === itemId);
+    if (item && item.status !== status) {
+      const label = STATUS_CONFIG[status]?.label ?? status;
+      showToast(`"${item.title}" → ${label}`);
+    }
     updateItemInPlan(planId, itemId, { status });
   }
 
@@ -231,6 +244,8 @@ export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
         </div>
       )}
 
+      <ToastContainer />
+
       {activeTab !== "year" && activePlan && (
         <>
           {/* ── Capacity bar ── */}
@@ -284,9 +299,6 @@ export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
               ) : null;
             })()}
           </div>
-
-          {/* ── Reviewers footer ── */}
-          <ReviewersFooter plan={activePlan} onStatusChange={handleStatusChange} />
 
           {/* ── Share modal ── */}
           <ShareModal

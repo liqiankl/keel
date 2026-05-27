@@ -21,12 +21,14 @@ interface RequestGroupHeaderProps {
   status: RequestStatus;
   count: number;
   onAddToGroup?: () => void;
+  statusLabels?: Partial<Record<RequestStatus, string>>;
 }
 
 export function RequestGroupHeader({
   status,
   count,
   onAddToGroup,
+  statusLabels,
 }: RequestGroupHeaderProps) {
   return (
     <div
@@ -40,7 +42,7 @@ export function RequestGroupHeader({
       <StatusIcon status={status} size={14} />
 
       <span className="text-[13px] font-medium text-[var(--color-text-secondary)]">
-        {STATUS_LABELS[status]}
+        {statusLabels?.[status] ?? STATUS_LABELS[status]}
       </span>
 
       <span className="text-[12px] text-[var(--color-text-muted)] tabular-nums">

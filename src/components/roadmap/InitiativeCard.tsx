@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { PRIORITY_CONFIG } from "@/lib/constants";
+import { Tooltip } from "@/components/ui/Tooltip";
 import type { RoadmapItem, QuarterlyGoal } from "@/types";
 
 const MOSCOW_COLORS: Record<string, { color: string; bg: string }> = {
@@ -13,6 +14,13 @@ const MOSCOW_COLORS: Record<string, { color: string; bg: string }> = {
 
 const MOSCOW_LABELS: Record<string, string> = {
   must: "Must", should: "Should", could: "Could", wont: "Won't",
+};
+
+const MOSCOW_DESCRIPTIONS: Record<string, string> = {
+  must:   "Must have — critical for this quarter",
+  should: "Should have — high value but not critical",
+  could:  "Could have — nice to have if capacity allows",
+  wont:   "Won't have — deferred to a future quarter",
 };
 
 interface InitiativeCardProps {
@@ -51,12 +59,13 @@ export function InitiativeCard({ item, goals, planId, isOpen, onOpen }: Initiati
       )}
     >
       {/* Priority accent */}
-      <span
-        className="absolute inset-y-0 left-0 w-[3px] rounded-l-xl"
-        style={{ backgroundColor: priorityCfg.color }}
-        title={`${priorityCfg.label} priority`}
-        aria-hidden="true"
-      />
+      <Tooltip content={`${priorityCfg.label} priority`} placement="right">
+        <span
+          className="absolute inset-y-0 left-0 w-[3px] rounded-l-xl cursor-default"
+          style={{ backgroundColor: priorityCfg.color }}
+          aria-hidden="true"
+        />
+      </Tooltip>
 
       {/* Title */}
       <p className="text-[13px] font-medium text-[var(--color-text-primary)] leading-snug pl-1">
@@ -69,13 +78,13 @@ export function InitiativeCard({ item, goals, planId, isOpen, onOpen }: Initiati
         {itemGoals.length > 0 && (
           <div className="flex items-center gap-1">
             {itemGoals.map((g) => (
-              <span
-                key={g.id}
-                className="h-2 w-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: g.color }}
-                title={g.title}
-                aria-label={g.title}
-              />
+              <Tooltip key={g.id} content={g.title} placement="top">
+                <span
+                  className="h-2 w-2 rounded-full flex-shrink-0 cursor-default"
+                  style={{ backgroundColor: g.color }}
+                  aria-label={g.title}
+                />
+              </Tooltip>
             ))}
           </div>
         )}
@@ -85,23 +94,23 @@ export function InitiativeCard({ item, goals, planId, isOpen, onOpen }: Initiati
 
         {/* MoSCoW badge */}
         {moscowCfg && moscow && (
-          <span
-            className="inline-flex items-center h-[18px] px-1.5 rounded-md text-[11px] font-medium"
-            style={{ backgroundColor: moscowCfg.bg, color: moscowCfg.color }}
-            title={`MoSCoW: ${MOSCOW_LABELS[moscow]}`}
-          >
-            {MOSCOW_LABELS[moscow]}
-          </span>
+          <Tooltip content={MOSCOW_DESCRIPTIONS[moscow] ?? `MoSCoW: ${MOSCOW_LABELS[moscow]}`} placement="top">
+            <span
+              className="inline-flex items-center h-[18px] px-1.5 rounded-md text-[11px] font-medium cursor-default"
+              style={{ backgroundColor: moscowCfg.bg, color: moscowCfg.color }}
+            >
+              {MOSCOW_LABELS[moscow]}
+            </span>
+          </Tooltip>
         )}
 
         {/* Effort */}
         {item.effort.points != null && (
-          <span
-            className="text-[11px] font-mono text-[var(--color-text-muted)] tabular-nums"
-            title="Story points"
-          >
-            {item.effort.points} pts
-          </span>
+          <Tooltip content="Story points (effort estimate)" placement="top">
+            <span className="text-[11px] font-mono text-[var(--color-text-muted)] tabular-nums cursor-default">
+              {item.effort.points} pts
+            </span>
+          </Tooltip>
         )}
       </div>
     </div>

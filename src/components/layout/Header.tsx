@@ -1,8 +1,7 @@
 "use client";
 
-import { Filter, Star, LayoutList, LayoutGrid, Map } from "lucide-react";
+import { Star, LayoutList, LayoutGrid, Map } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { Button } from "@/components/ui/Button";
 import { useAppStore } from "@/store/useAppStore";
 import type { ViewMode } from "@/types";
 
@@ -30,20 +29,20 @@ export function Header({
   const { viewMode, setViewMode } = useAppStore();
 
   return (
-    <header className="keel-topbar-height flex items-center border-b border-[var(--color-border-subtle)] px-4 gap-3 flex-shrink-0">
-      {/* Title row */}
-      <div className="flex items-center gap-2 min-w-0">
-        <h1 className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+    <header className="keel-topbar-height flex items-center border-b border-[var(--color-border-subtle)] px-5 gap-3 flex-shrink-0 bg-[var(--color-bg-base)]">
+      {/* Title */}
+      <div className="flex items-center gap-2.5 min-w-0">
+        <h1 className="text-[15px] font-semibold tracking-tight text-[var(--color-text-primary)] truncate leading-none">
           {title}
         </h1>
         {onStar && (
           <button
             onClick={onStar}
             aria-label={starred ? "Unstar this view" : "Star this view"}
-            className="text-[var(--color-text-muted)] hover:text-[var(--color-warning)] transition-colors"
+            className="text-[var(--color-text-muted)] hover:text-[var(--color-warning)] transition-colors flex-shrink-0"
           >
             <Star
-              size={14}
+              size={15}
               fill={starred ? "var(--color-warning)" : "none"}
               stroke={starred ? "var(--color-warning)" : "currentColor"}
             />
@@ -51,19 +50,14 @@ export function Header({
         )}
       </div>
 
-      {/* Spacer */}
       <div className="flex-1" />
 
       {/* Right controls */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         {showViewToggle && (
           <ViewToggle current={viewMode} onChange={setViewMode} />
         )}
         {rightSlot}
-        <Button variant="ghost" size="sm" className="gap-1.5">
-          <Filter size={13} />
-          Filter
-        </Button>
       </div>
     </header>
   );
@@ -86,7 +80,7 @@ function ViewToggle({
 }) {
   return (
     <div
-      className="flex items-center gap-0.5 rounded-md border border-[var(--color-border-subtle)] p-0.5"
+      className="flex items-center gap-0.5 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-bg-elevated)] p-0.5"
       role="group"
       aria-label="View mode"
     >
@@ -97,14 +91,14 @@ function ViewToggle({
           aria-label={label}
           aria-pressed={current === mode}
           className={cn(
-            "flex h-6 w-6 items-center justify-center rounded transition-colors",
+            "flex h-6 w-6 items-center justify-center rounded-md transition-colors",
             "focus-visible:outline-2 focus-visible:outline-[var(--color-brand)]",
             current === mode
-              ? "bg-[var(--color-bg-hover)] text-[var(--color-text-primary)]"
+              ? "bg-[var(--color-bg-base)] text-[var(--color-text-primary)] shadow-sm"
               : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]",
           )}
         >
-          <Icon size={13} />
+          <Icon size={14} />
         </button>
       ))}
     </div>

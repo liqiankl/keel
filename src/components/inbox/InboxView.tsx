@@ -116,8 +116,10 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
     const priority =
       request.prioritySignal === "critical" ? "urgent" :
       request.prioritySignal === "important" ? "high" : "low";
+    const teamId = initialTeam ? TEAMS.find((t) => t.slug === initialTeam)?.id : undefined;
     addInitiative({
       id:                `init_${id}_${Date.now()}`,
+      teamId,
       featureRequestId:  id,
       title:             request.title,
       description:       request.description,
@@ -139,7 +141,7 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
     setPrioritizeToast(request.title);
     setTimeout(() => setPrioritizeToast(null), 3500);
     if (phaseKey) markPhaseActed(phaseKey);
-  }, [requests, addInitiative, setStatus, phaseKey, markPhaseActed]);
+  }, [requests, addInitiative, setStatus, phaseKey, markPhaseActed, initialTeam]);
 
   function handleOpen(id: string) {
     setOpenId((prev) => (prev === id ? null : id));
@@ -233,6 +235,7 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
             onSendToPrioritize={initialTeam ? handleSendToPrioritize : undefined}
             allowedStatuses={initialTeam ? ["new", "triaged"] : undefined}
             statusLabels={initialTeam ? { triaged: "Backlog" } : undefined}
+            hideStatusIcon={!!initialTeam}
           />
         </div>
 

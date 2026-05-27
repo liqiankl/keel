@@ -35,10 +35,16 @@
   --color-brand-subtle:     #3a3a80;
   --color-brand-foreground: #ffffff;
 
+  /* ── Admin badge — dark-mode defaults (6.3:1 contrast) ── */
+  --color-admin-badge-bg:   #16153e;
+  --color-admin-badge-text: #9b99f5;
+
   /* ── Status ── */
   --color-status-backlog:     #55556a;
   --color-status-todo:        #8888a0;
   --color-status-in-progress: #f5a623;
+  --color-status-in-review:   #9b59b6;
+  --color-status-closed:      #2ecc71;
   --color-status-done:        #4a90d9;
   --color-status-canceled:    #6b6b7a;
 
@@ -119,10 +125,8 @@
 }
 
 /* ─────────────────────────────────────────────
-   LIGHT THEME — overrides @layer theme defaults.
-   Unlayered CSS beats @layer theme in the cascade.
-   Applied via: data-theme="light" (explicit) or
-   prefers-color-scheme: light (system default).
+   LIGHT THEME — applied only via data-theme="light".
+   System preference has no effect.
 ───────────────────────────────────────────── */
 
 html[data-theme="light"] {
@@ -141,32 +145,15 @@ html[data-theme="light"] {
   --color-text-muted:     #a0a0b5;
   --color-text-inverse:   #ffffff;
 
+  --color-brand-subtle:   #ededff;
+
+  /* ── Admin badge — light-mode (6.6:1 contrast) ── */
+  --color-admin-badge-bg:   #ededff;
+  --color-admin-badge-text: #4340c7;
+
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.14);
-}
-
-@media (prefers-color-scheme: light) {
-  html:not([data-theme="dark"]) {
-    --color-bg-base:       #f7f7f8;
-    --color-bg-surface:    #ffffff;
-    --color-bg-elevated:   #ffffff;
-    --color-bg-hover:      #f0f0f5;
-    --color-bg-selected:   #e8e8f5;
-    --color-bg-overlay:    rgba(0, 0, 0, 0.40);
-
-    --color-border-subtle: #e4e4ea;
-    --color-border-strong: #d0d0da;
-
-    --color-text-primary:   #111118;
-    --color-text-secondary: #6b6b80;
-    --color-text-muted:     #a0a0b5;
-    --color-text-inverse:   #ffffff;
-
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.14);
-  }
 }
 
 /* ─────────────────────────────────────────────
@@ -232,10 +219,6 @@ body {
 
 html[data-theme="light"] { color-scheme: light; }
 
-@media (prefers-color-scheme: light) {
-  html:not([data-theme="dark"]) { color-scheme: light; }
-}
-
 /* ─────────────────────────────────────────────
    UTILITY CLASSES (not covered by Tailwind tokens)
 ───────────────────────────────────────────── */
@@ -261,4 +244,14 @@ html[data-theme="light"] { color-scheme: light; }
 .keel-topbar-height {
   height: var(--spacing-topbar);
   min-height: var(--spacing-topbar);
+}
+
+@keyframes ping-slow {
+  0%   { transform: scale(1); opacity: 0.7; }
+  25%  { transform: scale(2); opacity: 0; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+.animate-ping-slow {
+  animation: ping-slow 4s cubic-bezier(0, 0, 0.2, 1) infinite;
 }

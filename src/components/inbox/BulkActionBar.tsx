@@ -1,6 +1,6 @@
 "use client";
 
-import { X, CheckCircle, Archive, CircleDot, Tag } from "lucide-react";
+import { X, CheckCircle, Archive, CircleDot, Tag, BarChart2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/Button";
 import type { RequestStatus } from "@/types";
@@ -15,6 +15,7 @@ interface BulkActionBarProps {
   onBulkStatus: (status: RequestStatus) => void;
   onBulkTag: (tag: string) => void;
   onClearSelection: () => void;
+  onSendToPrioritize?: () => void;
 }
 
 export function BulkActionBar({
@@ -22,6 +23,7 @@ export function BulkActionBar({
   onBulkStatus,
   onBulkTag,
   onClearSelection,
+  onSendToPrioritize,
 }: BulkActionBarProps) {
   if (selectedCount === 0) return null;
 
@@ -44,6 +46,14 @@ export function BulkActionBar({
 
       {/* Actions */}
       <div className="flex items-center gap-1">
+        {onSendToPrioritize && (
+          <BulkButton
+            icon={<BarChart2 size={13} />}
+            label="Send to Prioritization"
+            onClick={onSendToPrioritize}
+            highlight
+          />
+        )}
         <BulkButton
           icon={<CircleDot size={13} />}
           label="Mark new"
@@ -90,17 +100,22 @@ function BulkButton({
   icon,
   label,
   onClick,
+  highlight,
 }: {
   icon: React.ReactNode;
   label: string;
   onClick: () => void;
+  highlight?: boolean;
 }) {
   return (
     <Button
-      variant="ghost"
+      variant={highlight ? "primary" : "ghost"}
       size="sm"
       onClick={onClick}
-      className="gap-1.5 text-[12px] text-[var(--color-text-secondary)] h-7"
+      className={cn(
+        "gap-1.5 text-[12px] h-7",
+        !highlight && "text-[var(--color-text-secondary)]",
+      )}
     >
       {icon}
       {label}

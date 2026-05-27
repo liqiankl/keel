@@ -253,9 +253,9 @@ export function InviteModal({ open, onClose }: InviteModalProps) {
                     Add another
                   </button>
                 </div>
-                <p className="mt-1 text-[10px] text-[var(--color-text-muted)]">
-                  Press <kbd className="px-1 py-0.5 rounded bg-[var(--color-bg-hover)] text-[9px] font-mono">Enter</kbd> or{" "}
-                  <kbd className="px-1 py-0.5 rounded bg-[var(--color-bg-hover)] text-[9px] font-mono">,</kbd> to add multiple. Paste a list to bulk-add.
+                <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
+                  Press <kbd className="px-1 py-0.5 rounded bg-[var(--color-bg-hover)] text-[10px] font-mono">Enter</kbd> or{" "}
+                  <kbd className="px-1 py-0.5 rounded bg-[var(--color-bg-hover)] text-[10px] font-mono">,</kbd> to add multiple. Paste a list to bulk-add.
                 </p>
               </div>
 
@@ -313,7 +313,7 @@ export function InviteModal({ open, onClose }: InviteModalProps) {
                             >
                               <div className="flex-1 min-w-0">
                                 <p className="text-[12px] font-medium text-[var(--color-text-primary)]">{opt.label}</p>
-                                <p className="text-[10px] text-[var(--color-text-muted)]">{opt.description}</p>
+                                <p className="text-[11px] text-[var(--color-text-muted)]">{opt.description}</p>
                               </div>
                               {role === opt.value && (
                                 <Check size={13} className="text-[var(--color-brand)] mt-0.5 flex-shrink-0" />
@@ -380,7 +380,7 @@ export function InviteModal({ open, onClose }: InviteModalProps) {
                               >
                                 {team ? (
                                   <div
-                                    className="h-4 w-4 rounded flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
+                                    className="h-4 w-4 rounded flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
                                     style={{ backgroundColor: team.color }}
                                   >
                                     {team.name[0]}

@@ -82,6 +82,12 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialTeam, initialTab]);
 
+  // Team-scoped but not tab-filtered — used for accurate tab counts.
+  const baseRequests = useMemo(() => {
+    if (activeTeamId) return requests.filter((r) => r.teamId === activeTeamId);
+    return requests.filter((r) => r.teamId == null);
+  }, [requests, activeTeamId]);
+
   const filteredRequests = useMemo(
     () => selectFilteredRequests({ requests, filters }, activeTeamId),
     [requests, filters, activeTeamId],
@@ -217,7 +223,7 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
 
       <FilterTabs
         activeTab={filters.tab}
-        requests={requests}
+        requests={baseRequests}
         onTabChange={(tab) => {
           setFilter("tab", tab);
           setOpenId(null);

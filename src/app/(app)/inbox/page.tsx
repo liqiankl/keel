@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { WorkflowBar } from "@/components/workflow/WorkflowBar";
@@ -208,6 +208,7 @@ export default function InboxPage() {
   const [selected, setSelected]             = useState<Set<string>>(new Set());
   const [movedItems, setMovedItems]         = useState<{ title: string; teamName: string }[]>([]);
   const [hasMoved, setHasMoved]             = useState(false);
+  const [lastMovedTeamSlug, setLastMovedTeamSlug] = useState<string | null>(null);
   const [moveModalFeature, setMoveModalFeature] = useState<InboxFeature | null>(null);
   const [search, setSearch]                 = useState("");
   const [deletedToast, setDeletedToast]     = useState<string | null>(null);
@@ -219,6 +220,16 @@ export default function InboxPage() {
   const markPhaseActed = useAppStore((s) => s.markPhaseActed);
   const hasActed = phasesActed.includes("inbox");
   const router = useRouter();
+
+  // Auto-navigate to the team's Ideas page when inbox is cleared after moves.
+  const prevFeaturesLen = useRef(INITIAL_FEATURES.length);
+  useEffect(() => {
+    if (prevFeaturesLen.current > 0 && features.length === 0 && hasMoved && lastMovedTeamSlug) {
+      const t = setTimeout(() => router.push(`/team/${lastMovedTeamSlug}/ideas`), 1200);
+      return () => clearTimeout(t);
+    }
+    prevFeaturesLen.current = features.length;
+  }, [features.length, hasMoved, lastMovedTeamSlug, router]);
 
   const oldestDays = features.length
     ? Math.max(...features.map((f) => Math.floor((Date.now() - new Date(f.submittedAt).getTime()) / 86_400_000)))
@@ -299,6 +310,7 @@ export default function InboxPage() {
     setFeatures((prev) => prev.filter((f) => !movedIds.has(f.id)));
     setSelected((prev) => { const next = new Set(prev); featureIds.forEach((id) => next.delete(id)); return next; });
     setHasMoved(true);
+    setLastMovedTeamSlug(team.slug);
     setMovedItems((prev) => [
       ...prev,
       { title: `${targets.length} idea${targets.length !== 1 ? "s" : ""}`, teamName: team.name },

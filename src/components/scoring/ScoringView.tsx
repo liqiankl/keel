@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useStore } from "zustand";
 import { BarChart2, Check, Map, X } from "lucide-react";
 import { Header } from "@/components/layout/Header";
@@ -11,7 +12,6 @@ import { ScoringTable } from "./ScoringTable";
 import { InitiativeDetail } from "./InitiativeDetail";
 import { CustomDimensionsModal } from "./CustomDimensionsModal";
 import { WorkflowBar } from "@/components/workflow/WorkflowBar";
-import { NextPhaseBar } from "@/components/workflow/NextPhaseBar";
 import { useScoringStore } from "@/store/useScoringStore";
 import { useRoadmapStore } from "@/store/useRoadmapStore";
 import { useAppStore } from "@/store/useAppStore";
@@ -65,6 +65,7 @@ interface ScoringViewProps {
 }
 
 export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
+  const router = useRouter();
   const [openId, setOpenId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [customModalOpen, setCustomModalOpen] = useState(false);
@@ -128,6 +129,21 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
   }, [plans, teamId]);
 
   const { addPlan } = useRoadmapStore();
+
+  // Auto-navigate to roadmap when all initiatives are sent there.
+  const prevInitiativesLen = useRef<number | null>(null);
+  useEffect(() => {
+    if (!initialTeam) return;
+    if (prevInitiativesLen.current === null) {
+      prevInitiativesLen.current = initiatives.length;
+      return;
+    }
+    if (prevInitiativesLen.current > 0 && initiatives.length === 0 && hasActed) {
+      const t = setTimeout(() => router.push(`/team/${initialTeam}/roadmap`), 1200);
+      return () => clearTimeout(t);
+    }
+    prevInitiativesLen.current = initiatives.length;
+  }, [initiatives.length, hasActed, initialTeam, router]);
 
   const handleSendToRoadmap = useCallback((id: string) => {
     const initiative = initiatives.find((i) => i.id === id);
@@ -349,14 +365,6 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
         onAdd={addCustomDimension}
         onRemove={removeCustomDimension}
       />
-
-      {/* ── Next phase bar ── */}
-      {initialTeam && hasActed && (
-        <NextPhaseBar
-          nextPhase="Roadmap"
-          options={[{ label: "Roadmap", href: `/team/${initialTeam}/roadmap` }]}
-        />
-      )}
 
       {/* ── Roadmap toast ── */}
       {roadmapToast && (

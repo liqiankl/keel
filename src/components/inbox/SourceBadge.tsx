@@ -13,7 +13,7 @@ const SOURCE_CONFIG: Record<RequestSource, { label: string; color: string }> = {
 };
 
 export function SourceBadge({ source, className }: SourceBadgeProps) {
-  const { label, color } = SOURCE_CONFIG[source];
+  const { label, color } = SOURCE_CONFIG[source] ?? { label: source, color: "#94a3b8" };
   return (
     <span
       className={cn(

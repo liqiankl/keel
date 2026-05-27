@@ -127,8 +127,21 @@ export const useInboxStore = create<InboxState>()(
       }),
       {
         name: "keel-inbox",
-        version: 2,
+        version: 3,
         partialize: (s) => ({ requests: s.requests }),
+        migrate: (persisted: any, version: number) => {
+          if (version < 3) {
+            const SOURCE_MAP: Record<string, string> = {
+              market: "customer", sales: "customer",
+              leadership: "internal",
+            };
+            persisted.requests = (persisted.requests ?? []).map((r: any) => ({
+              ...r,
+              source: SOURCE_MAP[r.source] ?? r.source,
+            }));
+          }
+          return persisted;
+        },
       },
     ) as any,
     {

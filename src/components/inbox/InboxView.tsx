@@ -221,19 +221,21 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
       <Header title={title} />
       {initialTeam && <WorkflowBar currentStage="ideas" teamSlug={initialTeam} />}
 
-      <FilterTabs
-        activeTab={filters.tab}
-        requests={baseRequests}
-        onTabChange={(tab) => {
-          setFilter("tab", tab);
-          setOpenId(null);
-          clearSelection();
-        }}
-        searchValue={filters.search}
-        onSearchChange={(v) => setFilter("search", v)}
-        visibleTabs={visibleTabs}
-        searchPlaceholder={initialTeam ? "Search ideas…" : "Search requests…"}
-      />
+      {(!visibleTabs || visibleTabs.length > 1) && (
+        <FilterTabs
+          activeTab={filters.tab}
+          requests={baseRequests}
+          onTabChange={(tab) => {
+            setFilter("tab", tab);
+            setOpenId(null);
+            clearSelection();
+          }}
+          searchValue={filters.search}
+          onSearchChange={(v) => setFilter("search", v)}
+          visibleTabs={visibleTabs}
+          searchPlaceholder={initialTeam ? "Search ideas…" : "Search requests…"}
+        />
+      )}
 
       <BulkActionBar
         selectedCount={selectedIds.length}

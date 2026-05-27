@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useStore } from "zustand";
 import { Header } from "@/components/layout/Header";
 import { FilterTabs } from "./FilterTabs";
@@ -32,6 +33,7 @@ interface InboxViewProps {
 }
 
 export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTabs }: InboxViewProps = {}) {
+  const router = useRouter();
   const [openId, setOpenId] = useState<string | null>(null);
   const [newModalOpen, setNewModalOpen] = useState(false);
   const [prioritizeToast, setPrioritizeToast] = useState<string | null>(null);
@@ -87,6 +89,25 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
     if (activeTeamId) return requests.filter((r) => r.teamId === activeTeamId);
     return requests.filter((r) => r.teamId == null);
   }, [requests, activeTeamId]);
+
+  // Auto-navigate to prioritization when all ideas have been sent there.
+  const newIdeasCount = useMemo(
+    () => baseRequests.filter((r) => r.status === "new").length,
+    [baseRequests],
+  );
+  const prevNewIdeasCount = useRef<number | null>(null);
+  useEffect(() => {
+    if (!initialTeam) return;
+    if (prevNewIdeasCount.current === null) {
+      prevNewIdeasCount.current = newIdeasCount;
+      return;
+    }
+    if (prevNewIdeasCount.current > 0 && newIdeasCount === 0 && hasActed) {
+      const t = setTimeout(() => router.push(`/team/${initialTeam}/prioritization`), 1200);
+      return () => clearTimeout(t);
+    }
+    prevNewIdeasCount.current = newIdeasCount;
+  }, [newIdeasCount, hasActed, initialTeam, router]);
 
   const filteredRequests = useMemo(
     () => selectFilteredRequests({ requests, filters }, activeTeamId),
@@ -318,14 +339,6 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
           setOpenId(req.id);
         }}
       />
-
-      {/* ── Next phase bar ── */}
-      {initialTeam && hasActed && (
-        <NextPhaseBar
-          nextPhase="Prioritization"
-          options={[{ label: "Prioritization", href: `/team/${initialTeam}/prioritization` }]}
-        />
-      )}
 
       {prioritizeToast && (
         <div className={cn(

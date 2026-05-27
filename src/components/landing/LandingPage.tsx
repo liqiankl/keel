@@ -167,7 +167,7 @@ function Hero({
       </p>
 
       {/* App UI Mockup */}
-      <div className="relative mx-auto mt-16 max-w-5xl">
+      <div className="relative mx-auto mt-16 max-w-5xl overflow-x-auto">
         {/* Glow under the card */}
         <div
           className="absolute inset-x-10 -bottom-4 h-16 blur-2xl opacity-40 rounded-full"

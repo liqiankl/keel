@@ -257,8 +257,10 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
       <div className="flex flex-1 overflow-hidden min-h-0">
         {/* Table */}
         <div
-          className="flex flex-col overflow-hidden transition-all duration-200"
-          style={{ flex: hasDetail ? "0 0 58%" : "1 1 0%" }}
+          className={cn(
+            "flex flex-col overflow-hidden transition-all duration-200",
+            hasDetail ? "hidden md:flex md:[flex:0_0_58%]" : "flex-1",
+          )}
         >
           {initiatives.length === 0 ? (
             <div className="flex flex-1 items-center justify-center">
@@ -298,10 +300,7 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
 
         {/* Detail panel */}
         {hasDetail && openInitiative && (
-          <div
-            className="flex flex-col overflow-hidden"
-            style={{ flex: "0 0 42%" }}
-          >
+          <div className="flex flex-col overflow-hidden flex-1 md:[flex:0_0_42%]">
             <InitiativeDetail
               initiative={openInitiative}
               framework={activeFramework}

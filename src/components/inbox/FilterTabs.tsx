@@ -51,9 +51,9 @@ export function FilterTabs({
   const tabs = visibleTabs ? TABS.filter((t) => visibleTabs.includes(t.id)) : TABS;
 
   return (
-    <div className="flex items-center border-b border-[var(--color-border-subtle)] px-4 gap-0 flex-shrink-0 h-10">
+    <div className="flex items-center border-b border-[var(--color-border-subtle)] px-2 sm:px-4 gap-0 flex-shrink-0 h-10 overflow-x-auto">
       {/* Tabs */}
-      <div className="flex items-center gap-0 h-full" role="tablist" aria-label="Filter requests">
+      <div className="flex items-center gap-0 h-full flex-shrink-0" role="tablist" aria-label="Filter requests">
         {tabs.map((tab) => {
           const count = countForTab(tab.id, requests);
           const active = activeTab === tab.id;
@@ -114,7 +114,7 @@ export function FilterTabs({
           value={searchValue}
           onChange={(e) => onSearchChange(e.target.value)}
           className={cn(
-            "h-7 w-48 rounded-md pl-7 pr-3 text-[13px]",
+            "h-7 w-28 sm:w-48 rounded-md pl-7 pr-3 text-[13px]",
             "bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)]",
             "text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)]",
             "focus:outline-none focus:border-[var(--color-brand)]",

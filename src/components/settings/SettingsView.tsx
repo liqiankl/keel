@@ -84,9 +84,34 @@ export function SettingsView({ initialSection = "profile" }: Props) {
   const activeMeta = SECTIONS.find((s) => s.id === active)!;
 
   return (
-    <div className="flex h-full overflow-hidden">
-      {/* ── Section nav ── */}
-      <aside className="w-[200px] flex-shrink-0 border-r border-[var(--color-border-subtle)] bg-[var(--color-bg-base)] overflow-y-auto">
+    <div className="flex flex-col md:flex-row h-full overflow-hidden">
+      {/* ── Mobile top nav ── */}
+      <div className="md:hidden flex-shrink-0 border-b border-[var(--color-border-subtle)] overflow-x-auto">
+        <nav className="flex px-3 py-2 gap-1">
+          {SECTIONS.filter((s) => !s.comingSoon).map((s) => {
+            const Icon = s.icon;
+            const isActive = s.id === active;
+            return (
+              <button
+                key={s.id}
+                onClick={() => navigate(s.id)}
+                className={cn(
+                  "flex items-center gap-1.5 h-8 px-3 rounded-md text-[12px] whitespace-nowrap transition-colors flex-shrink-0",
+                  isActive
+                    ? "bg-[var(--color-bg-selected)] text-[var(--color-text-primary)] font-medium"
+                    : "text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]",
+                )}
+              >
+                <Icon size={13} />
+                {s.label}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* ── Desktop side nav ── */}
+      <aside className="hidden md:block w-[200px] flex-shrink-0 border-r border-[var(--color-border-subtle)] bg-[var(--color-bg-base)] overflow-y-auto">
         <div className="px-4 py-5">
           <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)] mb-2">
             Settings
@@ -136,7 +161,7 @@ export function SettingsView({ initialSection = "profile" }: Props) {
 
       {/* ── Content panel ── */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-2xl mx-auto px-8 py-8">
+        <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8">
           <div className="mb-6">
             <h1 className="text-lg font-semibold text-[var(--color-text-primary)]">
               {activeMeta.label}

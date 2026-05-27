@@ -85,7 +85,7 @@ export default function WorkspacePage() {
       </div>
 
       {/* ── Hero ── */}
-      <div className="relative z-10 flex flex-col items-center text-center px-6 pt-20 pb-16">
+      <div className="relative z-10 flex flex-col items-center text-center px-4 sm:px-6 pt-16 sm:pt-20 pb-12 sm:pb-16">
 
         {/* Badge */}
         <div
@@ -164,7 +164,7 @@ export default function WorkspacePage() {
       </div>
 
       {/* ── Body ── */}
-      <div className="relative z-10 flex flex-col items-center px-6 pb-16">
+      <div className="relative z-10 flex flex-col items-center px-4 sm:px-6 pb-16">
         <div className="w-full max-w-lg flex flex-col gap-8">
 
           {/* ── Stats ── */}

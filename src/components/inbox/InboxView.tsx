@@ -217,8 +217,10 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
 
       <div className="flex flex-1 overflow-hidden min-h-0">
         <div
-          className="flex flex-col overflow-hidden transition-all duration-200"
-          style={{ flex: hasDetail ? "0 0 55%" : "1 1 0%" }}
+          className={cn(
+            "flex flex-col overflow-hidden transition-all duration-200",
+            hasDetail ? "hidden md:flex md:[flex:0_0_55%]" : "flex-1",
+          )}
         >
           <RequestList
             allRequests={requests}
@@ -240,10 +242,7 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
         </div>
 
         {hasDetail && (
-          <div
-            className="flex flex-col overflow-hidden"
-            style={{ flex: "0 0 45%" }}
-          >
+          <div className="flex flex-col overflow-hidden flex-1 md:[flex:0_0_45%]">
             <RequestDetail
               request={openRequest}
               displayId={displayIdMap[openRequest.id] ?? "KEL-???"}

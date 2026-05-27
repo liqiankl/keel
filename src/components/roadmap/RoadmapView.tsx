@@ -264,8 +264,10 @@ export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
           <div className="flex flex-1 overflow-hidden min-h-0">
             {/* Board */}
             <div
-              className="overflow-x-auto overflow-y-hidden transition-all duration-200"
-              style={{ flex: openItemId ? "0 0 60%" : "1 1 0%" }}
+              className={cn(
+                "overflow-x-auto overflow-y-hidden transition-all duration-200",
+                openItemId ? "hidden md:block md:[flex:0_0_60%]" : "flex-1",
+              )}
             >
               <div className="flex gap-3 h-full px-4 py-4 min-w-max">
                 {nonEmptyStatuses.map((status) => (
@@ -287,7 +289,7 @@ export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
             {openItemId && (() => {
               const openItem = activePlan.items.find((i) => i.id === openItemId) ?? null;
               return openItem ? (
-                <div className="flex flex-col overflow-hidden" style={{ flex: "0 0 40%" }}>
+                <div className="flex flex-col overflow-hidden flex-1 md:[flex:0_0_40%]">
                   <RoadmapItemDetail
                     item={openItem}
                     goals={activePlan.goals}

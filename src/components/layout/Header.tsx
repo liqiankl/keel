@@ -1,6 +1,6 @@
 "use client";
 
-import { Star, LayoutList, LayoutGrid, Map } from "lucide-react";
+import { Star, LayoutList, LayoutGrid, Map, Menu } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useAppStore } from "@/store/useAppStore";
 import type { ViewMode } from "@/types";
@@ -26,10 +26,19 @@ export function Header({
   rightSlot,
   showViewToggle = false,
 }: HeaderProps) {
-  const { viewMode, setViewMode } = useAppStore();
+  const { viewMode, setViewMode, openMobileSidebar } = useAppStore();
 
   return (
-    <header className="keel-topbar-height flex items-center border-b border-[var(--color-border-subtle)] px-5 gap-3 flex-shrink-0 bg-[var(--color-bg-base)]">
+    <header className="keel-topbar-height flex items-center border-b border-[var(--color-border-subtle)] px-4 gap-3 flex-shrink-0 bg-[var(--color-bg-base)]">
+      {/* Hamburger — mobile only */}
+      <button
+        onClick={openMobileSidebar}
+        aria-label="Open navigation"
+        className="md:hidden flex items-center justify-center h-8 w-8 rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] transition-colors flex-shrink-0"
+      >
+        <Menu size={18} />
+      </button>
+
       {/* Title */}
       <div className="flex items-center gap-2.5 min-w-0">
         <h1 className="text-[15px] font-semibold tracking-tight text-[var(--color-text-primary)] truncate leading-none">

@@ -80,7 +80,7 @@ const STEPS = [
 
 function EmptyViews({ isGuest, onNew }: { isGuest: boolean; onNew: () => void }) {
   return (
-    <div className="h-full flex flex-col items-center justify-center px-6 py-16">
+    <div className="h-full flex flex-col items-center justify-center px-4 sm:px-6 py-10 sm:py-16">
       <div className="w-full max-w-md flex flex-col items-center">
 
         {/* Icon */}
@@ -151,7 +151,7 @@ function EmptyViews({ isGuest, onNew }: { isGuest: boolean; onNew: () => void })
             >
               How it works
             </p>
-            <div className="flex items-start gap-2">
+            <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-2">
               {STEPS.map(({ n, text }, i) => (
                 <div key={n} className="flex items-center gap-2 flex-1">
                   <div className="flex items-start gap-2 flex-1">

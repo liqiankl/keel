@@ -34,6 +34,7 @@ const SEED_MEMBERS: WorkspaceMember[] = [
 interface AppState {
   workspace: Workspace;
   sidebarCollapsed: boolean;
+  mobileSidebarOpen: boolean;
   activeTeamId: string;
   viewMode: ViewMode;
   activeFilterTab: FilterTab;
@@ -54,6 +55,8 @@ interface AppState {
   markPhaseActed: (key: string) => void;
   toggleSidebar: () => void;
   setSidebarCollapsed: (v: boolean) => void;
+  openMobileSidebar: () => void;
+  closeMobileSidebar: () => void;
   setActiveTeamId: (id: string) => void;
   setViewMode: (mode: ViewMode) => void;
   setActiveFilterTab: (tab: FilterTab) => void;
@@ -91,6 +94,7 @@ export const useAppStore = create<AppState>()(
       pendingInvites: [],
       phasesActed: [],
       sidebarCollapsed: false,
+      mobileSidebarOpen: false,
       activeTeamId: "team_navigators",
       viewMode: "list",
       activeFilterTab: "active",
@@ -168,6 +172,8 @@ export const useAppStore = create<AppState>()(
         ),
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setSidebarCollapsed: (v) => set({ sidebarCollapsed: v }),
+      openMobileSidebar:  () => set({ mobileSidebarOpen: true }),
+      closeMobileSidebar: () => set({ mobileSidebarOpen: false }),
       setActiveTeamId: (id) => set({ activeTeamId: id }),
       setViewMode: (mode) => set({ viewMode: mode }),
       setActiveFilterTab: (tab) => set({ activeFilterTab: tab }),

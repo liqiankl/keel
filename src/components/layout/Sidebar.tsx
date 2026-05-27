@@ -36,12 +36,14 @@ function labelCn(expanded: boolean) {
 }
 
 export function Sidebar() {
-  const pathname         = usePathname();
-  const workspace        = useAppStore((s) => s.workspace);
-  const activeTeamId     = useAppStore((s) => s.activeTeamId);
-  const setActiveTeamId  = useAppStore((s) => s.setActiveTeamId);
-  const sidebarCollapsed = useAppStore((s) => s.sidebarCollapsed);
-  const toggleSidebar    = useAppStore((s) => s.toggleSidebar);
+  const pathname           = usePathname();
+  const workspace          = useAppStore((s) => s.workspace);
+  const activeTeamId       = useAppStore((s) => s.activeTeamId);
+  const setActiveTeamId    = useAppStore((s) => s.setActiveTeamId);
+  const sidebarCollapsed   = useAppStore((s) => s.sidebarCollapsed);
+  const toggleSidebar      = useAppStore((s) => s.toggleSidebar);
+  const mobileSidebarOpen  = useAppStore((s) => s.mobileSidebarOpen);
+  const closeMobileSidebar = useAppStore((s) => s.closeMobileSidebar);
   const { open: tourOpen, openTour, closeTour } = useTourAutoShow();
   const { theme, cycleTheme } = useTheme();
   const ThemeIcon = theme === "light" ? Sun : Moon;
@@ -50,19 +52,8 @@ export function Sidebar() {
   const expanded = !sidebarCollapsed;
   const LABEL    = labelCn(expanded);
 
-  return (
-    <>
-      <aside
-        className={cn(
-          "flex flex-col h-full flex-shrink-0 overflow-hidden",
-          "transition-[width] duration-200 ease-in-out",
-          "bg-[var(--color-bg-base)] border-r border-[var(--color-border-subtle)]",
-          expanded ? "w-[220px]" : "w-12",
-        )}
-        aria-label="Main navigation"
-      >
-        {/* Inner panel — always 220px wide; aside clips when collapsed */}
-        <div className="flex flex-col h-full w-[220px] overflow-y-auto overflow-x-hidden">
+  const sidebarContent = (
+    <div className="flex flex-col h-full w-[220px] overflow-y-auto overflow-x-hidden">
 
           {/* ── Workspace header ── */}
           <Link
@@ -87,6 +78,7 @@ export function Sidebar() {
                 pathname={pathname}
                 expanded={expanded}
                 dataTour={NAV_TOUR_IDS[item.id]}
+                onNavigate={closeMobileSidebar}
               />
             ))}
           </nav>
@@ -165,6 +157,43 @@ export function Sidebar() {
           </div>
 
         </div>
+  );
+
+  return (
+    <>
+      {/* ── Desktop sidebar ── */}
+      <aside
+        className={cn(
+          "hidden md:flex flex-col h-full flex-shrink-0 overflow-hidden",
+          "transition-[width] duration-200 ease-in-out",
+          "bg-[var(--color-bg-base)] border-r border-[var(--color-border-subtle)]",
+          expanded ? "w-[220px]" : "w-12",
+        )}
+        aria-label="Main navigation"
+      >
+        {sidebarContent}
+      </aside>
+
+      {/* ── Mobile drawer backdrop ── */}
+      {mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={closeMobileSidebar}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* ── Mobile drawer ── */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex flex-col h-full overflow-hidden md:hidden",
+          "bg-[var(--color-bg-base)] border-r border-[var(--color-border-subtle)]",
+          "transition-transform duration-250 ease-in-out w-[220px]",
+          mobileSidebarOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+        aria-label="Main navigation"
+      >
+        {sidebarContent}
       </aside>
 
       <TourGuide open={tourOpen} onClose={closeTour} />
@@ -185,9 +214,9 @@ function IconBox({ children }: { children: React.ReactNode }) {
 // ── Nav item ───────────────────────────────────────────────────────────────
 
 function NavItem({
-  item, pathname, expanded, dataTour,
+  item, pathname, expanded, dataTour, onNavigate,
 }: {
-  item: SidebarNavItem; pathname: string; expanded: boolean; dataTour?: string;
+  item: SidebarNavItem; pathname: string; expanded: boolean; dataTour?: string; onNavigate?: () => void;
 }) {
   const Icon   = ICON_MAP[item.icon];
   const active = pathname === item.href || pathname.startsWith(item.href + "/");
@@ -197,6 +226,7 @@ function NavItem({
     <Link
       href={item.href}
       data-tour={dataTour}
+      onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={cn(
         "group/item flex items-center h-8 mx-1.5 rounded-md transition-colors duration-100",

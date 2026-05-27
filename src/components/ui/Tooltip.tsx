@@ -23,14 +23,14 @@ export function Tooltip({ content, children, placement = "top", className }: Too
       const r = anchorRef.current.getBoundingClientRect();
       let x = 0, y = 0;
       switch (placement) {
-        case "top":    x = r.left + r.width / 2;  y = r.top - 6;          break;
-        case "bottom": x = r.left + r.width / 2;  y = r.bottom + 6;       break;
-        case "left":   x = r.left - 6;             y = r.top + r.height / 2; break;
-        case "right":  x = r.right + 6;            y = r.top + r.height / 2; break;
+        case "top":    x = r.left + r.width / 2;  y = r.top - 8;             break;
+        case "bottom": x = r.left + r.width / 2;  y = r.bottom + 8;          break;
+        case "left":   x = r.left - 8;             y = r.top + r.height / 2;  break;
+        case "right":  x = r.right + 8;            y = r.top + r.height / 2;  break;
       }
       setCoords({ x, y });
       setVisible(true);
-    }, 300);
+    }, 150);
   }, [placement]);
 
   const hide = useCallback(() => {
@@ -64,11 +64,21 @@ export function Tooltip({ content, children, placement = "top", className }: Too
         <span
           role="tooltip"
           className={cn(
-            "fixed z-[9999] pointer-events-none whitespace-nowrap rounded-md px-2 py-1",
-            "bg-[#1a1a24] text-white text-[11px] leading-tight shadow-lg",
-            "animate-in fade-in duration-100",
+            "fixed z-[9999] pointer-events-none whitespace-nowrap",
+            "rounded-md px-2.5 py-1.5",
+            "text-[11px] font-medium leading-none tracking-wide",
+            "animate-in fade-in duration-75",
           )}
-          style={{ left: coords.x, top: coords.y, transform: transformMap[placement] }}
+          style={{
+            left: coords.x,
+            top: coords.y,
+            transform: transformMap[placement],
+            backgroundColor: "#0e0e12",
+            color: "#e0e0e8",
+            border: "1px solid rgba(255,255,255,0.08)",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.32), 0 0 0 0.5px rgba(0,0,0,0.2)",
+            letterSpacing: "0.01em",
+          }}
         >
           {content}
         </span>,

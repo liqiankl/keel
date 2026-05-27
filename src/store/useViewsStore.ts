@@ -3,19 +3,14 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-// ─────────────────────────────────────────────
-// Views store — shareable read-only roadmap
-// links (User Story 5.2: Shareable Roadmap Views).
-// ─────────────────────────────────────────────
-
 export type HiddenField = "effort" | "scores";
 
 export interface ShareableView {
   id: string;
   planId: string;
-  planLabel: string;     // "Q2 2026 Plan"
-  token: string;         // route param: /share/[token]
-  url: string;           // full URL: origin/share/[token]
+  planLabel: string;
+  token: string;
+  url: string;
   passwordProtected: boolean;
   password: string | null;
   hiddenFields: HiddenField[];

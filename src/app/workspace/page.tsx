@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useMemo } from "react";
 import {
   ArrowRight, Sparkles, Sun, Moon,
-  MessageSquare, LayoutGrid,
+  MessageSquare, LayoutGrid, Compass,
 } from "lucide-react";
+import { WORKSPACE_ONBOARD_KEY } from "@/components/tour/TourGuide";
 import { useAppStore } from "@/store/useAppStore";
 import { useInboxStore } from "@/store/useInboxStore";
 import { useRoadmapStore } from "@/store/useRoadmapStore";
@@ -149,18 +150,34 @@ export default function WorkspacePage() {
           Your product planning Olympus hub — where ideas become shipped features.
         </p>
 
-        {/* CTA */}
-        <Link
-          href="/inbox"
-          className="group inline-flex items-center gap-2.5 px-7 py-3 rounded-2xl text-[14px] font-semibold text-white transition-all active:scale-95"
-          style={{
-            background: `linear-gradient(135deg, ${workspace.avatarColor} 0%, #a78bfa 100%)`,
-            boxShadow: `0 0 30px ${workspace.avatarColor}55, 0 8px 24px rgba(0,0,0,0.3)`,
-          }}
-        >
-          Open workspace
-          <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-        </Link>
+        {/* CTAs */}
+        <div className="flex items-center gap-3 flex-wrap justify-center">
+          <Link
+            href="/inbox"
+            className="group inline-flex items-center gap-2.5 px-7 py-3 rounded-2xl text-[14px] font-semibold text-white transition-all active:scale-95"
+            style={{
+              background: `linear-gradient(135deg, ${workspace.avatarColor} 0%, #a78bfa 100%)`,
+              boxShadow: `0 0 30px ${workspace.avatarColor}55, 0 8px 24px rgba(0,0,0,0.3)`,
+            }}
+          >
+            Open workspace
+            <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+
+          <Link
+            href="/inbox"
+            onClick={() => sessionStorage.setItem(WORKSPACE_ONBOARD_KEY, "1")}
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl text-[14px] font-medium transition-all active:scale-95"
+            style={{
+              color: "var(--color-text-secondary)",
+              backgroundColor: "var(--color-bg-surface)",
+              border: "1px solid var(--color-border-subtle)",
+            }}
+          >
+            <Compass size={14} />
+            Take a tour
+          </Link>
+        </div>
       </div>
 
       {/* ── Body ── */}

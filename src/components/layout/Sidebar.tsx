@@ -153,13 +153,13 @@ export function Sidebar() {
               <span className={cn("text-[13px]", LABEL)}>{themeLabel}</span>
             </button>
 
-            {/* Reset demo data */}
+            {/* Reset data (dev only) */}
             <button
               type="button"
               onClick={handleResetClick}
               onBlur={() => setResetPending(false)}
-              aria-label="Reset all demo data"
-              title="Reset all demo data"
+              aria-label="Reset all data"
+              title="Reset all data"
               className={cn(
                 "flex items-center w-full h-8 rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-[var(--color-brand)]",
                 resetPending
@@ -168,8 +168,13 @@ export function Sidebar() {
               )}
             >
               <IconBox><RotateCcw size={15} /></IconBox>
-              <span className={cn("text-[13px] truncate", LABEL)}>
-                {resetPending ? "Confirm reset?" : "Reset demo"}
+              <span className={cn("flex items-center gap-1.5 text-[13px] truncate", LABEL)}>
+                {resetPending ? "Confirm reset?" : "Reset Data"}
+                {!resetPending && (
+                  <span className="inline-flex items-center px-1 py-px rounded text-[9px] font-bold uppercase tracking-wide leading-none bg-amber-500/15 text-amber-500 border border-amber-500/25">
+                    dev
+                  </span>
+                )}
               </span>
             </button>
 

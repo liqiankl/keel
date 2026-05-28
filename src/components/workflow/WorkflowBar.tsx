@@ -34,8 +34,8 @@ export function WorkflowBar({ currentStage, teamSlug }: WorkflowBarProps) {
         const isFuture = i > activeIndex;
         const Icon     = stage.icon;
 
-        const editHref = isPast
-          ? (teamSlug ? stage.href(teamSlug) : stage.key === "inbox" ? "/inbox" : null)
+        const editHref = isPast && stage.key !== "inbox"
+          ? (teamSlug ? stage.href(teamSlug) : null)
           : null;
 
         const stepContent = (
@@ -43,7 +43,8 @@ export function WorkflowBar({ currentStage, teamSlug }: WorkflowBarProps) {
             className={cn(
               "group/step flex items-center gap-2 px-3 py-1 rounded-full transition-all duration-150",
               isActive  && "bg-[var(--color-brand)]/10",
-              isPast    && "hover:bg-[var(--color-brand)]/10 cursor-pointer",
+              isPast && editHref  && "hover:bg-[var(--color-brand)]/10 cursor-pointer",
+              isPast && !editHref && "cursor-default",
               isFuture  && "opacity-40 cursor-default",
             )}
           >
@@ -56,14 +57,15 @@ export function WorkflowBar({ currentStage, teamSlug }: WorkflowBarProps) {
                 className={cn(
                   "relative w-[22px] h-[22px] rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-150",
                   isActive  && "bg-[var(--color-brand)] text-white shadow-sm",
-                  isPast    && "bg-[var(--color-success)]/20 text-[var(--color-success)] group-hover/step:bg-[var(--color-brand)] group-hover/step:text-white group-hover/step:shadow-sm",
+                  isPast && editHref  && "bg-[var(--color-success)]/20 text-[var(--color-success)] group-hover/step:bg-[var(--color-brand)] group-hover/step:text-white group-hover/step:shadow-sm",
+                  isPast && !editHref && "bg-[var(--color-success)]/20 text-[var(--color-success)]",
                   isFuture  && "bg-[var(--color-bg-hover)] border border-[var(--color-border-strong)] text-[var(--color-text-muted)]",
                 )}
               >
                 {isPast ? (
                   <>
-                    <Check  size={16} strokeWidth={2.5} className="transition-opacity duration-150 group-hover/step:opacity-0 absolute" />
-                    <Pencil size={15} strokeWidth={2}   className="transition-opacity duration-150 opacity-0 group-hover/step:opacity-100 absolute" />
+                    <Check  size={16} strokeWidth={2.5} className={cn("absolute", editHref && "transition-opacity duration-150 group-hover/step:opacity-0")} />
+                    {editHref && <Pencil size={15} strokeWidth={2} className="transition-opacity duration-150 opacity-0 group-hover/step:opacity-100 absolute" />}
                   </>
                 ) : (
                   <Icon size={16} strokeWidth={2} />
@@ -76,7 +78,8 @@ export function WorkflowBar({ currentStage, teamSlug }: WorkflowBarProps) {
               className={cn(
                 "text-[13px] font-medium whitespace-nowrap leading-none transition-colors duration-150",
                 isActive  && "text-[var(--color-brand)]",
-                isPast    && "text-[var(--color-text-secondary)] group-hover/step:text-[var(--color-brand)]",
+                isPast && editHref  && "text-[var(--color-text-secondary)] group-hover/step:text-[var(--color-brand)]",
+                isPast && !editHref && "text-[var(--color-text-secondary)]",
                 isFuture  && "text-[var(--color-text-muted)]",
               )}
             >

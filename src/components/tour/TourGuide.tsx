@@ -13,7 +13,8 @@ import { cn } from "@/lib/cn";
 // ─────────────────────────────────────────────
 
 const TOUR_SEEN_KEY  = "keel-tour-seen";
-export const TOUR_FORCE_KEY = "keel-start-tour"; // sessionStorage — set by landing page CTA
+export const TOUR_FORCE_KEY        = "keel-start-tour";       // sessionStorage — set by landing page CTA
+export const WORKSPACE_ONBOARD_KEY = "keel-tour-workspace-onboard"; // sessionStorage — set by workspace page CTA
 
 type Placement = "right" | "center" | "below";
 
@@ -28,31 +29,82 @@ interface TourStep {
 
 // ── Per-page step sets ─────────────────────────────────────────────────────
 
+// Combined sidebar + inbox tour — used when landing on /inbox (especially from /workspace).
+// Sidebar elements are always in the DOM so spotlighting them works from any (app)/ page.
 const INBOX_STEPS: TourStep[] = [
   {
-    id: "inbox-welcome",
-    title: "Your Inbox",
-    body: "Every feature request, customer ask, and stakeholder idea lands here first. Triage and tag them before promoting to Prioritization.",
+    id: "welcome",
+    title: "Welcome to Keel",
+    body: "Keel takes ideas from raw feature requests all the way to a locked quarterly roadmap. Let's walk through the whole workflow — starting right here in your Inbox.",
     placement: "center",
+  },
+  {
+    id: "teams-section",
+    target: "teams-section",
+    title: "Your Teams",
+    body: "Keel organises everything by team. Each team has its own Ideas backlog, Prioritization queue, and quarterly Roadmap — all independent.",
+    placement: "right",
+  },
+  {
+    id: "team-navigators",
+    target: "team-navigators",
+    title: "Navigators",
+    body: "The Navigators team owns product strategy. Click the team name to expand and jump straight into their Ideas, Prioritization, or Roadmap.",
+    placement: "right",
+    chip: { label: "N", color: "#5e5ce6" },
+  },
+  {
+    id: "nav-inbox",
+    target: "nav-inbox",
+    title: "Inbox — You're here",
+    body: "All incoming requests land here first. Triage them, set priority signals, add tags, and decide which are worth pursuing.",
+    placement: "right",
+  },
+  {
+    id: "nav-prioritize",
+    target: "nav-prioritize",
+    title: "Prioritization",
+    body: "Score shortlisted initiatives using RICE, MoSCoW, or WSJF. Rank them before committing capacity to the roadmap.",
+    placement: "right",
+  },
+  {
+    id: "nav-roadmap",
+    target: "nav-roadmap",
+    title: "Roadmap",
+    body: "The quarterly plan shown as a timeline. Plans progress through Draft → In Review → Locked. Locking generates a shareable stakeholder link.",
+    placement: "right",
+  },
+  {
+    id: "nav-views",
+    target: "nav-views",
+    title: "Views",
+    body: "Read-only share links for locked roadmaps. Stakeholders see the plan without needing workspace access — with optional password protection.",
+    placement: "right",
   },
   {
     id: "inbox-filters",
     target: "inbox-filter-tabs",
     title: "Filter & Search",
-    body: "Switch between All, Unread, and Triaged to focus your view. Use the search bar to find requests by keyword in real time.",
+    body: "Switch between All, Unread, and Triaged. Use the search bar to find requests by keyword instantly.",
     placement: "below",
   },
   {
     id: "inbox-list",
     target: "inbox-list",
     title: "Request Cards",
-    body: "Each card shows the source, priority signal, and current status. Click any card to open the full detail panel on the right.",
+    body: "Each card shows the source, priority signal, and status. Click any card to open the full detail panel — where you can tag, vote, and triage.",
     placement: "below",
   },
   {
     id: "inbox-send",
-    title: "Promote to Prioritization",
-    body: "Once a request looks worth pursuing, hit 'Send to Prioritization' inside the detail panel. It moves to your team's scoring queue.",
+    title: "Send to Prioritization",
+    body: "When a request is worth pursuing, open it and click 'Send to Prioritization'. It lands in your team's scoring queue — one step closer to the roadmap.",
+    placement: "center",
+  },
+  {
+    id: "done",
+    title: "You're all set",
+    body: "That's the full Keel workflow. Explore the sidebar, score some initiatives, lock a plan, and share it. Happy planning!",
     placement: "center",
   },
 ];
@@ -327,13 +379,14 @@ export function TourGuide({ open, onClose }: TourGuideProps) {
     onClose();
   }, [onClose]);
 
-  // ESC key
+  // ESC key — only closes if not locked (currently always closeable via ESC as a safety hatch)
   useEffect(() => {
     if (!open) return;
     const fn = (e: KeyboardEvent) => { if (e.key === "Escape") handleClose(); };
     document.addEventListener("keydown", fn);
     return () => document.removeEventListener("keydown", fn);
   }, [open, handleClose]);
+  // Note: backdrop click-to-close intentionally removed — use X button or Done to exit
 
   // Tooltip position
   const wrapperStyle = useMemo((): React.CSSProperties => {
@@ -375,7 +428,7 @@ export function TourGuide({ open, onClose }: TourGuideProps) {
     <AnimatePresence>
       {open && (
         <>
-          {/* ── Click-outside capture layer ──────────── */}
+          {/* ── Interaction-blocking layer (no click-to-close) ──────────── */}
           <motion.div
             key="tour-bg"
             initial={{ opacity: 0 }}
@@ -384,7 +437,6 @@ export function TourGuide({ open, onClose }: TourGuideProps) {
             transition={{ duration: 0.2 }}
             className="fixed inset-0"
             style={{ zIndex: 9000 }}
-            onClick={handleClose}
             aria-hidden="true"
           />
 
@@ -584,6 +636,14 @@ export function useTourAutoShow() {
       sessionStorage.removeItem(TOUR_FORCE_KEY);
       localStorage.removeItem(TOUR_SEEN_KEY);
       const t = setTimeout(() => setOpen(true), 350);
+      return () => clearTimeout(t);
+    }
+
+    // Coming from the /workspace page CTA — always start the full onboarding tour
+    const onboard = sessionStorage.getItem(WORKSPACE_ONBOARD_KEY);
+    if (onboard) {
+      sessionStorage.removeItem(WORKSPACE_ONBOARD_KEY);
+      const t = setTimeout(() => setOpen(true), 500);
       return () => clearTimeout(t);
     }
 

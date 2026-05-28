@@ -28,23 +28,17 @@ interface Release {
 const RELEASES: Release[] = [
   {
     version: "1.2.0",
-    date: "May 2026",
+    date: "27 May 2026",
     tag: "latest",
-    summary: "Members & workspace improvements. Tags are now workspace-scoped and can be created, renamed, and color-coded in Settings.",
+    summary: "Workspace improvements with better theme controls and navigation fixes.",
     changes: [
-      { type: "new",      text: "Workspace-scoped tag management with color picker" },
-      { type: "new",      text: "Members section: invite by email, role picker (Admin / Member / Viewer)" },
-      { type: "new",      text: "Pending invites list with cancel option" },
-      { type: "new",      text: "Per-member activity stats in Settings → Members" },
-      { type: "improved", text: "Profile section now shows live avatar preview and real activity counts" },
-      { type: "improved", text: "Email field in Profile is now editable with validation" },
       { type: "improved", text: "Appearance section wired to real theme hook — changes apply instantly" },
       { type: "fixed",    text: "Sidebar Settings link now highlights correctly when active" },
     ],
   },
   {
     version: "1.1.0",
-    date: "April 2026",
+    date: "24 May 2026",
     summary: "Deep links, shareable URLs, and the product tour.",
     changes: [
       { type: "new",      text: "Every view is URL-addressable: ?team=slug and ?tab=name params" },
@@ -59,7 +53,7 @@ const RELEASES: Release[] = [
   },
   {
     version: "1.0.1",
-    date: "March 2026",
+    date: "23 May 2026",
     summary: "Stability fixes following the 1.0 launch.",
     changes: [
       { type: "fixed",    text: "Scoring undo/redo history preserved across team switches" },
@@ -71,7 +65,7 @@ const RELEASES: Release[] = [
   },
   {
     version: "1.0.0",
-    date: "February 2026",
+    date: "21 May 2026",
     summary: "Initial public release of Keel.",
     changes: [
       { type: "new", text: "Unified feature request inbox with multi-team isolation" },
@@ -85,7 +79,7 @@ const RELEASES: Release[] = [
   },
   {
     version: "0.9.0",
-    date: "January 2026",
+    date: "20 May 2026",
     tag: "beta",
     summary: "Private beta. Core inbox and scoring flows stabilised.",
     changes: [

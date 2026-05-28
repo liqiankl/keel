@@ -16,12 +16,17 @@ import type { RequestSource, PrioritySignal } from "@/types";
 
 // ── Types ──────────────────────────────────────
 
+interface InboxVote {
+  name: string;
+  comment: string;
+}
+
 interface InboxFeature {
   id: string;
   title: string;
   productArea: string;
   source: RequestSource;
-  votes: number;
+  votes: InboxVote[];
   submittedBy: string;
   submittedAt: string;
   description: string;
@@ -42,84 +47,150 @@ function waitingLabel(iso: string): { label: string; urgent: boolean } {
 
 const INITIAL_FEATURES: InboxFeature[] = [
   {
-    id: "f1", title: "Bulk CSV export for transaction reports", productArea: "Reporting", source: "customer", votes: 34,
+    id: "f1", title: "Bulk CSV export for transaction reports", productArea: "Reporting", source: "customer",
     submittedBy: "Priya Nair, CFO @ Finstack", submittedAt: "2026-05-25",
     description: "Finance teams need to export large transaction datasets as CSV for reconciliation, auditing, and custom reporting in Excel or BI tools. Currently limited to 500 rows per export.",
     businessContext: "Blocking enterprise renewals worth ₹2.4Cr ARR. Four CFOs flagged this in QBRs this quarter.",
     prioritySignal: "critical",
     supportingLinks: ["https://finstack.notion.so/csv-export-req", "https://support.example.com/tickets/4821"],
+    votes: [
+      { name: "Priya Nair, CFO @ Finstack",        comment: "We're manually extracting data row-by-row for month-end close — blocking our audit prep and taking 8 hours every cycle." },
+      { name: "Ravi Kumar, Finance Lead @ ClearPay", comment: "Our reconciliation team hits the 500-row cap daily. We've resorted to splitting exports and stitching them back in Excel." },
+      { name: "Deepa Menon, VP Finance @ RetailX",  comment: "Four of my enterprise clients flagged this in QBRs. One is already evaluating a competitor specifically over this gap." },
+      { name: "Vikram Das, Enterprise Sales",        comment: "Lost two renewal conversations because the export limit came up. It's table stakes for any finance team." },
+      { name: "Arun B., Controller @ FinopsHub",     comment: "500 rows doesn't cover a single day of transactions for us. We need full-history bulk export to meet compliance obligations." },
+    ],
   },
   {
-    id: "f2", title: "Webhook retry with exponential backoff", productArea: "API", source: "engineering", votes: 8,
+    id: "f2", title: "Webhook retry with exponential backoff", productArea: "API", source: "engineering",
     submittedBy: "Shankar P., Backend Lead", submittedAt: "2026-05-19",
     description: "When a merchant endpoint is temporarily unavailable, webhook events are dropped after a single retry. We need configurable retry schedules with exponential backoff to improve reliability.",
     businessContext: "Three enterprise merchants reported missed payment events last quarter. Reliability SLAs are at risk.",
     prioritySignal: "important",
     supportingLinks: ["https://github.com/example/issues/1024"],
+    votes: [
+      { name: "Shankar P., Backend Lead",             comment: "We lost ₹40k in payment events last month due to single-retry failures. Ops manually replayed 200+ events after the fact." },
+      { name: "Arun Dev, Platform Architect @ TechMerch", comment: "A flapping endpoint caused a 2-hour outage during a peak sale. Backoff would have degraded gracefully instead of hard-failing." },
+      { name: "Deepika Nair, CTO @ D2C Brand",        comment: "Every dropped webhook is a missed order confirmation. Reliability is non-negotiable once you're above 10k orders/day." },
+      { name: "Sai Rajan, Engineering Lead @ PayBridge", comment: "We've built our own retry logic on top of the API as a workaround. This should be a platform primitive, not a per-customer hack." },
+    ],
   },
   {
-    id: "f3", title: "One-click payment link sharing via WhatsApp", productArea: "Payments", source: "customer", votes: 21,
+    id: "f3", title: "One-click payment link sharing via WhatsApp", productArea: "Payments", source: "customer",
     submittedBy: "Rohan Mehta, Sales Lead", submittedAt: "2026-05-12",
     description: "Merchants selling via WhatsApp Business need to share payment links directly inside the chat without copy-pasting. A native share button would streamline collection for D2C brands.",
     businessContext: "High-demand segment — 60% of our SMB merchants use WhatsApp as primary sales channel.",
     prioritySignal: "important",
     supportingLinks: [],
+    votes: [
+      { name: "Rohan Mehta, Sales Lead",             comment: "SMB sellers are losing orders mid-conversation because the multi-step share process breaks the chat flow entirely." },
+      { name: "Meena T., Owner @ GiftsByMeena",      comment: "I close 80% of my orders on WhatsApp. Copy-pasting links kills momentum right when the customer is ready to pay." },
+      { name: "Shyam Sundar, Head of SMB Growth",    comment: "WhatsApp commerce is our fastest-growing segment. This is a must-have to stay competitive with Razorpay and Cashfree." },
+      { name: "Lata Patel, Reseller @ HandmadeByLata", comment: "Customers ask for the link mid-chat. By the time I find and paste it, half have already dropped off." },
+      { name: "Prashant V., Regional Sales @ SMB Desk", comment: "Every SMB merchant I onboard asks about this within the first week. It's the single biggest friction point in the segment." },
+    ],
   },
   {
-    id: "f4", title: "Multi-currency dashboard for international merchants", productArea: "Dashboard", source: "customer", votes: 47,
+    id: "f4", title: "Multi-currency dashboard for international merchants", productArea: "Dashboard", source: "customer",
     submittedBy: "Amira Hassan, Enterprise Account", submittedAt: "2026-05-05",
     description: "Merchants operating across geographies can't see consolidated revenue in a single view. The dashboard should support multi-currency display with real-time FX conversion and currency toggle.",
     businessContext: "Required by 8 enterprise accounts expanding to Southeast Asia. Risk of churn to Stripe if not addressed by Q3.",
     prioritySignal: "critical",
     supportingLinks: ["https://docs.example.com/multi-currency", "https://loom.com/example-demo-recording"],
+    votes: [
+      { name: "Amira Hassan, Enterprise Account",       comment: "We operate in 6 currencies and rely on three separate tools to get a unified revenue view. It's costing us 8 hours a week." },
+      { name: "Nasreen Ali, CFO @ GlobalTradeHub",      comment: "Manual FX consolidation in spreadsheets is error-prone and creates audit risk. Real-time conversion would eliminate that entirely." },
+      { name: "Priya Kapoor, VP Growth @ AsiaExpand",   comment: "We're stalling our Southeast Asia rollout because we can't track regional performance in a single dashboard." },
+      { name: "Nikhil Sharma, Finance Director @ CrossBorder Inc", comment: "Currency toggles and FX reporting are baseline expectations for any enterprise account going international." },
+      { name: "Tara Singh, Enterprise CSM",             comment: "Three accounts in my book are actively evaluating Stripe as an alternative specifically because of this reporting gap." },
+    ],
   },
   {
-    id: "f5", title: "Smart dispute auto-categorisation", productArea: "Disputes", source: "internal", votes: 5,
+    id: "f5", title: "Smart dispute auto-categorisation", productArea: "Disputes", source: "internal",
     submittedBy: "Ananya S., Head of Support", submittedAt: "2026-04-28",
     description: "Support agents manually tag every dispute by type (fraud, product, service). An ML-based tagger trained on historical resolutions could auto-classify disputes and route them to the right queue.",
     businessContext: "Support handles 400+ disputes/month. Auto-categorisation could cut resolution time by 35% and reduce agent cost.",
     prioritySignal: "nice_to_have",
     supportingLinks: [],
+    votes: [
+      { name: "Ananya S., Head of Support",         comment: "Manual tagging is error-prone — wrong categories delay resolutions by 2–3 days and spike our SLA breach rate." },
+      { name: "Karan Malhotra, Customer Success Lead", comment: "Auto-categorisation would let us route disputes instantly instead of having an agent triage every single one before routing." },
+      { name: "Nidhi Jain, Operations Manager",     comment: "We handle 400+ disputes a month. Even a 30% auto-classification rate would free up meaningful agent capacity." },
+    ],
   },
   {
-    id: "f6", title: "Saved card management for returning customers", productArea: "Payments", source: "customer", votes: 62,
+    id: "f6", title: "Saved card management for returning customers", productArea: "Payments", source: "customer",
     submittedBy: "Multiple — 34 support tickets", submittedAt: "2026-04-14",
     description: "Returning customers want to manage their saved cards — view, delete, or set a default — without re-entering details each transaction. Currently there's no self-serve card vault UI.",
     businessContext: "Top requested feature in NPS surveys for 3 consecutive quarters. Directly impacts checkout conversion rate.",
     prioritySignal: "critical",
     supportingLinks: ["https://nps-dashboard.example.com/q1-themes"],
+    votes: [
+      { name: "Ritika Sharma, Enterprise Customer",   comment: "I've entered my card details 12 times this month. A vault would save 30 seconds per checkout — and I'd actually complete more purchases." },
+      { name: "Pavan Kumar, VP Product @ FastCart",   comment: "Cart abandonment at the payment step is 34% above industry average. We attribute this directly to the lack of saved cards." },
+      { name: "Sonal Mehta, NPS Respondent",          comment: "This is the single feature I'd pay a premium for. Every checkout feels like the first time, which erodes trust in the platform." },
+      { name: "Arjun Reddy, Head of Checkout @ BigBazaarOnline", comment: "Our A/B prototype with saved cards showed a 22% lift in completed transactions. The data is unambiguous." },
+      { name: "Isha Nair, Customer Experience Lead",  comment: "43% of our repeat-customer complaints this quarter were about re-entering payment details. Top NPS driver by far." },
+      { name: "Dev Mehta, VP Engineering @ ShopLocal", comment: "We've jury-rigged browser autofill as a workaround, but it's fragile and breaks on mobile. Native card vault is the right fix." },
+    ],
   },
   {
-    id: "f7", title: "Refund SLA tracker with merchant-facing status page", productArea: "Disputes", source: "internal", votes: 13,
+    id: "f7", title: "Refund SLA tracker with merchant-facing status page", productArea: "Disputes", source: "internal",
     submittedBy: "Customer Success Team", submittedAt: "2026-04-01",
     description: "Merchants have no visibility into refund processing timelines. A status page showing refund stages (initiated → bank processing → credited) would reduce support volume around refund queries.",
     businessContext: "Refund-related tickets account for 28% of CS volume. A status page alone could deflect ~300 tickets/month.",
     prioritySignal: "important",
     supportingLinks: [],
+    votes: [
+      { name: "Customer Success Team",               comment: "We field 300+ 'where's my refund' tickets monthly. A self-serve status page would deflect nearly all of them instantly." },
+      { name: "Madhuri P., Merchant @ HomeBrew",     comment: "Had to email every customer individually during a bank outage. A live refund tracker would have handled that automatically." },
+      { name: "Arjun Kapoor, CS Agent",              comment: "25% of my shift is answering refund status questions. A status page would free me to work on higher-value issues." },
+      { name: "Preethi R., Operations Lead @ PayReceive", comment: "Merchants need transparency into refund timelines to manage their own customers. Right now they're completely in the dark." },
+    ],
   },
   {
-    id: "f8", title: "API rate limit visibility in dashboard", productArea: "API", source: "engineering", votes: 19,
+    id: "f8", title: "API rate limit visibility in dashboard", productArea: "API", source: "engineering",
     submittedBy: "Developer community forum", submittedAt: "2026-03-20",
     description: "Developers hitting rate limits get opaque 429 errors with no visibility into current usage vs limits. The dashboard should show live API consumption, remaining quota, and reset windows.",
     businessContext: "Frequent complaint in developer community forum and onboarding calls. Affects developer experience score.",
     prioritySignal: "important",
     supportingLinks: ["https://community.example.com/rate-limit-thread"],
+    votes: [
+      { name: "Suhail Ahmed, Developer @ Integrations.io", comment: "Hit a 429 with zero warning and no dashboard indicator. Spent 45 minutes diagnosing an outage that was just a rate limit." },
+      { name: "Devraj N., Lead Engineer @ StartupPay",     comment: "Our monitoring is blind to rate limit headroom. We discover throttling after the fact, never before it causes an incident." },
+      { name: "Ankit Shah, Platform Engineer @ APIConnect", comment: "Live consumption with reset windows is table stakes for any API-first product. This is basic developer tooling." },
+      { name: "Pooja Jain, Developer Community Moderator", comment: "Rate limit confusion is the most-asked topic in our forum. Visibility alone would cut 40% of support escalations." },
+    ],
   },
   {
-    id: "f9", title: "Scheduled payouts for marketplace sellers", productArea: "Payouts", source: "customer", votes: 28,
+    id: "f9", title: "Scheduled payouts for marketplace sellers", productArea: "Payouts", source: "customer",
     submittedBy: "Vikram Das, Enterprise Sales", submittedAt: "2026-03-05",
     description: "Marketplace operators need to schedule payouts to sellers on weekly or monthly cycles rather than triggering them manually. This includes configurable payout dates, hold periods, and auto-split rules.",
     businessContext: "Blocking a ₹1.8Cr ACV marketplace deal. Competitor already offers scheduled payouts.",
     prioritySignal: "critical",
     supportingLinks: ["https://docs.example.com/payouts/scheduling"],
+    votes: [
+      { name: "Vikram Das, Enterprise Sales",         comment: "A ₹1.8Cr ACV deal is blocked entirely on this. The competitor they're evaluating already ships weekly scheduled payouts." },
+      { name: "Sai Gopal, CTO @ MarketNow",           comment: "Our sellers expect payouts every Friday. Manual triggering has failed twice this quarter, directly causing seller churn." },
+      { name: "Neha Gupta, Finance Lead @ HubSell",   comment: "200+ sellers, manual payout runs each cycle — takes a full workday. Automation would reclaim that time entirely." },
+      { name: "Rahul Kapoor, Head of Marketplace @ BazaarPro", comment: "Scheduled payouts are how we build seller trust. Right now we're managing expectations over Slack instead of shipping a feature." },
+      { name: "Aisha Mehta, Seller @ CraftCircle",    comment: "I plan inventory purchases around payout dates. When a manual run gets delayed, my whole supply chain is affected." },
+    ],
   },
   {
-    id: "f10", title: "Dark mode for merchant dashboard", productArea: "Dashboard", source: "customer", votes: 41,
+    id: "f10", title: "Dark mode for merchant dashboard", productArea: "Dashboard", source: "customer",
     submittedBy: "NPS Responses Q1 — 47 mentions", submittedAt: "2026-02-18",
     description: "Many merchants operate late-night shifts in warehouses and prefer dark UI to reduce eye strain. A system-preference-aware dark mode would improve usability and NPS among high-volume merchants.",
     businessContext: "47 unprompted NPS mentions in Q1. Low engineering effort relative to sentiment impact.",
     prioritySignal: "nice_to_have",
     supportingLinks: [],
+    votes: [
+      { name: "Kavya Reddy, Warehouse Supervisor @ NightOps", comment: "My team runs 10pm–6am shifts. The bright white dashboard is the first complaint every single night — eye strain is real." },
+      { name: "Amit Joshi, NPS Respondent",           comment: "Dark mode is table stakes for any modern B2B tool. This would genuinely make me enjoy using the product more." },
+      { name: "Sriram V., Operations Manager @ 24x7Logistics", comment: "Night-shift staff use mobile with dark mode enabled just to avoid the bright UI. Please build this natively." },
+      { name: "Deepa Kumar, Merchant @ LateNightMart", comment: "47 of us mentioned this unprompted in the Q1 NPS survey. It's a recurring pain point, not a niche request." },
+      { name: "Rajan P., Finance Controller @ NightOwlPharma", comment: "I do month-end close at midnight. A dark interface would reduce fatigue and help me work more accurately during late sessions." },
+    ],
   },
 ];
 
@@ -289,19 +360,24 @@ export default function InboxPage() {
         id:              `inbox_${feature.id}_${Date.now()}_${Math.random().toString(36).slice(2)}`,
         teamId,
         title:           feature.title,
-        description:     `Feature request from inbox: ${feature.title}`,
-        businessContext: `Submitted by ${feature.submittedBy}`,
+        description:     feature.description,
+        businessContext: feature.businessContext,
         source:          feature.source,
-        prioritySignal:  "important",
+        prioritySignal:  feature.prioritySignal,
         status:          "new",
         tags:            [],
-        productArea:     "",
+        productArea:     feature.productArea,
         goalIds:         [],
         submittedBy:     feature.submittedBy,
-        submittedAt:     new Date().toISOString(),
-        votes:           [],
+        submittedAt:     feature.submittedAt,
+        votes:           feature.votes.map((v, i) => ({
+          stakeholderId:   `stakeholder_${feature.id}_${i}`,
+          stakeholderName: v.name,
+          comment:         v.comment,
+          votedAt:         feature.submittedAt,
+        })),
         comments:        [],
-        supportingLinks: [],
+        supportingLinks: feature.supportingLinks,
         mergedFromIds:   [],
         externalRef:     null,
       });
@@ -596,11 +672,11 @@ export default function InboxPage() {
 
                     {/* Votes */}
                     <td className="px-4 py-3.5 w-20 text-right">
-                      {feature.votes > 0 ? (
-                        <div className="flex items-center justify-end gap-1" aria-label={`${feature.votes} votes`}>
+                      {feature.votes.length > 0 ? (
+                        <div className="flex items-center justify-end gap-1" aria-label={`${feature.votes.length} votes`}>
                           <ThumbsUp size={11} className="text-[var(--color-text-muted)]" />
                           <span className="text-[12px] text-[var(--color-text-muted)] tabular-nums">
-                            {feature.votes}
+                            {feature.votes.length}
                           </span>
                         </div>
                       ) : null}
@@ -717,11 +793,11 @@ export default function InboxPage() {
                                 </span>
 
                                 {/* Vote count — prominent */}
-                                {feature.votes > 0 && (
+                                {feature.votes.length > 0 && (
                                   <div className="flex items-center gap-1.5">
                                     <ThumbsUp size={14} className="text-[var(--color-text-muted)]" />
                                     <span className="text-[15px] font-bold text-[var(--color-text-primary)] tabular-nums leading-none">
-                                      {feature.votes}
+                                      {feature.votes.length}
                                     </span>
                                     <span className="text-[12px] text-[var(--color-text-muted)]">votes</span>
                                   </div>
@@ -875,7 +951,7 @@ export default function InboxPage() {
             title: `${selected.size} feature${selected.size !== 1 ? "s" : ""}`,
             productArea: "",
             source: "customer",
-            votes: 0,
+            votes: [],
             submittedBy: "",
             submittedAt: "",
             description: "",

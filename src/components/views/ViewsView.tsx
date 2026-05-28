@@ -36,7 +36,7 @@ export function ViewsView() {
         {mounted && effectiveViews.length > 0 && (
           <div className="p-6 space-y-6 max-w-3xl">
             {liveViews.length > 0 && (
-              <section className="space-y-2">
+              <section data-tour="views-list" className="space-y-2">
                 <SectionLabel>Live · {liveViews.length}</SectionLabel>
                 <div className="space-y-2">
                   {liveViews.map((view) => (

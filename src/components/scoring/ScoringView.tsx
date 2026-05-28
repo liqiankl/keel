@@ -956,14 +956,19 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
       <Header title="Prioritization" showViewToggle />
       {initialTeam && <WorkflowBar currentStage="prioritize" teamSlug={initialTeam} />}
 
-      <FrameworkTabs active={activeFramework} onChange={(f) => setActiveFramework(f)} />
+      <div data-tour="scoring-framework-tabs">
+        <FrameworkTabs active={activeFramework} onChange={(f) => setActiveFramework(f)} />
+      </div>
 
       <div className="flex flex-1 overflow-hidden min-h-0">
         {/* Main content */}
-        <div className={cn(
-          "flex flex-col overflow-hidden transition-all duration-200",
-          hasDetail ? "hidden md:flex md:[flex:0_0_55%]" : "flex-1",
-        )}>
+        <div
+          data-tour="scoring-card-list"
+          className={cn(
+            "flex flex-col overflow-hidden transition-all duration-200",
+            hasDetail ? "hidden md:flex md:[flex:0_0_55%]" : "flex-1",
+          )}
+        >
           {initiatives.length === 0 ? (
             <div className="flex flex-1 items-center justify-center">
               <EmptyState

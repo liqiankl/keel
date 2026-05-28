@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Inbox, Layers, Map, Circle, BarChart2,
   ChevronDown, ChevronRight, Compass, // Settings — hidden
-  PanelLeftClose, PanelLeftOpen, Sun, Moon,
+  PanelLeftClose, PanelLeftOpen, Sun, Moon, RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useAppStore } from "@/store/useAppStore";
@@ -48,6 +48,14 @@ export function Sidebar() {
   const { theme, cycleTheme } = useTheme();
   const ThemeIcon = theme === "light" ? Sun : Moon;
   const themeLabel = theme.charAt(0).toUpperCase() + theme.slice(1);
+
+  const [resetPending, setResetPending] = useState(false);
+
+  function handleResetClick() {
+    if (!resetPending) { setResetPending(true); return; }
+    localStorage.clear();
+    window.location.reload();
+  }
 
   const expanded = !sidebarCollapsed;
   const LABEL    = labelCn(expanded);
@@ -143,6 +151,26 @@ export function Sidebar() {
             >
               <IconBox><ThemeIcon size={19} /></IconBox>
               <span className={cn("text-[13px]", LABEL)}>{themeLabel}</span>
+            </button>
+
+            {/* Reset demo data */}
+            <button
+              type="button"
+              onClick={handleResetClick}
+              onBlur={() => setResetPending(false)}
+              aria-label="Reset all demo data"
+              title="Reset all demo data"
+              className={cn(
+                "flex items-center w-full h-8 rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-[var(--color-brand)]",
+                resetPending
+                  ? "text-red-500 bg-red-500/10 hover:bg-red-500/20"
+                  : "text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-secondary)]",
+              )}
+            >
+              <IconBox><RotateCcw size={15} /></IconBox>
+              <span className={cn("text-[13px] truncate", LABEL)}>
+                {resetPending ? "Confirm reset?" : "Reset demo"}
+              </span>
             </button>
 
             <button

@@ -2,29 +2,190 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronRight, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 // ─────────────────────────────────────────────
-// TourGuide — step-by-step spotlight walkthrough.
-// Renders via portal so z-index always wins.
-// Highlights DOM elements via data-tour attributes.
+// TourGuide — page-specific spotlight walkthrough.
+// Picks the correct step set based on the current pathname.
 // ─────────────────────────────────────────────
 
 const TOUR_SEEN_KEY  = "keel-tour-seen";
 export const TOUR_FORCE_KEY = "keel-start-tour"; // sessionStorage — set by landing page CTA
+
+type Placement = "right" | "center" | "below";
 
 interface TourStep {
   id: string;
   target?: string;               // value of data-tour="..." attribute
   title: string;
   body: string;
-  placement: "right" | "center"; // right = anchored to sidebar element
+  placement: Placement;
   chip?: { label: string; color: string };
 }
 
-const STEPS: TourStep[] = [
+// ── Per-page step sets ─────────────────────────────────────────────────────
+
+const INBOX_STEPS: TourStep[] = [
+  {
+    id: "inbox-welcome",
+    title: "Your Inbox",
+    body: "Every feature request, customer ask, and stakeholder idea lands here first. Triage and tag them before promoting to Prioritization.",
+    placement: "center",
+  },
+  {
+    id: "inbox-filters",
+    target: "inbox-filter-tabs",
+    title: "Filter & Search",
+    body: "Switch between All, Unread, and Triaged to focus your view. Use the search bar to find requests by keyword in real time.",
+    placement: "below",
+  },
+  {
+    id: "inbox-list",
+    target: "inbox-list",
+    title: "Request Cards",
+    body: "Each card shows the source, priority signal, and current status. Click any card to open the full detail panel on the right.",
+    placement: "below",
+  },
+  {
+    id: "inbox-send",
+    title: "Promote to Prioritization",
+    body: "Once a request looks worth pursuing, hit 'Send to Prioritization' inside the detail panel. It moves to your team's scoring queue.",
+    placement: "center",
+  },
+];
+
+const IDEAS_STEPS: TourStep[] = [
+  {
+    id: "ideas-welcome",
+    title: "Team Ideas",
+    body: "This is your team's private idea backlog — requests that have been triaged and are ready to score.",
+    placement: "center",
+  },
+  {
+    id: "ideas-filters",
+    target: "inbox-filter-tabs",
+    title: "Filter & Search",
+    body: "Filter by status or search by keyword. Use multi-select to bulk-promote several ideas to Prioritization at once.",
+    placement: "below",
+  },
+  {
+    id: "ideas-list",
+    target: "inbox-list",
+    title: "Idea Cards",
+    body: "Each card represents a candidate initiative. Click to open the detail, review context, and decide if it's worth scoring.",
+    placement: "below",
+  },
+  {
+    id: "ideas-send",
+    title: "Send to Prioritization",
+    body: "Select one or more ideas and hit 'Send to Prioritization'. They'll appear in the RICE / MoSCoW / WSJF scoring view.",
+    placement: "center",
+  },
+];
+
+const SCORING_STEPS: TourStep[] = [
+  {
+    id: "scoring-welcome",
+    title: "Prioritization",
+    body: "Score your initiatives before committing them to the roadmap. Pick the framework that matches how your team thinks.",
+    placement: "center",
+  },
+  {
+    id: "scoring-frameworks",
+    target: "scoring-framework-tabs",
+    title: "Scoring Frameworks",
+    body: "RICE (Reach × Impact × Confidence ÷ Effort) gives a numeric score. MoSCoW classifies into Must / Should / Could / Won't. WSJF weights cost of delay against job size.",
+    placement: "below",
+  },
+  {
+    id: "scoring-cards",
+    target: "scoring-card-list",
+    title: "Initiative Cards",
+    body: "Each card shows the initiative title, priority dot, and current score. Edit values inline — click any number field to type directly.",
+    placement: "below",
+  },
+  {
+    id: "scoring-drag",
+    title: "Drag to Reorder",
+    body: "In RICE and WSJF views, drag the handle on the left side of a card to manually override the sort order.",
+    placement: "center",
+  },
+  {
+    id: "scoring-roadmap",
+    title: "Send to Roadmap",
+    body: "Hover a card and click 'Roadmap' to promote the initiative to your quarterly plan. In MoSCoW, use the column checkboxes to send an entire tier at once.",
+    placement: "center",
+  },
+];
+
+const ROADMAP_STEPS: TourStep[] = [
+  {
+    id: "roadmap-welcome",
+    title: "Roadmap",
+    body: "Your team's committed quarterly plan — shown as a timeline. Items flow here from Prioritization once scored and approved.",
+    placement: "center",
+  },
+  {
+    id: "roadmap-quarters",
+    target: "roadmap-quarter-tabs",
+    title: "Quarter Navigation",
+    body: "Switch between Q2, Q3, Q4, or Full Year. Each quarter has its own plan, capacity budget, and status.",
+    placement: "below",
+  },
+  {
+    id: "roadmap-timeline",
+    target: "roadmap-timeline",
+    title: "Timeline View",
+    body: "Initiatives appear as horizontal bars. The red line marks today. Click any bar to open the detail panel and edit status, effort, or priority.",
+    placement: "below",
+  },
+  {
+    id: "roadmap-status",
+    target: "roadmap-plan-status",
+    title: "Plan Status",
+    body: "Move the plan from Draft → In Review → Locked. Locking generates a shareable, read-only link you can send to stakeholders.",
+    placement: "below",
+  },
+  {
+    id: "roadmap-share",
+    title: "Lock & Share",
+    body: "Once locked, a celebration modal appears with a copy-able share link. That link appears in the Views page for easy access later.",
+    placement: "center",
+  },
+];
+
+const VIEWS_STEPS: TourStep[] = [
+  {
+    id: "views-welcome",
+    title: "Shareable Views",
+    body: "Views are read-only snapshots of a locked roadmap — perfect for stakeholders who don't need full workspace access.",
+    placement: "center",
+  },
+  {
+    id: "views-list",
+    target: "views-list",
+    title: "Live View Cards",
+    body: "Each card shows the plan label, live status, share URL, and creation date. Copy the link in one click — it's always up to date.",
+    placement: "below",
+  },
+  {
+    id: "views-create",
+    title: "Create a View",
+    body: "Lock a quarterly plan from the Roadmap page and a view is automatically created. Or hit 'New view' here to manually configure one.",
+    placement: "center",
+  },
+  {
+    id: "views-control",
+    title: "Access Control",
+    body: "Revoke a view instantly to cut off access without deleting it. Restore at any time. Optional passwords and field-hiding are available too.",
+    placement: "center",
+  },
+];
+
+const GENERAL_STEPS: TourStep[] = [
   {
     id: "welcome",
     title: "Welcome to Keel",
@@ -72,7 +233,7 @@ const STEPS: TourStep[] = [
     id: "roadmap",
     target: "nav-roadmap",
     title: "Roadmap",
-    body: "Each team's quarterly plan is shown as a kanban board — Backlog → Planned → In Progress → Done. Plans can be drafted, reviewed, approved, and locked.",
+    body: "Each team's quarterly plan is shown as a timeline. Plans can be drafted, reviewed, approved, and locked.",
     placement: "right",
   },
   {
@@ -90,6 +251,28 @@ const STEPS: TourStep[] = [
   },
 ];
 
+function getStepsForPath(pathname: string): TourStep[] {
+  if (pathname.includes("/ideas"))          return IDEAS_STEPS;
+  if (pathname === "/inbox" || pathname.startsWith("/inbox/")) return INBOX_STEPS;
+  if (pathname.includes("/prioritization") || pathname.includes("/scoring")) return SCORING_STEPS;
+  if (pathname.includes("/roadmap"))        return ROADMAP_STEPS;
+  if (pathname === "/views")                return VIEWS_STEPS;
+  return GENERAL_STEPS;
+}
+
+// ── Page label for the tour header chip ───────────────────────────────────
+
+function getPageLabel(pathname: string): string {
+  if (pathname.includes("/ideas"))          return "Ideas";
+  if (pathname === "/inbox" || pathname.startsWith("/inbox/")) return "Inbox";
+  if (pathname.includes("/prioritization") || pathname.includes("/scoring")) return "Prioritization";
+  if (pathname.includes("/roadmap"))        return "Roadmap";
+  if (pathname === "/views")                return "Views";
+  return "Keel";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 interface Rect { top: number; left: number; width: number; height: number; }
 
 function measureTarget(target: string): Rect | null {
@@ -99,7 +282,7 @@ function measureTarget(target: string): Rect | null {
   return { top: r.top, left: r.left, width: r.width, height: r.height };
 }
 
-// ── Main component ─────────────────────────────
+// ── Main component ─────────────────────────────────────────────────────────
 
 interface TourGuideProps {
   open: boolean;
@@ -107,14 +290,18 @@ interface TourGuideProps {
 }
 
 export function TourGuide({ open, onClose }: TourGuideProps) {
+  const pathname = usePathname();
+  const steps    = useMemo(() => getStepsForPath(pathname), [pathname]);
+  const pageLabel = getPageLabel(pathname);
+
   const [step, setStep]       = useState(0);
   const [rect, setRect]       = useState<Rect | null>(null);
   const [mounted, setMounted] = useState(false);
 
-  const current    = STEPS[step];
+  const current    = steps[Math.min(step, steps.length - 1)];
   const isCentered = current.placement === "center";
   const isFirst    = step === 0;
-  const isLast     = step === STEPS.length - 1;
+  const isLast     = step === steps.length - 1;
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -125,8 +312,8 @@ export function TourGuide({ open, onClose }: TourGuideProps) {
     return () => clearTimeout(id);
   }, [open, step, current.target]);
 
-  // Reset to step 0 on close
-  useEffect(() => { if (!open) setStep(0); }, [open]);
+  // Reset to step 0 on open/close or page change
+  useEffect(() => { setStep(0); }, [open, pathname]);
 
   const handleNext = useCallback(() => {
     if (isLast) { onClose(); }
@@ -148,7 +335,7 @@ export function TourGuide({ open, onClose }: TourGuideProps) {
     return () => document.removeEventListener("keydown", fn);
   }, [open, handleClose]);
 
-  // Tooltip anchor position (right of sidebar element)
+  // Tooltip position
   const wrapperStyle = useMemo((): React.CSSProperties => {
     if (isCentered || !rect) {
       return {
@@ -160,6 +347,19 @@ export function TourGuide({ open, onClose }: TourGuideProps) {
       };
     }
     const GAP = 14;
+    if (current.placement === "below") {
+      return {
+        position: "fixed",
+        top: rect.top + rect.height + GAP,
+        left: Math.min(
+          Math.max(rect.left + rect.width / 2, 160),
+          (typeof window !== "undefined" ? window.innerWidth : 1200) - 160,
+        ),
+        transform: "translateX(-50%)",
+        zIndex: 9002,
+      };
+    }
+    // "right"
     return {
       position: "fixed",
       top: rect.top + rect.height / 2,
@@ -167,7 +367,7 @@ export function TourGuide({ open, onClose }: TourGuideProps) {
       transform: "translateY(-50%)",
       zIndex: 9002,
     };
-  }, [isCentered, rect]);
+  }, [isCentered, rect, current.placement]);
 
   if (!mounted) return null;
 
@@ -189,7 +389,7 @@ export function TourGuide({ open, onClose }: TourGuideProps) {
           />
 
           {/* ── Spotlight / dim layer ─────────────────── */}
-          {isCentered ? (
+          {isCentered || !rect ? (
             <motion.div
               key="tour-dim"
               initial={{ opacity: 0 }}
@@ -200,27 +400,25 @@ export function TourGuide({ open, onClose }: TourGuideProps) {
               style={{ zIndex: 9001 }}
             />
           ) : (
-            rect && (
-              <motion.div
-                key={`tour-spotlight-${step}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="fixed pointer-events-none"
-                style={{
-                  zIndex: 9001,
-                  borderRadius: 6,
-                  top: rect.top - 3,
-                  left: rect.left - 4,
-                  width: rect.width + 8,
-                  height: rect.height + 6,
-                  boxShadow: "0 0 0 9999px rgba(0,0,0,0.52)",
-                  outline: "2px solid rgba(99,102,241,0.6)",
-                  outlineOffset: 1,
-                }}
-              />
-            )
+            <motion.div
+              key={`tour-spotlight-${step}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="fixed pointer-events-none"
+              style={{
+                zIndex: 9001,
+                borderRadius: 6,
+                top: rect.top - 3,
+                left: rect.left - 4,
+                width: rect.width + 8,
+                height: rect.height + 6,
+                boxShadow: "0 0 0 9999px rgba(0,0,0,0.52)",
+                outline: "2px solid rgba(99,102,241,0.6)",
+                outlineOffset: 1,
+              }}
+            />
           )}
 
           {/* ── Tooltip card ─────────────────────────── */}
@@ -243,7 +441,7 @@ export function TourGuide({ open, onClose }: TourGuideProps) {
               )}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Team chip row */}
+              {/* Page label chip */}
               {current.chip && (
                 <div className="flex items-center gap-2 px-4 pt-4 pb-0">
                   <div
@@ -276,9 +474,14 @@ export function TourGuide({ open, onClose }: TourGuideProps) {
               {/* Header row (no chip) */}
               {!current.chip && (
                 <div className="flex items-start justify-between px-4 pt-4 pb-0">
-                  <h3 className="text-[13px] font-semibold text-[var(--color-text-primary)] leading-snug">
-                    {current.title}
-                  </h3>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-brand)] opacity-80 block mb-0.5">
+                      {pageLabel}
+                    </span>
+                    <h3 className="text-[13px] font-semibold text-[var(--color-text-primary)] leading-snug">
+                      {current.title}
+                    </h3>
+                  </div>
                   <button
                     type="button"
                     onClick={handleClose}
@@ -310,7 +513,7 @@ export function TourGuide({ open, onClose }: TourGuideProps) {
               <div className="flex items-center justify-between border-t border-[var(--color-border-subtle)] px-4 py-3">
                 {/* Step progress pills */}
                 <div className="flex items-center gap-[3px]">
-                  {STEPS.map((_, i) => (
+                  {steps.map((_, i) => (
                     <button
                       key={i}
                       type="button"
@@ -379,9 +582,8 @@ export function useTourAutoShow() {
     const forced = sessionStorage.getItem(TOUR_FORCE_KEY);
     if (forced) {
       sessionStorage.removeItem(TOUR_FORCE_KEY);
-      // Clear "seen" so the tour isn't suppressed for returning users who clicked CTA again
       localStorage.removeItem(TOUR_SEEN_KEY);
-      const t = setTimeout(() => setOpen(true), 350); // short delay for the app to paint
+      const t = setTimeout(() => setOpen(true), 350);
       return () => clearTimeout(t);
     }
 

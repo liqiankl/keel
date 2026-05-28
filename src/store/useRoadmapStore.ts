@@ -76,7 +76,13 @@ export const useRoadmapStore = create<RoadmapState>()(
         set((s) => ({
           plans: s.plans.map((p) =>
             p.id === id
-              ? { ...p, status: "locked" as PlanStatus, lockedAt: new Date().toISOString(), lockedBy: userId }
+              ? {
+                  ...p,
+                  status: "locked" as PlanStatus,
+                  lockedAt: new Date().toISOString(),
+                  lockedBy: userId,
+                  shareLink: p.shareLink ?? `${typeof window !== "undefined" ? window.location.origin : ""}/share/${id}`,
+                }
               : p,
           ),
         })),

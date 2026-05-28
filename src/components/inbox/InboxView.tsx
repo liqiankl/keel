@@ -295,19 +295,21 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
       {initialTeam && <WorkflowBar currentStage="ideas" teamSlug={initialTeam} />}
 
       {(!visibleTabs || visibleTabs.length > 1) && (
-        <FilterTabs
-          activeTab={filters.tab}
-          requests={baseRequests}
-          onTabChange={(tab) => {
-            setFilter("tab", tab);
-            setOpenId(null);
-            clearSelection();
-          }}
-          searchValue={filters.search}
-          onSearchChange={(v) => setFilter("search", v)}
-          visibleTabs={visibleTabs}
-          searchPlaceholder={initialTeam ? "Search ideas…" : "Search requests…"}
-        />
+        <div data-tour="inbox-filter-tabs">
+          <FilterTabs
+            activeTab={filters.tab}
+            requests={baseRequests}
+            onTabChange={(tab) => {
+              setFilter("tab", tab);
+              setOpenId(null);
+              clearSelection();
+            }}
+            searchValue={filters.search}
+            onSearchChange={(v) => setFilter("search", v)}
+            visibleTabs={visibleTabs}
+            searchPlaceholder={initialTeam ? "Search ideas…" : "Search requests…"}
+          />
+        </div>
       )}
 
       <BulkActionBar
@@ -321,6 +323,7 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
 
       <div className="flex flex-1 overflow-hidden min-h-0">
         <div
+          data-tour="inbox-list"
           className={cn(
             "flex flex-col overflow-hidden transition-all duration-200",
             hasDetail ? "hidden md:flex md:[flex:0_0_55%]" : "flex-1",

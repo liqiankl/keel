@@ -3,13 +3,15 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { useStore } from "zustand";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ChevronRight, Lock, Map } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronRight, Copy, Check as CheckIcon, Lock, Map, Share2 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { WorkflowBar } from "@/components/workflow/WorkflowBar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { RoadmapItemDetail } from "./RoadmapItemDetail";
 import { useRoadmapStore } from "@/store/useRoadmapStore";
 import { useAppStore } from "@/store/useAppStore";
+import { useViewsStore } from "@/store/useViewsStore";
 import { TEAMS } from "@/lib/constants";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
 import { cn } from "@/lib/cn";
@@ -411,6 +413,175 @@ function LockConfirmDialog({
   );
 }
 
+// ─────────────────────────────────────────────
+// Lock celebration
+// ─────────────────────────────────────────────
+
+const CONFETTI_COLORS = ["#6366f1", "#8b5cf6", "#f59e0b", "#22c55e", "#0ea5e9", "#f97316", "#ef4444"];
+
+function Confetti() {
+  const particles = useMemo(
+    () =>
+      Array.from({ length: 30 }, (_, i) => ({
+        id: i,
+        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+        x: (Math.random() - 0.5) * 480,
+        y: -(60 + Math.random() * 260),
+        rotate: (Math.random() - 0.5) * 720,
+        size: 5 + Math.random() * 7,
+        delay: Math.random() * 0.4,
+      })),
+    [], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  return (
+    <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
+      {particles.map((p) => (
+        <motion.div
+          key={p.id}
+          className="absolute rounded-sm"
+          style={{ width: p.size, height: p.size, backgroundColor: p.color }}
+          initial={{ x: 0, y: 0, opacity: 1, scale: 1, rotate: 0 }}
+          animate={{ x: p.x, y: p.y, opacity: 0, scale: 0.4, rotate: p.rotate }}
+          transition={{ duration: 1.1, delay: p.delay, ease: [0.22, 1, 0.36, 1] }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function LockCelebrationModal({
+  open,
+  plan,
+  shareUrl,
+  onClose,
+}: {
+  open: boolean;
+  plan: QuarterlyPlan;
+  shareUrl: string;
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const shareLink = shareUrl;
+
+  function copyLink() {
+    if (!shareLink) return;
+    navigator.clipboard.writeText(shareLink).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2200);
+    });
+  }
+
+  const quarterLabel = plan.quarter?.label ?? `Q${plan.quarter?.quarter} ${plan.quarter?.year}`;
+
+  return (
+    <Dialog.Root open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[3px] animate-in fade-in duration-200" />
+        <Dialog.Content
+          className={cn(
+            "fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2",
+            "w-[420px] rounded-2xl p-8 overflow-hidden",
+            "bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)]",
+            "shadow-[0_32px_64px_rgba(0,0,0,0.24)]",
+            "animate-in fade-in zoom-in-90 duration-300",
+          )}
+        >
+          {/* Confetti burst */}
+          <AnimatePresence>{open && <Confetti />}</AnimatePresence>
+
+          {/* Lock icon with pulse ring */}
+          <div className="relative flex justify-center mb-5">
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 260, damping: 18, delay: 0.1 }}
+              className="relative"
+            >
+              {/* Pulse ring */}
+              <motion.div
+                className="absolute inset-0 rounded-full bg-[#22c55e]/20"
+                initial={{ scale: 1, opacity: 0.8 }}
+                animate={{ scale: 2.2, opacity: 0 }}
+                transition={{ duration: 1.0, delay: 0.3, ease: "easeOut" }}
+              />
+              <div className="h-16 w-16 rounded-full flex items-center justify-center bg-[#22c55e]/12 border-2 border-[#22c55e]/40">
+                <Lock size={28} className="text-[#22c55e]" />
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Titles */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.3 }}
+            className="text-center mb-2"
+          >
+            <Dialog.Title className="text-[20px] font-bold text-[var(--color-text-primary)]">
+              Plan locked! 🎉
+            </Dialog.Title>
+            <Dialog.Description className="text-[13px] text-[var(--color-text-muted)] mt-1 leading-relaxed">
+              Your <span className="font-medium text-[var(--color-text-secondary)]">{quarterLabel}</span> roadmap
+              is committed. Share the read-only link with your team so everyone can see what's shipping.
+            </Dialog.Description>
+          </motion.div>
+
+          {/* Share link */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.32, duration: 0.3 }}
+            className="mt-5 mb-6"
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-1.5 flex items-center gap-1.5">
+              <Share2 size={10} />
+              Read-only share link
+            </p>
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "flex-1 flex items-center h-9 px-3 rounded-lg text-[12px] font-mono truncate",
+                "bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)]",
+                "text-[var(--color-text-secondary)]",
+              )}>
+                {shareLink || "Generating…"}
+              </div>
+              <button
+                onClick={copyLink}
+                disabled={!shareLink}
+                className={cn(
+                  "flex items-center gap-1.5 h-9 px-3 rounded-lg text-[12px] font-semibold flex-shrink-0 transition-all duration-150",
+                  copied
+                    ? "bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/30"
+                    : "bg-[var(--color-brand)] text-white hover:opacity-90",
+                )}
+              >
+                {copied ? <CheckIcon size={13} /> : <Copy size={13} />}
+                {copied ? "Copied!" : "Copy"}
+              </button>
+            </div>
+          </motion.div>
+
+          {/* Done */}
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.44 }}
+            onClick={onClose}
+            className={cn(
+              "w-full h-9 rounded-xl text-[13px] font-medium transition-colors",
+              "border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
+              "hover:bg-[var(--color-bg-hover)]",
+            )}
+          >
+            Done
+          </motion.button>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
 function PlanStatusControl({
   plan,
   onSetStatus,
@@ -420,7 +591,13 @@ function PlanStatusControl({
   onSetStatus: (id: string, status: PlanStatus) => void;
   onLock: (id: string, userId: string) => void;
 }) {
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen]         = useState(false);
+  const [celebrationOpen, setCelebrationOpen] = useState(false);
+  const [shareUrl, setShareUrl]               = useState("");
+
+  const createView  = useViewsStore((s) => s.createView);
+  const existingViews = useViewsStore((s) => s.views);
+
   const { color, label } = PLAN_STATUS_META[plan.status];
   const isLocked = plan.status === "locked";
 
@@ -494,10 +671,42 @@ function PlanStatusControl({
         open={confirmOpen}
         quarterLabel={quarterLabel}
         onConfirm={() => {
+          const token  = plan.id;
+          const origin = typeof window !== "undefined" ? window.location.origin : "";
+          const url    = `${origin}/share/${token}`;
+
           onLock(plan.id, "u_pm_01");
+
+          // Create a shareable view in the views store if one doesn't already exist
+          const alreadyLive = existingViews.some((v) => v.planId === plan.id && !v.revokedAt);
+          if (!alreadyLive) {
+            createView({
+              id: `view_${plan.id}_${Date.now()}`,
+              planId: plan.id,
+              planLabel: quarterLabel,
+              token,
+              url,
+              passwordProtected: false,
+              password: null,
+              hiddenFields: [],
+              createdAt: new Date().toISOString(),
+              createdBy: "Alex Chen",
+              revokedAt: null,
+            });
+          }
+
+          setShareUrl(url);
           setConfirmOpen(false);
+          setCelebrationOpen(true);
         }}
         onCancel={() => setConfirmOpen(false)}
+      />
+
+      <LockCelebrationModal
+        open={celebrationOpen}
+        plan={plan}
+        shareUrl={shareUrl}
+        onClose={() => setCelebrationOpen(false)}
       />
     </>
   );
@@ -752,6 +961,7 @@ export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
 
       {/* ── Quarter tabs ── */}
       <div
+        data-tour="roadmap-quarter-tabs"
         className="flex items-center border-b border-[var(--color-border-subtle)] px-4 h-10 flex-shrink-0"
         role="tablist"
       >
@@ -779,11 +989,13 @@ export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
         {/* Plan status + item count + today chip */}
         {activeTab !== "year" && activePlan && (
           <div className="ml-auto flex items-center gap-4">
-            <PlanStatusControl
-              plan={activePlan}
-              onSetStatus={setPlanStatus}
-              onLock={lockPlan}
-            />
+            <span data-tour="roadmap-plan-status">
+              <PlanStatusControl
+                plan={activePlan}
+                onSetStatus={setPlanStatus}
+                onLock={lockPlan}
+              />
+            </span>
             <div className="h-4 w-px bg-[var(--color-border-subtle)]" />
             <span className="text-[12px] text-[var(--color-text-muted)]">
               {activePlan.items.length} initiative{activePlan.items.length !== 1 ? "s" : ""}
@@ -821,6 +1033,7 @@ export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
           {/* Timeline panel */}
           <div
             ref={ganttContainerRef}
+            data-tour="roadmap-timeline"
             className={cn(
               "flex flex-col overflow-hidden transition-all duration-200",
               hasDetail ? "hidden md:flex md:[flex:0_0_60%]" : "flex-1",

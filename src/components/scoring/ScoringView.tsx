@@ -956,7 +956,7 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
       <Header title="Prioritization" showViewToggle />
       {initialTeam && <WorkflowBar currentStage="prioritize" teamSlug={initialTeam} />}
 
-      <div data-tour="scoring-framework-tabs">
+      <div data-tour="scoring-framework-tabs" className="flex-shrink-0">
         <FrameworkTabs active={activeFramework} onChange={(f) => setActiveFramework(f)} />
       </div>
 

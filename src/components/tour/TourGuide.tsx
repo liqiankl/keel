@@ -84,8 +84,8 @@ const INBOX_STEPS: TourStep[] = [
   {
     id: "inbox-filters",
     target: "inbox-filter-tabs",
-    title: "Filter & Search",
-    body: "Switch between All, Unread, and Triaged. Use the search bar to find requests by keyword instantly.",
+    title: "Search",
+    body: "Use the search bar to find any request by keyword instantly.",
     placement: "below",
   },
   {
@@ -154,10 +154,9 @@ const SCORING_STEPS: TourStep[] = [
   },
   {
     id: "scoring-cards",
-    target: "scoring-card-list",
     title: "Initiative Cards",
     body: "Each card shows the initiative title, priority dot, and current score. Edit values inline — click any number field to type directly.",
-    placement: "below",
+    placement: "center",
   },
   {
     id: "scoring-drag",
@@ -189,10 +188,9 @@ const ROADMAP_STEPS: TourStep[] = [
   },
   {
     id: "roadmap-timeline",
-    target: "roadmap-timeline",
     title: "Timeline View",
     body: "Initiatives appear as horizontal bars. The red line marks today. Click any bar to open the detail panel and edit status, effort, or priority.",
-    placement: "below",
+    placement: "center",
   },
   {
     id: "roadmap-status",

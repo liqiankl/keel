@@ -690,7 +690,7 @@ function PlanStatusControl({
               password: null,
               hiddenFields: [],
               createdAt: new Date().toISOString(),
-              createdBy: "Alex Chen",
+              createdBy: "Beulah Khumlo",
               revokedAt: null,
             });
           }

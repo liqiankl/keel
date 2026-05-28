@@ -6,12 +6,13 @@ import { Header } from "@/components/layout/Header";
 import { WorkflowBar } from "@/components/workflow/WorkflowBar";
 import { NextPhaseBar } from "@/components/workflow/NextPhaseBar";
 import { SourceBadge } from "@/components/inbox/SourceBadge";
-import { Check, ArrowRightCircle, Trash2, Search, X, Minus, ThumbsUp, Folder, FolderOpen, ExternalLink, Clock, Zap } from "lucide-react";
+import { Check, ArrowRightCircle, Trash2, Search, X, Minus, ThumbsUp, Folder, FolderOpen, ExternalLink, Clock, Zap, Info, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useInboxStore } from "@/store/useInboxStore";
 import { useAppStore } from "@/store/useAppStore";
 import { TEAMS } from "@/lib/constants";
 import { getInitials, avatarColor } from "@/lib/format";
+import { Tooltip } from "@/components/ui/Tooltip";
 import type { RequestSource, PrioritySignal } from "@/types";
 
 // ── Types ──────────────────────────────────────
@@ -91,18 +92,18 @@ const INITIAL_FEATURES: InboxFeature[] = [
     ],
   },
   {
-    id: "f4", title: "Multi-currency dashboard for international merchants", productArea: "Dashboard", source: "customer",
-    submittedBy: "Amira Hassan, Enterprise Account", submittedAt: "2026-05-05",
-    description: "Merchants operating across geographies can't see consolidated revenue in a single view. The dashboard should support multi-currency display with real-time FX conversion and currency toggle.",
-    businessContext: "Required by 8 enterprise accounts expanding to Southeast Asia. Risk of churn to Stripe if not addressed by Q3.",
+    id: "f4", title: "File Application Console Enhancement", productArea: "Developer Tools", source: "engineering",
+    submittedBy: "Karan Desai, Platform Engineering Lead", submittedAt: "2026-05-05",
+    description: "The file application console lacks essential developer tooling — no real-time log streaming, no structured error output, and no support for bulk file operations. Engineers are context-switching to external tools for tasks that should be native to the console.",
+    businessContext: "Slowing down 3 active integrations and generating 15+ support escalations a month. Internal teams have flagged this as the top developer-experience gap for Q2.",
     prioritySignal: "critical",
-    supportingLinks: ["https://docs.example.com/multi-currency", "https://loom.com/example-demo-recording"],
+    supportingLinks: ["https://github.com/example/issues/2047", "https://internal.wiki/file-console-gaps"],
     votes: [
-      { name: "Amira Hassan, Enterprise Account",       comment: "We operate in 6 currencies and rely on three separate tools to get a unified revenue view. It's costing us 8 hours a week." },
-      { name: "Nasreen Ali, CFO @ GlobalTradeHub",      comment: "Manual FX consolidation in spreadsheets is error-prone and creates audit risk. Real-time conversion would eliminate that entirely." },
-      { name: "Priya Kapoor, VP Growth @ AsiaExpand",   comment: "We're stalling our Southeast Asia rollout because we can't track regional performance in a single dashboard." },
-      { name: "Nikhil Sharma, Finance Director @ CrossBorder Inc", comment: "Currency toggles and FX reporting are baseline expectations for any enterprise account going international." },
-      { name: "Tara Singh, Enterprise CSM",             comment: "Three accounts in my book are actively evaluating Stripe as an alternative specifically because of this reporting gap." },
+      { name: "Karan Desai, Platform Engineering Lead", comment: "We spend 40 minutes per deployment switching between the console and external log tools. Real-time streaming alone would save hours a week." },
+      { name: "Sneha Iyer, Senior Developer @ FileOps", comment: "Structured error output is non-negotiable for debugging. Right now errors are buried in unformatted blobs — it's a productivity killer." },
+      { name: "Arjun Pillai, DevOps Engineer",          comment: "Bulk file operations are manual and error-prone. One misfire last quarter corrupted a staging environment and cost us a full day." },
+      { name: "Meera Nandan, Integration Engineer",     comment: "Every new integration onboarding involves a workaround for the console's limitations. This is the first thing engineers complain about." },
+      { name: "Rahul Srinivasan, VP Engineering",       comment: "This is blocking two enterprise integrations we committed to for Q2. It needs to be fixed before we can unblock those teams." },
     ],
   },
   {
@@ -190,6 +191,64 @@ const INITIAL_FEATURES: InboxFeature[] = [
       { name: "Sriram V., Operations Manager @ 24x7Logistics", comment: "Night-shift staff use mobile with dark mode enabled just to avoid the bright UI. Please build this natively." },
       { name: "Deepa Kumar, Merchant @ LateNightMart", comment: "47 of us mentioned this unprompted in the Q1 NPS survey. It's a recurring pain point, not a niche request." },
       { name: "Rajan P., Finance Controller @ NightOwlPharma", comment: "I do month-end close at midnight. A dark interface would reduce fatigue and help me work more accurately during late sessions." },
+    ],
+  },
+  {
+    id: "f11", title: "Inbox DLQ Capability", productArea: "Platform", source: "engineering",
+    submittedBy: "Platform Engineering Team", submittedAt: "2026-05-27",
+    description: "Add Dead Letter Queue support, RSDs (Retry Strategy Definitions), and Inbox Operator tooling to Hub Inbox. Enables developers to handle failed inbox messages without manual platform team intervention.",
+    businessContext: "All failed inbox messages currently require platform team intervention to investigate and replay. This is a growing support bottleneck — averaging 20+ escalations a week — and slows incident resolution across Hub tenants.",
+    prioritySignal: "critical",
+    supportingLinks: ["https://github.com/example/issues/3102", "https://internal.wiki/hub-inbox-dlq-rfc"],
+    votes: [
+      { name: "Suresh Nair, Staff Engineer @ Hub Platform",  comment: "We're manually replaying failed messages multiple times a week. DLQ support would let app teams own their own failure handling without paging us." },
+      { name: "Divya Krishnan, Engineering Manager",         comment: "The lack of RSDs means every retry strategy is bespoke per application. Standardising this would cut incident triage time by at least half." },
+      { name: "Aditya Rao, Backend Developer @ TenantOps",  comment: "Every time a message fails we raise a ticket and wait. With Inbox Operator tooling we could self-serve investigations and replays immediately." },
+      { name: "Priya Venkat, SRE Lead",                     comment: "Hub Inbox failures are in our top-5 on-call triggers. DLQ visibility would let us detect and resolve issues before they escalate to production incidents." },
+    ],
+  },
+  {
+    id: "f12", title: "Credentials Management", productArea: "Security", source: "engineering",
+    submittedBy: "Dia Platform Team", submittedAt: "2026-05-24",
+    description: "Secure handling of secrets and credentials for Hub applications via Dia. Provides a managed credential store that applications can reference without embedding secrets in manifests or source code.",
+    businessContext: "Secrets embedded in manifests are a security liability flagged in the last internal audit. Several Hub applications are currently non-compliant with the organisation's secret management policy, creating audit and breach risk.",
+    prioritySignal: "critical",
+    supportingLinks: ["https://internal.wiki/dia-credentials-spec", "https://github.com/example/issues/2891"],
+    votes: [
+      { name: "Rohan Joshi, Security Architect",            comment: "Hardcoded secrets in manifests are the number-one finding in our quarterly security reviews. This needs to be solved at the platform level, not per-app." },
+      { name: "Ananya Rao, Compliance Lead",                comment: "We're carrying audit risk on every Hub application that still embeds credentials. A managed credential store would close the gap across the board." },
+      { name: "Kiran Mehta, Senior Developer @ AppHub",    comment: "Rotating secrets manually across manifests is error-prone and has caused two outages. A centralised store with automatic rotation would remove that risk entirely." },
+      { name: "Siddharth V., DevOps Engineer",             comment: "Without managed credentials, every CI pipeline has its own bespoke secret injection. Dia-native support would standardise and secure the entire deploy chain." },
+      { name: "Nisha Patel, VP Engineering",               comment: "This is a pre-requisite for two enterprise customer certifications we're targeting in Q3. We can't proceed without it." },
+    ],
+  },
+  {
+    id: "f13", title: "Customer Onboarding Enablement", productArea: "Customer Success", source: "internal",
+    submittedBy: "Preethi Sharma, Head of Customer Success", submittedAt: "2026-05-20",
+    description: "Dedicated bandwidth to help customers onboard onto Hub applications. Root cause of onboarding friction is poor developer experience — this initiative bridges the gap with guided onboarding, enablement support, and activation tracking.",
+    businessContext: "Time-to-first-value for new Hub customers is averaging 6 weeks, double the 3-week target. Onboarding drop-off is the top contributor to early-stage churn and delayed revenue recognition.",
+    prioritySignal: "important",
+    supportingLinks: ["https://internal.wiki/onboarding-metrics-q1", "https://internal.notion.so/hub-activation-report"],
+    votes: [
+      { name: "Preethi Sharma, Head of Customer Success",  comment: "We're losing customers in the first 30 days not because the product is bad, but because the onboarding path is unclear. Guided enablement would change that." },
+      { name: "Lakshmi R., Customer Success Manager",      comment: "I spend 60% of my time filling gaps in the onboarding experience manually. Structured activation tracking would let me focus on relationship-building instead." },
+      { name: "Arvind Kumar, New Customer @ FinBridge",    comment: "We went 4 weeks without a working Hub integration because we couldn't figure out the correct setup sequence. A guided flow would have cut that to days." },
+      { name: "Tanvi Mehta, Solutions Engineer",           comment: "Activation data is scattered across spreadsheets and Slack threads. A proper tracking layer would give us early signals on at-risk accounts before they churn." },
+    ],
+  },
+  {
+    id: "f14", title: "PCI Data Management", productArea: "Compliance", source: "internal",
+    submittedBy: "Compliance & Security Team", submittedAt: "2026-05-22",
+    description: "Establish a framework for managing PCI-scoped data within Hub applications, including data classification, access controls, audit logging, and tokenisation support for cardholder data environments.",
+    businessContext: "PCI DSS v4.0 compliance deadline is approaching and formal data management controls are required. Three enterprise customers are blocked from production go-live pending PCI certification of the Hub platform.",
+    prioritySignal: "critical",
+    supportingLinks: ["https://internal.wiki/pci-dss-v4-readiness", "https://internal.notion.so/hub-pci-gap-analysis"],
+    votes: [
+      { name: "Vikram Pillai, Chief Compliance Officer",   comment: "PCI DSS v4.0 requires controls we don't have today. Without this we cannot certify Hub for cardholder data environments — full stop." },
+      { name: "Ananya Rao, Compliance Lead",               comment: "The gap analysis shows 7 open controls. Data classification and access controls are the two highest-risk items we need to close first." },
+      { name: "Rajesh Kumar, Enterprise Account @ PaySecure", comment: "Our legal team has put our Hub go-live on hold until PCI certification is confirmed. This is blocking ₹3Cr in contracted ARR." },
+      { name: "Sonal Iyer, Security Engineer",             comment: "Without tokenisation support, every team touching cardholder data is building their own controls. Standardising at the platform level is the only scalable fix." },
+      { name: "Deepak Nair, CTO @ CardVault Inc",          comment: "We chose Hub on the premise that PCI compliance would be handled at the infrastructure layer. That expectation needs to be met before we can go live." },
     ],
   },
 ];
@@ -285,6 +344,7 @@ export default function InboxPage() {
   const [deletedToast, setDeletedToast]     = useState<string | null>(null);
   const [bulkMoveOpen, setBulkMoveOpen]     = useState(false);
   const [expandedId, setExpandedId]         = useState<string | null>(null);
+  const [ageSort, setAgeSort]               = useState<"asc" | "desc" | null>(null);
 
   const addRequest = useInboxStore((s) => s.addRequest);
   const phasesActed   = useAppStore((s) => s.phasesActed);
@@ -308,13 +368,22 @@ export default function InboxPage() {
 
   const filteredFeatures = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return features;
-    return features.filter((f) =>
-      f.title.toLowerCase().includes(q) ||
-      f.source.toLowerCase().includes(q) ||
-      f.submittedBy.toLowerCase().includes(q),
-    );
-  }, [features, search]);
+    let result = q
+      ? features.filter((f) =>
+          f.title.toLowerCase().includes(q) ||
+          f.source.toLowerCase().includes(q) ||
+          f.submittedBy.toLowerCase().includes(q),
+        )
+      : [...features];
+    if (ageSort) {
+      result = result.sort((a, b) => {
+        const ageA = Date.now() - new Date(a.submittedAt).getTime();
+        const ageB = Date.now() - new Date(b.submittedAt).getTime();
+        return ageSort === "desc" ? ageB - ageA : ageA - ageB;
+      });
+    }
+    return result;
+  }, [features, search, ageSort]);
 
   function toggleRow(id: string) {
     setSelected((prev) => {
@@ -589,22 +658,69 @@ export default function InboxPage() {
                     />
                   </th>
                   <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-text-secondary)]">
-                    Feature Request
+                    <span className="inline-flex items-center gap-1">
+                      Feature Request
+                      <Tooltip content="The title and summary of the incoming feature request" placement="bottom" width={200}>
+                        <Info size={11} className="text-[var(--color-text-muted)] flex-shrink-0" />
+                      </Tooltip>
+                    </span>
                   </th>
                   <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-text-secondary)] w-36">
-                    Product Area
+                    <span className="inline-flex items-center gap-1">
+                      Product Area
+                      <Tooltip content="The area of the product this request relates to" placement="bottom" width={200}>
+                        <Info size={11} className="text-[var(--color-text-muted)] flex-shrink-0" />
+                      </Tooltip>
+                    </span>
                   </th>
                   <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-text-secondary)] w-36">
-                    Source
+                    <span className="inline-flex items-center gap-1">
+                      Source
+                      <Tooltip content="Where this request originated — customer, engineering, or internal" placement="bottom" width={200}>
+                        <Info size={11} className="text-[var(--color-text-muted)] flex-shrink-0" />
+                      </Tooltip>
+                    </span>
                   </th>
                   <th className="text-right px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-text-secondary)] w-20">
-                    Votes
+                    <span className="inline-flex items-center justify-end gap-1">
+                      Votes
+                      <Tooltip content="Number of stakeholders who have upvoted this request" placement="bottom" width={200}>
+                        <Info size={11} className="text-[var(--color-text-muted)] flex-shrink-0" />
+                      </Tooltip>
+                    </span>
                   </th>
                   <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-text-secondary)] w-56">
-                    Submitted By
+                    <span className="inline-flex items-center gap-1">
+                      Submitted By
+                      <Tooltip content="The person or team who submitted this request" placement="bottom" width={200}>
+                        <Info size={11} className="text-[var(--color-text-muted)] flex-shrink-0" />
+                      </Tooltip>
+                    </span>
                   </th>
                   <th className="text-right px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-text-secondary)] w-28">
-                    Age
+                    <span className="inline-flex items-center justify-end gap-1">
+                      Age
+                      <Tooltip content="How long this request has been waiting in the inbox" placement="bottom" width={200}>
+                        <Info size={11} className="text-[var(--color-text-muted)] flex-shrink-0" />
+                      </Tooltip>
+                      <button
+                        type="button"
+                        onClick={() => setAgeSort((prev) => prev === "asc" ? "desc" : prev === "desc" ? null : "asc")}
+                        aria-label={ageSort === "asc" ? "Sort oldest first" : ageSort === "desc" ? "Clear sort" : "Sort newest first"}
+                        className={cn(
+                          "flex items-center justify-center h-4 w-4 rounded transition-colors",
+                          ageSort
+                            ? "text-[var(--color-brand)]"
+                            : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]",
+                        )}
+                      >
+                        {ageSort === "asc"
+                          ? <ArrowUp size={11} />
+                          : ageSort === "desc"
+                          ? <ArrowDown size={11} />
+                          : <ArrowUpDown size={11} />}
+                      </button>
+                    </span>
                   </th>
                   <th className="w-24" />
                 </tr>
@@ -927,6 +1043,7 @@ export default function InboxPage() {
                 );
               })}
             </tbody>
+            <tfoot><tr><td colSpan={8} className="h-20" /></tr></tfoot>
           </table>
         )}
       </div>

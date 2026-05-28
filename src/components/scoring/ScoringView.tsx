@@ -953,7 +953,7 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <Header title="Prioritization" showViewToggle />
+      <Header title="Prioritization" />
       {initialTeam && <WorkflowBar currentStage="prioritize" teamSlug={initialTeam} />}
 
       <div data-tour="scoring-framework-tabs" className="flex-shrink-0">

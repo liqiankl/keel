@@ -9,9 +9,10 @@ interface TooltipProps {
   children: React.ReactNode;
   placement?: "top" | "bottom" | "left" | "right";
   className?: string;
+  width?: number;
 }
 
-export function Tooltip({ content, children, placement = "top", className }: TooltipProps) {
+export function Tooltip({ content, children, placement = "top", className, width }: TooltipProps) {
   const [visible, setVisible] = useState(false);
   const [coords, setCoords] = useState({ x: 0, y: 0 });
   const anchorRef = useRef<HTMLSpanElement>(null);
@@ -64,20 +65,22 @@ export function Tooltip({ content, children, placement = "top", className }: Too
         <span
           role="tooltip"
           className={cn(
-            "fixed z-[9999] pointer-events-none whitespace-nowrap",
-            "rounded-md px-2.5 py-1.5",
-            "text-[11px] font-medium leading-none tracking-wide",
-            "animate-in fade-in duration-75",
+            "fixed z-[9999] pointer-events-none",
+            width ? "whitespace-normal leading-relaxed" : "whitespace-nowrap leading-none",
+            "rounded-lg px-3 py-2",
+            "text-[11.5px] font-normal tracking-normal",
+            "animate-in fade-in duration-100",
           )}
           style={{
             left: coords.x,
             top: coords.y,
             transform: transformMap[placement],
-            backgroundColor: "#0e0e12",
-            color: "#e0e0e8",
-            border: "1px solid rgba(255,255,255,0.08)",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.32), 0 0 0 0.5px rgba(0,0,0,0.2)",
-            letterSpacing: "0.01em",
+            backgroundColor: "var(--color-bg-elevated)",
+            color: "var(--color-text-secondary)",
+            border: "1px solid var(--color-border-strong)",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.14), 0 1px 4px rgba(0,0,0,0.08)",
+            letterSpacing: "0em",
+            ...(width ? { width } : {}),
           }}
         >
           {content}

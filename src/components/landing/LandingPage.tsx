@@ -132,7 +132,7 @@ function Hero({
       {/* Subheadline */}
       <p className="mx-auto mt-6 max-w-xl text-lg text-[#8888a0] leading-relaxed">
         Inbox requests, prioritize with RICE, MoSCoW, or WSJF, plan your quarter, and share
-        beautiful roadmaps — all in one focused tool.
+        beautiful roadmaps all in one focused tool.
       </p>
 
       {/* CTAs */}

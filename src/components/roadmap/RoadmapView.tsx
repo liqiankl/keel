@@ -46,7 +46,7 @@ const STATUS_META: Record<string, { color: string; label: string }> = {
   todo:        { color: "#8b5cf6", label: "Planned"     }, // violet
   in_progress: { color: "#3b82f6", label: "In Progress" }, // blue
   in_review:   { color: "#f59e0b", label: "In Review"   }, // amber
-  closed:      { color: "#14b8a6", label: "Closed"      }, // teal
+  closed:      { color: "#14b8a6", label: "Completed"   }, // teal
   canceled:    { color: "#ef4444", label: "Canceled"    }, // red
 };
 
@@ -721,6 +721,7 @@ const YEAR_STATUS_COLORS: Record<string, string> = {
 };
 
 function YearOverview({ plans, teamName }: { plans: QuarterlyPlan[]; teamName: string }) {
+  const [expandedQuarters, setExpandedQuarters] = useState<Set<number>>(new Set());
   const allItems = plans.flatMap((p) => p.items);
   const inProg = allItems.filter((i) => i.status === "in_progress").length;
   const inRev  = allItems.filter((i) => i.status === "in_review").length;
@@ -758,7 +759,10 @@ function YearOverview({ plans, teamName }: { plans: QuarterlyPlan[]; teamName: s
               </div>
             );
           }
-          const sorted = sortItems(plan.items);
+          const sorted   = sortItems(plan.items);
+          const isExpanded = expandedQuarters.has(qNum);
+          const visible  = isExpanded ? sorted : sorted.slice(0, 5);
+          const remaining = plan.items.length - 5;
           const capPct = plan.capacity.total > 0
             ? Math.round((plan.capacity.committed / plan.capacity.total) * 100)
             : 0;
@@ -792,7 +796,7 @@ function YearOverview({ plans, teamName }: { plans: QuarterlyPlan[]; teamName: s
                 </div>
               </div>
               <div className="space-y-1.5">
-                {sorted.slice(0, 5).map((item) => {
+                {visible.map((item) => {
                   const { color } = STATUS_META[item.status] ?? { color: "#94a3b8" };
                   return (
                     <div key={item.id} className="flex items-center gap-2">
@@ -801,8 +805,23 @@ function YearOverview({ plans, teamName }: { plans: QuarterlyPlan[]; teamName: s
                     </div>
                   );
                 })}
-                {plan.items.length > 5 && (
-                  <p className="text-[11px] text-[var(--color-text-muted)] pl-3.5">+{plan.items.length - 5} more</p>
+                {!isExpanded && remaining > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setExpandedQuarters((prev) => new Set([...prev, qNum]))}
+                    className="text-[11px] text-[var(--color-text-muted)] hover:text-[var(--color-brand)] pl-3.5 transition-colors text-left"
+                  >
+                    +{remaining} more
+                  </button>
+                )}
+                {isExpanded && remaining > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setExpandedQuarters((prev) => { const s = new Set(prev); s.delete(qNum); return s; })}
+                    className="text-[11px] text-[var(--color-text-muted)] hover:text-[var(--color-brand)] pl-3.5 transition-colors text-left"
+                  >
+                    Show less
+                  </button>
                 )}
               </div>
             </div>

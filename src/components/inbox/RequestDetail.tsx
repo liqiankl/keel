@@ -4,7 +4,6 @@ import { useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
   X,
-  Maximize2,
   ThumbsUp,
   Tag,
   Clock,
@@ -104,17 +103,6 @@ export function RequestDetail({
 
         <div className="flex-1" />
 
-        <button
-          className={cn(
-            "flex h-7 w-7 items-center justify-center rounded",
-            "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]",
-            "hover:bg-[var(--color-bg-hover)] transition-colors",
-          )}
-          aria-label="Expand to full page"
-          title="Expand"
-        >
-          <Maximize2 size={18} />
-        </button>
         <button
           onClick={onClose}
           className={cn(

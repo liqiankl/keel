@@ -856,9 +856,10 @@ export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
   const sortedItemsRef = useRef<RoadmapItem[]>([]);
   useEffect(() => { weekOverridesRef.current = weekOverrides; }, [weekOverrides]);
 
-  const { plans, updateItemInPlan, setPlanStatus, lockPlan } = useRoadmapStore();
-  const activeTeamId   = useAppStore((s) => s.activeTeamId);
+  const { plans, updateItemInPlan, addPlan, addItemToPlan, removeItemFromPlan, setPlanStatus, lockPlan } = useRoadmapStore();
+  const activeTeamId    = useAppStore((s) => s.activeTeamId);
   const setActiveTeamId = useAppStore((s) => s.setActiveTeamId);
+  const workspaceId     = useAppStore((s) => s.workspace.id);
   const temporal = useStore(useRoadmapStore.temporal);
 
   useEffect(() => {
@@ -1133,6 +1134,41 @@ export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
                 onStatusChange={(itemId, planId, status) =>
                   updateItemInPlan(planId, itemId, { status })
                 }
+                onQuarterChange={(itemId, fromPlanId, quarter) => {
+                  const sourcePlan = plans.find((p) => p.id === fromPlanId);
+                  if (!sourcePlan) return;
+                  const movedItem = sourcePlan.items.find((i) => i.id === itemId);
+                  if (!movedItem) return;
+
+                  let targetPlan = plans.find(
+                    (p) => p.teamId === activeTeamId && p.quarter.quarter === quarter.quarter && p.quarter.year === quarter.year,
+                  );
+
+                  if (!targetPlan) {
+                    const newPlan: import("@/types").QuarterlyPlan = {
+                      id: `plan_${activeTeamId}_q${quarter.quarter}_${quarter.year}`,
+                      quarter,
+                      workspaceId,
+                      teamId: activeTeamId,
+                      status: "draft",
+                      goals: [],
+                      items: [],
+                      capacity: { unit: sourcePlan.capacity.unit, total: sourcePlan.capacity.total, committed: 0, warningThreshold: 0.9, byArea: {} },
+                      reviewers: [],
+                      lockedAt: null,
+                      lockedBy: null,
+                      createdAt: new Date().toISOString(),
+                      updatedAt: new Date().toISOString(),
+                      shareLink: null,
+                    };
+                    addPlan(newPlan);
+                    targetPlan = newPlan;
+                  }
+
+                  removeItemFromPlan(fromPlanId, itemId);
+                  addItemToPlan(targetPlan.id, { ...movedItem, quarter, status: "backlog" });
+                  setOpenItemId(null);
+                }}
               />
             </div>
           )}

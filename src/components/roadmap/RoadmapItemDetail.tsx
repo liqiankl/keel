@@ -1,9 +1,10 @@
 "use client";
 
-import { X, Clock } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { X, Clock, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { STATUS_CONFIG, PRIORITY_CONFIG } from "@/lib/constants";
-import type { RoadmapItem, QuarterlyGoal, InitiativeStatus } from "@/types";
+import { STATUS_CONFIG, PRIORITY_CONFIG, CURRENT_QUARTER, makeQuarterRef } from "@/lib/constants";
+import type { RoadmapItem, QuarterlyGoal, InitiativeStatus, QuarterRef } from "@/types";
 
 const ALL_STATUSES: InitiativeStatus[] = [
   "backlog", "todo", "in_progress", "in_review", "closed", "canceled",
@@ -16,12 +17,27 @@ const MOSCOW_COLORS: Record<string, string> = {
   must: "#f87171", should: "#fb923c", could: "#60a5fa", wont: "#6b7280",
 };
 
+function getNextQuarters(count = 4): QuarterRef[] {
+  const { year, quarter } = CURRENT_QUARTER;
+  const quarters: QuarterRef[] = [];
+  let y = year, q = quarter;
+  for (let i = 0; i < count; i++) {
+    q++;
+    if (q > 4) { q = 1; y++; }
+    quarters.push(makeQuarterRef(y, q as 1 | 2 | 3 | 4));
+  }
+  return quarters;
+}
+
+const FUTURE_QUARTERS = getNextQuarters(2);
+
 interface RoadmapItemDetailProps {
   item: RoadmapItem;
   goals: QuarterlyGoal[];
   planId: string;
   onClose: () => void;
   onStatusChange: (itemId: string, planId: string, status: InitiativeStatus) => void;
+  onQuarterChange?: (itemId: string, planId: string, quarter: QuarterRef) => void;
 }
 
 export function RoadmapItemDetail({
@@ -30,7 +46,22 @@ export function RoadmapItemDetail({
   planId,
   onClose,
   onStatusChange,
+  onQuarterChange,
 }: RoadmapItemDetailProps) {
+  const [quarterOpen, setQuarterOpen] = useState(false);
+  const [pendingQuarter, setPendingQuarter] = useState<QuarterRef | null>(null);
+  const quarterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!quarterOpen) return;
+    function handle(e: MouseEvent) {
+      if (quarterRef.current && !quarterRef.current.contains(e.target as Node)) {
+        setQuarterOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, [quarterOpen]);
   const priorityCfg = PRIORITY_CONFIG[item.priority] ?? PRIORITY_CONFIG.none;
   const itemGoals   = goals.filter((g) => item.goalIds.includes(g.id));
   const rice        = item.score?.rice;
@@ -151,9 +182,47 @@ export function RoadmapItemDetail({
             )}
 
             <MetaCard label="Quarter">
-              <span className="text-[13px] text-[var(--color-text-primary)]">
-                {item.quarter.label}
-              </span>
+              <div ref={quarterRef} className="relative">
+                <button
+                  onClick={() => onQuarterChange && setQuarterOpen((o) => !o)}
+                  disabled={!onQuarterChange}
+                  className={cn(
+                    "flex items-center gap-1 text-[13px] text-[var(--color-text-primary)]",
+                    onQuarterChange && "hover:text-[var(--color-brand)] transition-colors cursor-pointer",
+                  )}
+                >
+                  {item.quarter.label}
+                  {onQuarterChange && (
+                    <ChevronDown
+                      size={13}
+                      className={cn("text-[var(--color-text-muted)] transition-transform", quarterOpen && "rotate-180")}
+                    />
+                  )}
+                </button>
+                {quarterOpen && (
+                  <div className={cn(
+                    "absolute left-0 top-full mt-1 z-50 min-w-[110px] rounded-lg py-1",
+                    "bg-[var(--color-bg-elevated)] border border-[var(--color-border-strong)]",
+                    "shadow-xl",
+                  )}>
+                    {FUTURE_QUARTERS.map((q) => (
+                      <button
+                        key={q.label}
+                        onClick={() => {
+                          setPendingQuarter(q);
+                          setQuarterOpen(false);
+                        }}
+                        className={cn(
+                          "w-full text-left px-3 py-1.5 text-[13px] transition-colors",
+                          "text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]",
+                        )}
+                      >
+                        {q.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </MetaCard>
           </div>
         </section>
@@ -215,6 +284,52 @@ export function RoadmapItemDetail({
           </section>
         )}
       </div>
+
+      {/* ── Quarter change confirmation modal ── */}
+      {pendingQuarter && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+            onClick={() => setPendingQuarter(null)}
+          />
+          <div className={cn(
+            "relative z-10 w-full max-w-[360px] rounded-xl p-5",
+            "bg-[var(--color-bg-surface)] border border-[var(--color-border-strong)]",
+            "shadow-2xl",
+          )}>
+            <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)] mb-2">
+              Move to {pendingQuarter.label}?
+            </h3>
+            <p className="text-[13px] text-[var(--color-text-secondary)] leading-relaxed mb-5">
+              Do you want to move this item to {pendingQuarter.label}? It will be set to draft state until processed.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setPendingQuarter(null)}
+                className={cn(
+                  "h-8 px-4 rounded-lg text-[13px] font-medium transition-colors",
+                  "text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]",
+                  "border border-[var(--color-border-subtle)]",
+                )}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  onQuarterChange!(item.id, planId, pendingQuarter);
+                  setPendingQuarter(null);
+                }}
+                className={cn(
+                  "h-8 px-4 rounded-lg text-[13px] font-medium transition-colors",
+                  "bg-[var(--color-brand)] text-white hover:opacity-90",
+                )}
+              >
+                Yes, move it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

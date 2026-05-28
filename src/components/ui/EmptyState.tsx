@@ -69,7 +69,12 @@ export function EmptyState({
       {(action || secondaryAction) && (
         <div className="flex items-center gap-2">
           {action && (
-            <Button variant="primary" size="sm" onClick={action.onClick}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={action.onClick}
+              className="hover:bg-[var(--color-brand)] hover:text-white hover:border-[var(--color-brand)] transition-colors"
+            >
               {action.label}
             </Button>
           )}

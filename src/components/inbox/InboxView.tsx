@@ -120,7 +120,7 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
   const openRequest = openId ? requests.find((r) => r.id === openId) ?? null : null;
 
   useGlobalShortcuts({
-    c: () => setNewModalOpen(true),
+    c: () => { if (!initialTeam) setNewModalOpen(true); },
     escape: () => {
       if (newModalOpen) return;
       if (openId) { setOpenId(null); return; }
@@ -340,7 +340,7 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
             onCheck={toggleSelectId}
             onStatusChange={handleStatusChange}
             onFocus={setFocusedId}
-            onAddToGroup={() => setNewModalOpen(true)}
+            onAddToGroup={initialTeam ? undefined : () => setNewModalOpen(true)}
             onSendToPrioritize={initialTeam ? handleSendToPrioritize : undefined}
             onSendToIdeas={!initialTeam ? handleSendToIdeas : undefined}
             allowedStatuses={initialTeam ? ["new", "triaged"] : undefined}
@@ -371,14 +371,16 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
         )}
       </div>
 
-      <NewRequestModal
-        open={newModalOpen}
-        onClose={() => setNewModalOpen(false)}
-        onSubmit={(req) => {
-          addRequest(req);
-          setOpenId(req.id);
-        }}
-      />
+      {!initialTeam && (
+        <NewRequestModal
+          open={newModalOpen}
+          onClose={() => setNewModalOpen(false)}
+          onSubmit={(req) => {
+            addRequest(req);
+            setOpenId(req.id);
+          }}
+        />
+      )}
 
       {prioritizeToast && (
         <div className={cn(

@@ -154,21 +154,19 @@ export function RequestList({
   if (filteredRequests.length === 0) {
     if (teamSlug) {
       return (
-        <div className="flex-1 flex items-center justify-center py-20 px-8">
-          <div className="flex flex-col items-center text-center max-w-[360px] gap-6">
+        <div className="flex-1 flex items-center justify-center py-16 px-8">
+          <div className="flex flex-col items-center text-center max-w-[300px] gap-4">
             {/* Icon */}
-            <div className="relative">
-              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[var(--color-brand)]/20 to-[var(--color-brand)]/5 border border-[var(--color-brand)]/20 flex items-center justify-center">
-                <Sparkles size={28} className="text-[var(--color-brand)]" />
-              </div>
+            <div className="h-10 w-10 rounded-xl bg-[var(--color-brand)]/10 border border-[var(--color-brand)]/15 flex items-center justify-center">
+              <Sparkles size={18} className="text-[var(--color-brand)]" />
             </div>
 
             {/* Copy */}
-            <div className="space-y-2.5">
-              <p className="text-[17px] font-bold text-[var(--color-text-primary)] leading-snug tracking-tight">
+            <div className="space-y-1.5">
+              <p className="text-[13px] font-medium text-[var(--color-text-primary)]">
                 Fresh canvas. Time to fill it.
               </p>
-              <p className="text-[13px] text-[var(--color-text-secondary)] leading-relaxed">
+              <p className="text-[12px] text-[var(--color-text-muted)] leading-relaxed">
                 Your inbox is stacked with feature requests waiting for a verdict.
                 Pull in the ones worth building — your team is ready to execute.
               </p>
@@ -178,18 +176,18 @@ export function RequestList({
             <a
               href="/inbox"
               className={cn(
-                "inline-flex items-center gap-2 h-9 px-5 rounded-lg text-[13px] font-semibold",
-                "bg-[var(--color-brand)] text-white",
-                "hover:opacity-90 active:scale-[0.98] transition-all duration-150",
-                "shadow-[0_2px_12px_var(--color-brand)/30]",
+                "inline-flex items-center gap-1.5 h-7 px-3 rounded-md text-[12px] font-medium",
+                "border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
+                "hover:border-[var(--color-brand)] hover:text-[var(--color-brand)] hover:bg-[var(--color-brand)]/5",
+                "transition-colors duration-150",
               )}
             >
               Browse Inbox
-              <ArrowRight size={14} />
+              <ArrowRight size={12} />
             </a>
 
             <p className="text-[11px] text-[var(--color-text-muted)]">
-              Open any request · hit <kbd className="font-mono bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded px-1 py-0.5">Send to Ideas</kbd> · done.
+              Open any request · hit <kbd className="font-mono bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded px-1 py-0.5 text-[10px]">Send to Ideas</kbd> · done.
             </p>
           </div>
         </div>

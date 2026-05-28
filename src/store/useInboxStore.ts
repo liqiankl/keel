@@ -130,7 +130,7 @@ export const useInboxStore = create<InboxState>()(
       }),
       {
         name: "keel-inbox",
-        version: 4,
+        version: 5,
         partialize: (s) => ({ requests: s.requests }),
         migrate: (persisted: any, version: number) => {
           if (version < 3) {

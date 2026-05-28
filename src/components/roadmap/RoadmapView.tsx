@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { useStore } from "zustand";
-import { Map } from "lucide-react";
+import * as Dialog from "@radix-ui/react-dialog";
+import { ChevronRight, Lock, Map } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { WorkflowBar } from "@/components/workflow/WorkflowBar";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -12,7 +13,7 @@ import { useAppStore } from "@/store/useAppStore";
 import { TEAMS } from "@/lib/constants";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
 import { cn } from "@/lib/cn";
-import type { InitiativeStatus, QuarterlyPlan, RoadmapItem } from "@/types";
+import type { InitiativeStatus, PlanStatus, QuarterlyPlan, RoadmapItem } from "@/types";
 
 // ─────────────────────────────────────────────
 // Constants
@@ -36,15 +37,15 @@ const QUARTER_MONTHS: Record<string, { short: string; long: string }[]> = {
 
 const TOTAL_WEEKS = 12;
 const LABEL_W = 256; // px — left sticky label column
+const DRAG_THRESHOLD = 4; // px movement before treating interaction as a drag
 
-const STATUS_META: Record<InitiativeStatus, { color: string; label: string }> = {
-  backlog:     { color: "#64748b", label: "Backlog" },
-  todo:        { color: "#8b5cf6", label: "Planned" },
-  in_progress: { color: "#5e5ce6", label: "In Progress" },
-  in_review:   { color: "#f59e0b", label: "In Review" },
-  done:        { color: "#22c55e", label: "Done" },
-  closed:      { color: "#94a3b8", label: "Closed" },
-  canceled:    { color: "#94a3b8", label: "Canceled" },
+const STATUS_META: Record<string, { color: string; label: string }> = {
+  backlog:     { color: "#94a3b8", label: "Backlog"     }, // slate
+  todo:        { color: "#8b5cf6", label: "Planned"     }, // violet
+  in_progress: { color: "#3b82f6", label: "In Progress" }, // blue
+  in_review:   { color: "#f59e0b", label: "In Review"   }, // amber
+  closed:      { color: "#14b8a6", label: "Closed"      }, // teal
+  canceled:    { color: "#ef4444", label: "Canceled"    }, // red
 };
 
 const PRIORITY_COLOR: Record<string, string> = {
@@ -55,7 +56,7 @@ const PRIORITY_COLOR: Record<string, string> = {
 };
 
 const STATUS_SORT: Partial<Record<InitiativeStatus, number>> = {
-  in_progress: 0, in_review: 1, done: 2, todo: 3, backlog: 4, closed: 5, canceled: 6,
+  in_progress: 0, in_review: 1, todo: 2, backlog: 3, closed: 4, canceled: 5,
 };
 const PRIO_SORT: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
 
@@ -64,7 +65,7 @@ const PRIO_SORT: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 
 // ─────────────────────────────────────────────
 
 function getStartWeek(item: RoadmapItem): number {
-  if (item.status === "done" || item.status === "in_progress") return 1;
+  if (item.status === "in_progress") return 1;
   if (item.status === "in_review") return 3;
   if (item.status === "todo") {
     if (item.priority === "urgent") return 1;
@@ -137,42 +138,47 @@ function TimelineGrid({ todayPct }: { todayPct: number | null }) {
           style={{
             left: `${((i + 1) / TOTAL_WEEKS) * 100}%`,
             width: "1px",
-            backgroundColor: (i + 1) % 4 === 0
-              ? "var(--color-border-subtle)"
-              : "var(--color-border-subtle)",
+            backgroundColor: "var(--color-border-subtle)",
             opacity: (i + 1) % 4 === 0 ? 0.8 : 0.35,
           }}
         />
       ))}
-      {/* Today line */}
-      {todayPct !== null && (
-        <>
-          <div
-            className="absolute top-0 bottom-0 z-10"
-            style={{ left: `${todayPct}%`, width: "2px", backgroundColor: "#e5484d" }}
-          />
-          <div
-            className="absolute top-1 z-10 -translate-x-1/2 text-[9px] font-bold text-white bg-[#e5484d] rounded px-1 py-0.5 leading-none"
-            style={{ left: `${todayPct}%` }}
-          >
-            TODAY
-          </div>
-        </>
-      )}
+    </div>
+  );
+}
+
+// Renders once over the entire rows area — today line + 3 labels (top / mid / bottom).
+// Uses CSS calc so it stays aligned with the gantt area regardless of container width.
+function TodayOverlay({ todayPct }: { todayPct: number }) {
+  const left = `calc(${LABEL_W}px + (100% - ${LABEL_W}px) * ${todayPct / 100})`;
+  const pill = "absolute -translate-x-1/2 text-[9px] font-bold text-white bg-[#e5484d] rounded px-1 py-0.5 leading-none";
+  return (
+    <div className="absolute inset-0 pointer-events-none z-10" style={{ left: 0, right: 0 }}>
+      <div className="absolute inset-y-0" style={{ left }}>
+        {/* Vertical line */}
+        <div className="absolute inset-y-0 w-[2px] -translate-x-[1px] bg-[#e5484d]" />
+        {/* Labels: top, middle, bottom */}
+        <div className={`${pill} top-2`}>TODAY</div>
+        <div className={`${pill} top-1/2 -translate-y-1/2 -translate-x-1/2`}>TODAY</div>
+        <div className={`${pill} bottom-2`}>TODAY</div>
+      </div>
     </div>
   );
 }
 
 function GanttBar({
   item,
+  startWeek,
   isOpen,
-  onOpen,
+  isDragging,
+  onMouseDown,
 }: {
   item: RoadmapItem;
+  startWeek: number;
   isOpen: boolean;
-  onOpen: (id: string) => void;
+  isDragging: boolean;
+  onMouseDown: (id: string, e: React.MouseEvent) => void;
 }) {
-  const startWeek = getStartWeek(item);
   const dur = getDurationWeeks(item);
   const end = Math.min(startWeek + dur - 1, TOTAL_WEEKS);
   const actualDur = end - startWeek + 1;
@@ -183,49 +189,71 @@ function GanttBar({
   return (
     <div
       className="absolute inset-y-0 flex items-center px-1"
-      style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+      style={{
+        left: `${leftPct}%`,
+        width: `${widthPct}%`,
+        transition: isDragging ? "none" : "left 0.18s ease, width 0.18s ease",
+        zIndex: isDragging ? 20 : undefined,
+      }}
     >
-      <button
-        onClick={() => onOpen(item.id)}
+      <div
+        role="button"
+        tabIndex={0}
+        onMouseDown={(e) => onMouseDown(item.id, e)}
         className={cn(
-          "w-full h-8 rounded-lg flex items-center gap-1.5 px-2.5 text-left",
-          "transition-all duration-100 hover:brightness-110 active:scale-[0.99]",
-          "shadow-[0_1px_3px_rgba(0,0,0,0.08)]",
-          isOpen && "ring-2 ring-offset-1",
+          "w-full h-8 rounded-lg flex items-center gap-1.5 px-2.5 select-none",
+          isDragging
+            ? "shadow-2xl cursor-grabbing scale-[1.03]"
+            : "shadow-[0_1px_3px_rgba(0,0,0,0.08)] cursor-grab hover:brightness-110",
         )}
         style={{
-          backgroundColor: `${color}28`,
-          border: `1.5px solid ${color}66`,
-          ...(isOpen ? { ringColor: color } : {}),
+          backgroundColor: isDragging ? `${color}40` : `${color}28`,
+          border: `1.5px solid ${color}${isDragging ? "99" : isOpen ? "bb" : "66"}`,
+          outline: isOpen && !isDragging ? `2px solid ${color}60` : undefined,
+          outlineOffset: isOpen && !isDragging ? "1px" : undefined,
+          transition: isDragging ? "none" : "background-color 0.1s, border-color 0.1s",
         }}
-        title={`${item.title} · ${STATUS_META[item.status]?.label}`}
+        title={`${item.title} · ${STATUS_META[item.status]?.label} · Drag to reposition`}
       >
         <div className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
         <span className="text-[11px] font-semibold truncate" style={{ color }}>
           {item.title}
         </span>
-        {actualDur >= 3 && item.effort.points && (
+        {isDragging ? (
           <span
-            className="ml-auto text-[10px] tabular-nums flex-shrink-0 opacity-70"
+            className="ml-auto text-[10px] font-bold flex-shrink-0 tabular-nums whitespace-nowrap"
             style={{ color }}
           >
-            {item.effort.points}pt
+            W{startWeek}
           </span>
+        ) : (
+          actualDur >= 3 && item.effort.points && (
+            <span
+              className="ml-auto text-[10px] tabular-nums flex-shrink-0 opacity-70"
+              style={{ color }}
+            >
+              {item.effort.points}pt
+            </span>
+          )
         )}
-      </button>
+      </div>
     </div>
   );
 }
 
 function ItemRow({
   item,
+  startWeek,
   isOpen,
-  onOpen,
+  isDragging,
+  onBarMouseDown,
   todayPct,
 }: {
   item: RoadmapItem;
+  startWeek: number;
   isOpen: boolean;
-  onOpen: (id: string) => void;
+  isDragging: boolean;
+  onBarMouseDown: (id: string, e: React.MouseEvent) => void;
   todayPct: number | null;
 }) {
   const { color, label } = STATUS_META[item.status] ?? { color: "#94a3b8", label: item.status };
@@ -267,7 +295,13 @@ function ItemRow({
       {/* Gantt area */}
       <div className="flex-1 relative overflow-hidden">
         <TimelineGrid todayPct={todayPct} />
-        <GanttBar item={item} isOpen={isOpen} onOpen={onOpen} />
+        <GanttBar
+          item={item}
+          startWeek={startWeek}
+          isOpen={isOpen}
+          isDragging={isDragging}
+          onMouseDown={onBarMouseDown}
+        />
       </div>
     </div>
   );
@@ -299,6 +333,177 @@ function MonthHeader({ qKey }: { qKey: string }) {
 }
 
 // ─────────────────────────────────────────────
+// Plan status
+// ─────────────────────────────────────────────
+
+const PLAN_STATUS_META: Record<PlanStatus, { color: string; label: string }> = {
+  draft:     { color: "#94a3b8", label: "Draft"     },
+  in_review: { color: "#f59e0b", label: "In Review" },
+  approved:  { color: "#22c55e", label: "Approved"  },
+  locked:    { color: "#5e5ce6", label: "Locked"    },
+};
+
+function LockConfirmDialog({
+  open,
+  quarterLabel,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  quarterLabel: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <Dialog.Root open={open} onOpenChange={(v) => { if (!v) onCancel(); }}>
+      <Dialog.Portal>
+        <Dialog.Overlay
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-150"
+        />
+        <Dialog.Content
+          className={cn(
+            "fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2",
+            "w-[380px] rounded-2xl p-6",
+            "bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)]",
+            "shadow-[0_24px_48px_rgba(0,0,0,0.18)]",
+            "animate-in fade-in zoom-in-95 duration-150",
+          )}
+        >
+          {/* Icon */}
+          <div className="flex justify-center mb-4">
+            <div className="h-12 w-12 rounded-full flex items-center justify-center bg-[#5e5ce6]/12 border border-[#5e5ce6]/30">
+              <Lock size={22} className="text-[#5e5ce6]" />
+            </div>
+          </div>
+
+          <Dialog.Title className="text-[16px] font-semibold text-[var(--color-text-primary)] text-center mb-1">
+            Lock {quarterLabel} plan?
+          </Dialog.Title>
+          <Dialog.Description className="text-[13px] text-[var(--color-text-muted)] text-center leading-relaxed mb-6">
+            Locking marks this plan as final. You can still view it but it signals the plan is committed and shouldn&apos;t change.
+          </Dialog.Description>
+
+          <div className="flex gap-2.5">
+            <button
+              onClick={onCancel}
+              className={cn(
+                "flex-1 h-9 rounded-lg text-[13px] font-medium transition-colors",
+                "border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
+                "hover:bg-[var(--color-bg-hover)]",
+              )}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className={cn(
+                "flex-1 h-9 rounded-lg text-[13px] font-semibold transition-colors",
+                "bg-[#5e5ce6] text-white hover:bg-[#4f4de0]",
+              )}
+            >
+              <Lock size={13} className="inline mr-1.5 -mt-0.5" />
+              Lock Plan
+            </button>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
+function PlanStatusControl({
+  plan,
+  onSetStatus,
+  onLock,
+}: {
+  plan: QuarterlyPlan;
+  onSetStatus: (id: string, status: PlanStatus) => void;
+  onLock: (id: string, userId: string) => void;
+}) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const { color, label } = PLAN_STATUS_META[plan.status];
+  const isLocked = plan.status === "locked";
+
+  const quarterLabel = plan.quarter?.label ?? `Q${plan.quarter?.quarter} ${plan.quarter?.year}`;
+
+  return (
+    <>
+      <div className="flex items-center gap-2">
+        {/* Current status badge */}
+        <span
+          className="inline-flex items-center gap-1 h-6 px-2.5 rounded-full text-[11px] font-semibold"
+          style={{
+            backgroundColor: `${color}18`,
+            color,
+            border: `1px solid ${color}40`,
+          }}
+        >
+          {isLocked && <Lock size={10} />}
+          {label}
+        </span>
+
+        {/* Transition actions */}
+        {plan.status === "draft" && (
+          <button
+            onClick={() => onSetStatus(plan.id, "in_review")}
+            className={cn(
+              "inline-flex items-center gap-1 h-6 px-2.5 rounded-full text-[11px] font-medium",
+              "border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
+              "hover:border-[#f59e0b] hover:text-[#f59e0b] transition-colors",
+            )}
+            title="Send this plan for review"
+          >
+            Send for Review
+            <ChevronRight size={11} />
+          </button>
+        )}
+
+        {(plan.status === "in_review" || plan.status === "approved") && (
+          <>
+            <button
+              onClick={() => setConfirmOpen(true)}
+              className={cn(
+                "inline-flex items-center gap-1 h-6 px-2.5 rounded-full text-[11px] font-semibold",
+                "border transition-colors",
+                "text-[#5e5ce6] border-[#5e5ce6]/50 bg-[#5e5ce6]/8",
+                "hover:bg-[#5e5ce6]/15",
+              )}
+              title="Lock this plan — no further changes"
+            >
+              <Lock size={10} />
+              Lock Plan
+            </button>
+            <button
+              onClick={() => onSetStatus(plan.id, "draft")}
+              className="text-[11px] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
+              title="Revert to Draft"
+            >
+              Revert
+            </button>
+          </>
+        )}
+
+        {isLocked && plan.lockedAt && (
+          <span className="text-[11px] text-[var(--color-text-muted)]">
+            {new Date(plan.lockedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+          </span>
+        )}
+      </div>
+
+      <LockConfirmDialog
+        open={confirmOpen}
+        quarterLabel={quarterLabel}
+        onConfirm={() => {
+          onLock(plan.id, "u_pm_01");
+          setConfirmOpen(false);
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────
 // Year overview (kept as card grid)
 // ─────────────────────────────────────────────
 
@@ -308,8 +513,8 @@ const YEAR_STATUS_COLORS: Record<string, string> = {
 
 function YearOverview({ plans, teamName }: { plans: QuarterlyPlan[]; teamName: string }) {
   const allItems = plans.flatMap((p) => p.items);
-  const done = allItems.filter((i) => i.status === "done").length;
   const inProg = allItems.filter((i) => i.status === "in_progress").length;
+  const inRev  = allItems.filter((i) => i.status === "in_review").length;
 
   return (
     <div className="flex-1 overflow-y-auto px-5 py-5">
@@ -323,7 +528,7 @@ function YearOverview({ plans, teamName }: { plans: QuarterlyPlan[]; teamName: s
           { label: "Quarters planned", value: plans.length },
           { label: "Initiatives",      value: allItems.length },
           { label: "In progress",      value: inProg },
-          { label: "Done",             value: done },
+          { label: "In review",        value: inRev },
         ].map(({ label, value }) => (
           <div key={label}>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)] mb-0.5">{label}</p>
@@ -411,8 +616,20 @@ export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
   const [activeTab, setActiveTab] = useState<QuarterTab>("q2");
   const [openItemId, setOpenItemId] = useState<string | null>(null);
 
-  const { plans, updateItemInPlan } = useRoadmapStore();
-  const activeTeamId  = useAppStore((s) => s.activeTeamId);
+  // Drag state — weekOverrides persists positions after drag; dragLive is the live position during drag
+  const [weekOverrides, setWeekOverrides] = useState<Record<string, number>>({});
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragLive, setDragLive] = useState<{ itemId: string; week: number } | null>(null);
+  const dragInfoRef = useRef<{ itemId: string; startX: number } | null>(null);
+  const ganttContainerRef = useRef<HTMLDivElement>(null);
+
+  // Stable refs so event handlers don't go stale
+  const weekOverridesRef = useRef(weekOverrides);
+  const sortedItemsRef = useRef<RoadmapItem[]>([]);
+  useEffect(() => { weekOverridesRef.current = weekOverrides; }, [weekOverrides]);
+
+  const { plans, updateItemInPlan, setPlanStatus, lockPlan } = useRoadmapStore();
+  const activeTeamId   = useAppStore((s) => s.activeTeamId);
   const setActiveTeamId = useAppStore((s) => s.setActiveTeamId);
   const temporal = useStore(useRoadmapStore.temporal);
 
@@ -438,6 +655,9 @@ export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
     [activePlan],
   );
 
+  // Keep ref in sync for use inside stable callbacks
+  useEffect(() => { sortedItemsRef.current = sortedItems; }, [sortedItems]);
+
   const todayPct = useMemo(
     () => (activeTab !== "year" ? getTodayPercent(activeTab) : null),
     [activeTab],
@@ -447,6 +667,74 @@ export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
     () => activePlan?.items.find((i) => i.id === openItemId) ?? null,
     [activePlan, openItemId],
   );
+
+  // Set global cursor during drag
+  useEffect(() => {
+    if (isDragging) {
+      document.body.style.cursor = "grabbing";
+      document.body.style.userSelect = "none";
+    } else {
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    }
+    return () => {
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [isDragging]);
+
+  // Global mousemove/mouseup during drag
+  useEffect(() => {
+    if (!isDragging) return;
+
+    function computeTargetWeek(mouseX: number): number {
+      if (!ganttContainerRef.current) return 1;
+      const rect = ganttContainerRef.current.getBoundingClientRect();
+      const ganttLeft = rect.left + LABEL_W;
+      const ganttWidth = rect.width - LABEL_W;
+      const cellWidth = ganttWidth / TOTAL_WEEKS;
+      return Math.max(1, Math.min(TOTAL_WEEKS, Math.floor((mouseX - ganttLeft) / cellWidth) + 1));
+    }
+
+    function onMove(e: MouseEvent) {
+      if (!dragInfoRef.current) return;
+      const week = computeTargetWeek(e.clientX);
+      setDragLive({ itemId: dragInfoRef.current.itemId, week });
+    }
+
+    function onUp(e: MouseEvent) {
+      if (!dragInfoRef.current) return;
+      const { itemId, startX } = dragInfoRef.current;
+      const dx = Math.abs(e.clientX - startX);
+      if (dx > DRAG_THRESHOLD) {
+        const week = computeTargetWeek(e.clientX);
+        setWeekOverrides((prev) => ({ ...prev, [itemId]: week }));
+      } else {
+        // Treat as click — toggle detail panel
+        setOpenItemId((prev) => (prev === itemId ? null : itemId));
+      }
+      dragInfoRef.current = null;
+      setDragLive(null);
+      setIsDragging(false);
+    }
+
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+    return () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    };
+  }, [isDragging]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleBarMouseDown = useCallback((itemId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    const item = sortedItemsRef.current.find((i) => i.id === itemId);
+    if (!item) return;
+    const startWeek = weekOverridesRef.current[itemId] ?? getStartWeek(item);
+    dragInfoRef.current = { itemId, startX: e.clientX };
+    setDragLive({ itemId, week: startWeek });
+    setIsDragging(true);
+  }, []);
 
   useGlobalShortcuts({
     escape: () => { if (openItemId) setOpenItemId(null); },
@@ -488,9 +776,15 @@ export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
           </button>
         ))}
 
-        {/* Item count + legend chips */}
+        {/* Plan status + item count + today chip */}
         {activeTab !== "year" && activePlan && (
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex items-center gap-4">
+            <PlanStatusControl
+              plan={activePlan}
+              onSetStatus={setPlanStatus}
+              onLock={lockPlan}
+            />
+            <div className="h-4 w-px bg-[var(--color-border-subtle)]" />
             <span className="text-[12px] text-[var(--color-text-muted)]">
               {activePlan.items.length} initiative{activePlan.items.length !== 1 ? "s" : ""}
             </span>
@@ -525,10 +819,13 @@ export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
         <div className="flex flex-1 overflow-hidden min-h-0">
 
           {/* Timeline panel */}
-          <div className={cn(
-            "flex flex-col overflow-hidden transition-all duration-200",
-            hasDetail ? "hidden md:flex md:[flex:0_0_60%]" : "flex-1",
-          )}>
+          <div
+            ref={ganttContainerRef}
+            className={cn(
+              "flex flex-col overflow-hidden transition-all duration-200",
+              hasDetail ? "hidden md:flex md:[flex:0_0_60%]" : "flex-1",
+            )}
+          >
 
             {/* Sticky header row */}
             <div className="flex flex-shrink-0 sticky top-0 z-20 border-b-2 border-[var(--color-border-subtle)] bg-[var(--color-bg-elevated)]">
@@ -548,34 +845,48 @@ export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
             </div>
 
             {/* Rows */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden">
-              {sortedItems.length === 0 ? (
-                <div className="flex items-center justify-center h-32">
-                  <p className="text-[13px] text-[var(--color-text-muted)]">No initiatives in this plan.</p>
-                </div>
-              ) : (
-                sortedItems.map((item) => (
-                  <ItemRow
-                    key={item.id}
-                    item={item}
-                    isOpen={openItemId === item.id}
-                    onOpen={setOpenItemId}
-                    todayPct={todayPct}
-                  />
-                ))
-              )}
+            <div className="flex-1 relative overflow-hidden">
+              {/* Today overlay — sits above rows, doesn't scroll */}
+              {todayPct !== null && <TodayOverlay todayPct={todayPct} />}
+
+              <div className="absolute inset-0 overflow-y-auto overflow-x-hidden">
+                {sortedItems.length === 0 ? (
+                  <div className="flex items-center justify-center h-32">
+                    <p className="text-[13px] text-[var(--color-text-muted)]">No initiatives in this plan.</p>
+                  </div>
+                ) : (
+                  sortedItems.map((item) => {
+                    const isThisDragging = dragLive?.itemId === item.id;
+                    const startWeek = isThisDragging
+                      ? dragLive!.week
+                      : (weekOverrides[item.id] ?? getStartWeek(item));
+                    return (
+                      <ItemRow
+                        key={item.id}
+                        item={item}
+                        startWeek={startWeek}
+                        isOpen={openItemId === item.id}
+                        isDragging={isThisDragging}
+                        onBarMouseDown={handleBarMouseDown}
+                        todayPct={todayPct}
+                      />
+                    );
+                  })
+                )}
+              </div>
             </div>
 
             {/* Status legend */}
             <div className="flex-shrink-0 border-t border-[var(--color-border-subtle)] px-4 py-2 flex items-center gap-4 flex-wrap bg-[var(--color-bg-elevated)]">
-              {(Object.entries(STATUS_META) as [InitiativeStatus, { color: string; label: string }][]).map(
-                ([status, { color, label }]) => (
-                  <div key={status} className="flex items-center gap-1.5">
-                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-                    <span className="text-[11px] text-[var(--color-text-muted)]">{label}</span>
-                  </div>
-                ),
-              )}
+              {Object.entries(STATUS_META).map(([status, { color, label }]) => (
+                <div key={status} className="flex items-center gap-1.5">
+                  <div className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+                  <span className="text-[11px] text-[var(--color-text-muted)]">{label}</span>
+                </div>
+              ))}
+              <div className="ml-auto flex items-center gap-1 text-[11px] text-[var(--color-text-muted)]">
+                <span>Drag bars to reposition</span>
+              </div>
             </div>
           </div>
 

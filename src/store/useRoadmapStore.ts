@@ -183,7 +183,7 @@ export const useRoadmapStore = create<RoadmapState>()(
       }),
       {
         name: "keel-roadmap",
-        version: 3,
+        version: 4,
         partialize: (s) => ({ plans: s.plans, activePlanId: s.activePlanId }),
       },
     ) as any,

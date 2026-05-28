@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "zustand";
+import * as Dialog from "@radix-ui/react-dialog";
 import { Header } from "@/components/layout/Header";
 import { FilterTabs } from "./FilterTabs";
 import { BulkActionBar } from "./BulkActionBar";
@@ -19,7 +20,7 @@ import { useGuestSession } from "@/context/GuestSessionContext";
 import { buildDisplayIdMap } from "@/lib/format";
 import { TEAMS, CURRENT_QUARTER } from "@/lib/constants";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Inbox, Check } from "lucide-react";
+import { AlertTriangle, Inbox, Check } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { RequestStatus, FilterTab, FeatureRequest } from "@/types";
 
@@ -252,6 +253,42 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
     return () => document.removeEventListener("click", handleClick);
   }, [openId]);
 
+  // ── Leave guard (ideas phase only) ──────────────
+  const [leaveGuardOpen, setLeaveGuardOpen] = useState(false);
+  const pendingHrefRef = useRef<string | null>(null);
+  const isIdeasPhase = !!initialTeam;
+
+  useEffect(() => {
+    if (!isIdeasPhase || newIdeasCount === 0) return;
+
+    function onBeforeUnload(e: BeforeUnloadEvent) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isIdeasPhase, newIdeasCount]);
+
+  useEffect(() => {
+    if (!isIdeasPhase || newIdeasCount === 0) return;
+
+    function onLinkClick(e: MouseEvent) {
+      const link = (e.target as HTMLElement).closest("a");
+      if (!link) return;
+      const href = link.getAttribute("href");
+      if (!href || href.startsWith("#")) return;
+      // Allow same-page navigation (query/hash changes only)
+      if (href === window.location.pathname) return;
+      if (href.startsWith(window.location.pathname + "?")) return;
+      e.preventDefault();
+      e.stopPropagation();
+      pendingHrefRef.current = href;
+      setLeaveGuardOpen(true);
+    }
+    document.addEventListener("click", onLinkClick, true);
+    return () => document.removeEventListener("click", onLinkClick, true);
+  }, [isIdeasPhase, newIdeasCount]);
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <Header title={title} />
@@ -365,6 +402,66 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
           <span>Sent to <span className="font-semibold text-[var(--color-text-primary)]">{ideasToast.team} Ideas</span></span>
         </div>
       )}
+
+      {/* ── Leave guard dialog ── */}
+      <Dialog.Root open={leaveGuardOpen} onOpenChange={(v) => { if (!v) setLeaveGuardOpen(false); }}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-150" />
+          <Dialog.Content
+            className={cn(
+              "fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2",
+              "w-[400px] rounded-2xl p-6",
+              "bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)]",
+              "shadow-[0_24px_48px_rgba(0,0,0,0.18)]",
+              "animate-in fade-in zoom-in-95 duration-150",
+            )}
+          >
+            <div className="flex justify-center mb-4">
+              <div className="h-12 w-12 rounded-full flex items-center justify-center bg-amber-500/12 border border-amber-500/30">
+                <AlertTriangle size={22} className="text-amber-500" />
+              </div>
+            </div>
+
+            <Dialog.Title className="text-[16px] font-semibold text-[var(--color-text-primary)] text-center mb-1">
+              Ideas phase isn&apos;t done yet
+            </Dialog.Title>
+            <Dialog.Description className="text-[13px] text-[var(--color-text-muted)] text-center leading-relaxed mb-6">
+              {newIdeasCount === 1
+                ? "1 idea hasn't been sent to Prioritization yet."
+                : `${newIdeasCount} ideas haven't been sent to Prioritization yet.`}{" "}
+              Complete this phase before moving on for the best workflow experience.
+            </Dialog.Description>
+
+            <div className="flex gap-2.5">
+              <button
+                onClick={() => {
+                  setLeaveGuardOpen(false);
+                  if (pendingHrefRef.current) {
+                    router.push(pendingHrefRef.current);
+                    pendingHrefRef.current = null;
+                  }
+                }}
+                className={cn(
+                  "flex-1 h-9 rounded-lg text-[13px] font-medium transition-colors",
+                  "border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
+                  "hover:bg-[var(--color-bg-hover)]",
+                )}
+              >
+                Leave anyway
+              </button>
+              <button
+                onClick={() => setLeaveGuardOpen(false)}
+                className={cn(
+                  "flex-1 h-9 rounded-lg text-[13px] font-semibold transition-colors",
+                  "bg-[var(--color-brand)] text-white hover:opacity-90",
+                )}
+              >
+                Stay &amp; finish
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   );
 }

@@ -47,12 +47,6 @@ const WSJF_FIELDS: FieldDef[] = [
   { label: "Job Size",      color: "#64748b", description: "Relative effort or complexity; acts as a proxy for duration." },
 ];
 
-const CUSTOM_FIELDS: FieldDef[] = [
-  { label: "Dimension",  color: "#6366f1", description: "A named metric you define — e.g. Strategic fit, Revenue impact, or Customer satisfaction." },
-  { label: "Scale",      color: "#8b5cf6", description: "Scoring range per dimension — either 1–5 or 1–10." },
-  { label: "Weight",     color: "#a78bfa", description: "How much this dimension contributes to the final score (1–10)." },
-];
-
 const FRAMEWORK_CONTENT: Record<ScoringFramework, FrameworkInfo> = {
   rice: {
     title: "About RICE",
@@ -76,14 +70,6 @@ const FRAMEWORK_CONTENT: Record<ScoringFramework, FrameworkInfo> = {
     formula: <WSJFFormula />,
     fields: WSJF_FIELDS,
     note: "Higher WSJF score = deliver sooner for maximum economic benefit.",
-  },
-  custom: {
-    title: "About Custom Scoring",
-    description:
-      "Custom scoring lets you define your own weighted dimensions to rank initiatives against criteria that matter most to your team.",
-    formula: <CustomFormula />,
-    fields: CUSTOM_FIELDS,
-    note: "Configure dimensions and weights using the panel in the top-right.",
   },
 };
 
@@ -142,25 +128,6 @@ function WSJFFormula() {
   );
 }
 
-function CustomFormula() {
-  return (
-    <div className="space-y-2">
-      <p className="text-[11px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
-        Score Formula
-      </p>
-      <div className="flex flex-wrap items-center gap-1 rounded-lg bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] px-3 py-2.5">
-        <span className="text-[11px] text-[var(--color-text-secondary)]">Σ</span>
-        <span className="text-[11px] text-[var(--color-text-muted)] px-0.5">(</span>
-        <FormulaChip label="Dimension value" color="#6366f1" />
-        <Operator>×</Operator>
-        <FormulaChip label="Weight" color="#8b5cf6" />
-        <span className="text-[11px] text-[var(--color-text-muted)] px-0.5">)</span>
-        <Operator>÷</Operator>
-        <span className="text-[11px] text-[var(--color-text-secondary)]">Σ weights</span>
-      </div>
-    </div>
-  );
-}
 
 // ── Main popover component ─────────────────────
 

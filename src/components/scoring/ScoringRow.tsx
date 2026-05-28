@@ -10,7 +10,6 @@ import { MoSCoWCell } from "./MoSCoWCell";
 import type { ColDef } from "./columns";
 import { IMPACT_VALUES, RICE_EDITABLE_COL_ORDER, WSJF_EDITABLE_COL_ORDER } from "./columns";
 import type { RoadmapItem, QuarterlyGoal, ScoringFramework, MoSCoWLabel, RICEScore, WSJFScore } from "@/types";
-import type { CustomDimension } from "@/types";
 
 // ─────────────────────────────────────────────
 // ScoringRow — 36px dense row in the scoring
@@ -40,7 +39,6 @@ interface ScoringRowProps {
   columns: ColDef[];
   framework: ScoringFramework;
   goals: QuarterlyGoal[];
-  customDimensions: CustomDimension[];
   isOpen: boolean;
   isSelected: boolean;
   onOpen: (id: string) => void;
@@ -48,7 +46,6 @@ interface ScoringRowProps {
   onUpdateRICE: (id: string, patch: Partial<RICEScore>) => void;
   onUpdateMoSCoW: (id: string, label: MoSCoWLabel) => void;
   onUpdateWSJF: (id: string, patch: Partial<WSJFScore>) => void;
-  onUpdateCustom: (id: string, dimId: string, value: number) => void;
   onSendToRoadmap?: (id: string) => void;
 }
 
@@ -58,7 +55,6 @@ export function ScoringRow({
   columns,
   framework,
   goals,
-  customDimensions,
   isOpen,
   isSelected,
   onOpen,
@@ -66,7 +62,6 @@ export function ScoringRow({
   onUpdateRICE,
   onUpdateMoSCoW,
   onUpdateWSJF,
-  onUpdateCustom,
   onSendToRoadmap,
 }: ScoringRowProps) {
   const score = initiative.score;
@@ -139,8 +134,6 @@ export function ScoringRow({
           val = map[col.id] ?? 0;
         } else if (framework === "wsjf") {
           val = col.id === "costOfDelay" ? (wsjf?.costOfDelay ?? 0) : (wsjf?.jobSize ?? 1);
-        } else if (framework === "custom") {
-          val = score?.custom?.dimensions?.[col.id] ?? 0;
         }
         return (
           <div key={col.id} style={colStyle(col)} className="flex items-center h-full">
@@ -159,8 +152,6 @@ export function ScoringRow({
                   onUpdateRICE(initiative.id, { [col.id]: v } as Partial<RICEScore>);
                 } else if (framework === "wsjf") {
                   onUpdateWSJF(initiative.id, { [col.id]: v } as Partial<WSJFScore>);
-                } else if (framework === "custom") {
-                  onUpdateCustom(initiative.id, col.id, v);
                 }
               }}
               className="w-full h-full"
@@ -225,7 +216,6 @@ export function ScoringRow({
         let scoreVal: number | null = null;
         if (col.id === "riceScore") scoreVal = rice?.score ?? null;
         if (col.id === "wsjfScore") scoreVal = wsjf?.score ?? null;
-        if (col.id === "customScore") scoreVal = score?.custom?.score ?? null;
 
         return (
           <div

@@ -6,7 +6,7 @@ import { STATUS_CONFIG, PRIORITY_CONFIG } from "@/lib/constants";
 import type { RoadmapItem, QuarterlyGoal, InitiativeStatus } from "@/types";
 
 const ALL_STATUSES: InitiativeStatus[] = [
-  "backlog", "todo", "in_progress", "in_review", "closed", "done", "canceled",
+  "backlog", "todo", "in_progress", "in_review", "closed", "canceled",
 ];
 
 const MOSCOW_LABELS: Record<string, string> = {

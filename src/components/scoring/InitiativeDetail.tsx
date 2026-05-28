@@ -14,7 +14,6 @@ import type {
   MoSCoWLabel,
   RICEScore,
   WSJFScore,
-  CustomDimension,
 } from "@/types";
 
 // ─────────────────────────────────────────────
@@ -27,12 +26,10 @@ interface InitiativeDetailProps {
   initiative: RoadmapItem;
   framework: ScoringFramework;
   goals: QuarterlyGoal[];
-  customDimensions: CustomDimension[];
   onClose: () => void;
   onUpdateRICE: (id: string, patch: Partial<RICEScore>) => void;
   onUpdateMoSCoW: (id: string, label: MoSCoWLabel) => void;
   onUpdateWSJF: (id: string, patch: Partial<WSJFScore>) => void;
-  onUpdateCustom: (id: string, dimId: string, value: number) => void;
   onSendToRoadmap?: (id: string) => void;
 }
 
@@ -70,12 +67,10 @@ export function InitiativeDetail({
   initiative,
   framework,
   goals,
-  customDimensions,
   onClose,
   onUpdateRICE,
   onUpdateMoSCoW,
   onUpdateWSJF,
-  onUpdateCustom,
   onSendToRoadmap,
 }: InitiativeDetailProps) {
   const score = initiative.score;
@@ -140,11 +135,6 @@ export function InitiativeDetail({
           </div>
         )}
 
-        {framework === "custom" && (
-          <div className="flex items-center justify-center">
-            <ScoreDisplay label="Custom Score" value={score?.custom?.score ?? null} large />
-          </div>
-        )}
       </div>
 
       {/* Inputs section */}
@@ -234,39 +224,6 @@ export function InitiativeDetail({
                 />
               </InputRow>
             </div>
-          </section>
-        )}
-
-        {/* ── Custom dimension inputs ── */}
-        {framework === "custom" && (
-          <section>
-            <h3 className="text-[12px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-3">
-              Custom Scores
-            </h3>
-            {customDimensions.length === 0 ? (
-              <p className="text-[13px] text-[var(--color-text-muted)]">
-                No custom dimensions configured. Use "Configure dimensions" to add some.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {customDimensions.map((dim) => (
-                  <InputRow
-                    key={dim.id}
-                    label={dim.name}
-                    hint={`Scale 1–${dim.scale} · Weight ${dim.weight}`}
-                  >
-                    <InlineNumberCell
-                      value={score?.custom?.dimensions?.[dim.id] ?? 0}
-                      min={0}
-                      max={dim.scale}
-                      step={1}
-                      onChange={(v) => onUpdateCustom(initiative.id, dim.id, v)}
-                      className="!h-8 !text-right text-[13px]"
-                    />
-                  </InputRow>
-                ))}
-              </div>
-            )}
           </section>
         )}
 

@@ -20,7 +20,7 @@ export type InitiativeStatus =
 
 export type PlanStatus = "draft" | "in_review" | "approved" | "locked";
 
-export type ScoringFramework = "rice" | "moscow" | "wsjf" | "custom";
+export type ScoringFramework = "rice" | "moscow" | "wsjf";
 
 export type MoSCoWLabel = "must" | "should" | "could" | "wont";
 
@@ -90,25 +90,12 @@ export interface WSJFScore {
   score: number;        // computed: costOfDelay / jobSize
 }
 
-export interface CustomDimension {
-  id: string;
-  name: string;
-  scale: 5 | 10;
-  weight: number;       // 1–10
-}
-
-export interface CustomScore {
-  dimensions: Record<string, number>; // dimensionId → value
-  score: number;                       // computed weighted average
-}
-
 export interface PrioritizationScore {
   initiativeId: string;
   framework: ScoringFramework;
   rice: RICEScore | null;
   moscow: MoSCoWLabel | null;
   wsjf: WSJFScore | null;
-  custom: CustomScore | null;
   manualRankOverride: number | null;
   overrideReason: string | null;
   scoredAt: string;
@@ -118,7 +105,7 @@ export interface PrioritizationScore {
 
 export interface ScoringHistoryEntry {
   framework: ScoringFramework;
-  scoreSnapshot: Partial<RICEScore & WSJFScore & CustomScore>;
+  scoreSnapshot: Partial<RICEScore & WSJFScore>;
   changedAt: string;
   changedBy: string;
 }

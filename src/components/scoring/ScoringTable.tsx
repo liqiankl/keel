@@ -11,7 +11,6 @@ import type {
   MoSCoWLabel,
   RICEScore,
   WSJFScore,
-  CustomDimension,
 } from "@/types";
 
 // ─────────────────────────────────────────────
@@ -55,7 +54,6 @@ function getFrameworkScore(item: RoadmapItem, framework: ScoringFramework): numb
   switch (framework) {
     case "rice":   return item.score?.rice?.score ?? 0;
     case "wsjf":   return item.score?.wsjf?.score ?? 0;
-    case "custom": return item.score?.custom?.score ?? 0;
     case "moscow": {
       const label = item.score?.moscow;
       return label ? (MOSCOW_ORDER.length - MOSCOW_ORDER.indexOf(label)) : 0;
@@ -74,7 +72,6 @@ function getCellValue(item: RoadmapItem, col: string, framework: ScoringFramewor
     case "wsjfScore":   return item.score?.wsjf?.score ?? 0;
     case "costOfDelay": return item.score?.wsjf?.costOfDelay ?? 0;
     case "jobSize":     return item.score?.wsjf?.jobSize ?? 0;
-    case "customScore": return item.score?.custom?.score ?? 0;
     case "moscow": {
       const label = item.score?.moscow;
       return label ? MOSCOW_ORDER.indexOf(label) : 99;
@@ -88,7 +85,6 @@ interface ScoringTableProps {
   framework: ScoringFramework;
   columns: ColDef[];
   goals: QuarterlyGoal[];
-  customDimensions: CustomDimension[];
   sortColumn: string | null;
   sortDirection: "asc" | "desc";
   openId: string | null;
@@ -100,7 +96,6 @@ interface ScoringTableProps {
   onUpdateRICE: (id: string, patch: Partial<RICEScore>) => void;
   onUpdateMoSCoW: (id: string, label: MoSCoWLabel) => void;
   onUpdateWSJF: (id: string, patch: Partial<WSJFScore>) => void;
-  onUpdateCustom: (id: string, dimId: string, value: number) => void;
   onSendToRoadmap?: (id: string) => void;
 }
 
@@ -109,7 +104,6 @@ export function ScoringTable({
   framework,
   columns,
   goals,
-  customDimensions,
   sortColumn,
   sortDirection,
   openId,
@@ -121,7 +115,6 @@ export function ScoringTable({
   onUpdateRICE,
   onUpdateMoSCoW,
   onUpdateWSJF,
-  onUpdateCustom,
   onSendToRoadmap,
 }: ScoringTableProps) {
   const sorted = useMemo(
@@ -158,7 +151,6 @@ export function ScoringTable({
             columns={columns}
             framework={framework}
             goals={goals}
-            customDimensions={customDimensions}
             isOpen={openId === item.id}
             isSelected={selectedIds.includes(item.id)}
             onOpen={onOpen}
@@ -166,7 +158,6 @@ export function ScoringTable({
             onUpdateRICE={onUpdateRICE}
             onUpdateMoSCoW={onUpdateMoSCoW}
             onUpdateWSJF={onUpdateWSJF}
-            onUpdateCustom={onUpdateCustom}
             onSendToRoadmap={onSendToRoadmap}
           />
         ))}

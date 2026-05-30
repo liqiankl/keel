@@ -8,7 +8,7 @@ import type {
   RequestStatus,
   FilterTab,
 } from "@/types";
-// import { SEED_REQUESTS, SEED_REQUESTS_HITCHHIKER } from "@/lib/seed";
+import { INBOX_SEED_REQUESTS } from "@/lib/seed";
 
 // ─────────────────────────────────────────────
 // Inbox store — feature requests, triage.
@@ -51,7 +51,7 @@ export const useInboxStore = create<InboxState>()(
   temporal(
     persist<InboxState, [], [], Pick<InboxState, "requests">>(
       (set) => ({
-        requests: [],
+        requests: INBOX_SEED_REQUESTS,
         filters: DEFAULT_FILTERS,
         selectedIds: [],
         focusedId: null,

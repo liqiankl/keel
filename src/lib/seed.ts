@@ -6,6 +6,214 @@ import type {
 } from "@/types";
 import { makeQuarterRef } from "./constants";
 
+// ── Global inbox seed (14 features, no teamId) ─
+// These are the canonical feature requests shown in /inbox.
+// useInboxStore uses these as its default state so the inbox
+// always resets to this data when localStorage is cleared.
+
+export const INBOX_SEED_REQUESTS: FeatureRequest[] = [
+  {
+    id: "f1", title: "Bulk CSV export for transaction reports", productArea: "Reporting", source: "customer",
+    submittedBy: "Priya Nair, CFO @ Finstack", submittedAt: "2026-05-25",
+    description: "Finance teams need to export large transaction datasets as CSV for reconciliation, auditing, and custom reporting in Excel or BI tools. Currently limited to 500 rows per export.",
+    businessContext: "Blocking enterprise renewals worth ₹2.4Cr ARR. Four CFOs flagged this in QBRs this quarter.",
+    prioritySignal: "critical", status: "new", tags: [], goalIds: [], comments: [], mergedFromIds: [], externalRef: null,
+    supportingLinks: ["https://finstack.notion.so/csv-export-req", "https://support.example.com/tickets/4821"],
+    votes: [
+      { stakeholderId: "s_f1_0", stakeholderName: "Priya Nair, CFO @ Finstack",        comment: "We're manually extracting data row-by-row for month-end close — blocking our audit prep and taking 8 hours every cycle.", votedAt: "2026-05-25" },
+      { stakeholderId: "s_f1_1", stakeholderName: "Ravi Kumar, Finance Lead @ ClearPay", comment: "Our reconciliation team hits the 500-row cap daily. We've resorted to splitting exports and stitching them back in Excel.", votedAt: "2026-05-25" },
+      { stakeholderId: "s_f1_2", stakeholderName: "Deepa Menon, VP Finance @ RetailX",  comment: "Four of my enterprise clients flagged this in QBRs. One is already evaluating a competitor specifically over this gap.", votedAt: "2026-05-25" },
+      { stakeholderId: "s_f1_3", stakeholderName: "Vikram Das, Enterprise Sales",        comment: "Lost two renewal conversations because the export limit came up. It's table stakes for any finance team.", votedAt: "2026-05-25" },
+      { stakeholderId: "s_f1_4", stakeholderName: "Arun B., Controller @ FinopsHub",     comment: "500 rows doesn't cover a single day of transactions for us. We need full-history bulk export to meet compliance obligations.", votedAt: "2026-05-25" },
+    ],
+  },
+  {
+    id: "f2", title: "Webhook retry with exponential backoff", productArea: "API", source: "engineering",
+    submittedBy: "Shankar P., Backend Lead", submittedAt: "2026-05-19",
+    description: "When a merchant endpoint is temporarily unavailable, webhook events are dropped after a single retry. We need configurable retry schedules with exponential backoff to improve reliability.",
+    businessContext: "Three enterprise merchants reported missed payment events last quarter. Reliability SLAs are at risk.",
+    prioritySignal: "important", status: "new", tags: [], goalIds: [], comments: [], mergedFromIds: [], externalRef: null,
+    supportingLinks: ["https://github.com/example/issues/1024"],
+    votes: [
+      { stakeholderId: "s_f2_0", stakeholderName: "Shankar P., Backend Lead",                comment: "We lost ₹40k in payment events last month due to single-retry failures. Ops manually replayed 200+ events after the fact.", votedAt: "2026-05-19" },
+      { stakeholderId: "s_f2_1", stakeholderName: "Arun Dev, Platform Architect @ TechMerch", comment: "A flapping endpoint caused a 2-hour outage during a peak sale. Backoff would have degraded gracefully instead of hard-failing.", votedAt: "2026-05-19" },
+      { stakeholderId: "s_f2_2", stakeholderName: "Deepika Nair, CTO @ D2C Brand",            comment: "Every dropped webhook is a missed order confirmation. Reliability is non-negotiable once you're above 10k orders/day.", votedAt: "2026-05-19" },
+      { stakeholderId: "s_f2_3", stakeholderName: "Sai Rajan, Engineering Lead @ PayBridge",  comment: "We've built our own retry logic on top of the API as a workaround. This should be a platform primitive, not a per-customer hack.", votedAt: "2026-05-19" },
+    ],
+  },
+  {
+    id: "f3", title: "One-click payment link sharing via WhatsApp", productArea: "Payments", source: "customer",
+    submittedBy: "Rohan Mehta, Sales Lead", submittedAt: "2026-05-12",
+    description: "Merchants selling via WhatsApp Business need to share payment links directly inside the chat without copy-pasting. A native share button would streamline collection for D2C brands.",
+    businessContext: "High-demand segment — 60% of our SMB merchants use WhatsApp as primary sales channel.",
+    prioritySignal: "important", status: "new", tags: [], goalIds: [], comments: [], mergedFromIds: [], externalRef: null, supportingLinks: [],
+    votes: [
+      { stakeholderId: "s_f3_0", stakeholderName: "Rohan Mehta, Sales Lead",              comment: "SMB sellers are losing orders mid-conversation because the multi-step share process breaks the chat flow entirely.", votedAt: "2026-05-12" },
+      { stakeholderId: "s_f3_1", stakeholderName: "Meena T., Owner @ GiftsByMeena",       comment: "I close 80% of my orders on WhatsApp. Copy-pasting links kills momentum right when the customer is ready to pay.", votedAt: "2026-05-12" },
+      { stakeholderId: "s_f3_2", stakeholderName: "Shyam Sundar, Head of SMB Growth",     comment: "WhatsApp commerce is our fastest-growing segment. This is a must-have to stay competitive with Razorpay and Cashfree.", votedAt: "2026-05-12" },
+      { stakeholderId: "s_f3_3", stakeholderName: "Lata Patel, Reseller @ HandmadeByLata", comment: "Customers ask for the link mid-chat. By the time I find and paste it, half have already dropped off.", votedAt: "2026-05-12" },
+      { stakeholderId: "s_f3_4", stakeholderName: "Prashant V., Regional Sales @ SMB Desk", comment: "Every SMB merchant I onboard asks about this within the first week. It's the single biggest friction point in the segment.", votedAt: "2026-05-12" },
+    ],
+  },
+  {
+    id: "f4", title: "File Application Console Enhancement", productArea: "Developer Tools", source: "engineering",
+    submittedBy: "Karan Desai, Platform Engineering Lead", submittedAt: "2026-05-05",
+    description: "The file application console lacks essential developer tooling — no real-time log streaming, no structured error output, and no support for bulk file operations. Engineers are context-switching to external tools for tasks that should be native to the console.",
+    businessContext: "Slowing down 3 active integrations and generating 15+ support escalations a month. Internal teams have flagged this as the top developer-experience gap for Q2.",
+    prioritySignal: "critical", status: "new", tags: [], goalIds: [], comments: [], mergedFromIds: [], externalRef: null,
+    supportingLinks: ["https://github.com/example/issues/2047", "https://internal.wiki/file-console-gaps"],
+    votes: [
+      { stakeholderId: "s_f4_0", stakeholderName: "Karan Desai, Platform Engineering Lead", comment: "We spend 40 minutes per deployment switching between the console and external log tools. Real-time streaming alone would save hours a week.", votedAt: "2026-05-05" },
+      { stakeholderId: "s_f4_1", stakeholderName: "Sneha Iyer, Senior Developer @ FileOps", comment: "Structured error output is non-negotiable for debugging. Right now errors are buried in unformatted blobs — it's a productivity killer.", votedAt: "2026-05-05" },
+      { stakeholderId: "s_f4_2", stakeholderName: "Arjun Pillai, DevOps Engineer",           comment: "Bulk file operations are manual and error-prone. One misfire last quarter corrupted a staging environment and cost us a full day.", votedAt: "2026-05-05" },
+      { stakeholderId: "s_f4_3", stakeholderName: "Meera Nandan, Integration Engineer",      comment: "Every new integration onboarding involves a workaround for the console's limitations. This is the first thing engineers complain about.", votedAt: "2026-05-05" },
+      { stakeholderId: "s_f4_4", stakeholderName: "Rahul Srinivasan, VP Engineering",        comment: "This is blocking two enterprise integrations we committed to for Q2. It needs to be fixed before we can unblock those teams.", votedAt: "2026-05-05" },
+    ],
+  },
+  {
+    id: "f5", title: "Smart dispute auto-categorisation", productArea: "Disputes", source: "internal",
+    submittedBy: "Ananya S., Head of Support", submittedAt: "2026-04-28",
+    description: "Support agents manually tag every dispute by type (fraud, product, service). An ML-based tagger trained on historical resolutions could auto-classify disputes and route them to the right queue.",
+    businessContext: "Support handles 400+ disputes/month. Auto-categorisation could cut resolution time by 35% and reduce agent cost.",
+    prioritySignal: "nice_to_have", status: "new", tags: [], goalIds: [], comments: [], mergedFromIds: [], externalRef: null, supportingLinks: [],
+    votes: [
+      { stakeholderId: "s_f5_0", stakeholderName: "Ananya S., Head of Support",            comment: "Manual tagging is error-prone — wrong categories delay resolutions by 2–3 days and spike our SLA breach rate.", votedAt: "2026-04-28" },
+      { stakeholderId: "s_f5_1", stakeholderName: "Karan Malhotra, Customer Success Lead", comment: "Auto-categorisation would let us route disputes instantly instead of having an agent triage every single one before routing.", votedAt: "2026-04-28" },
+      { stakeholderId: "s_f5_2", stakeholderName: "Nidhi Jain, Operations Manager",        comment: "We handle 400+ disputes a month. Even a 30% auto-classification rate would free up meaningful agent capacity.", votedAt: "2026-04-28" },
+    ],
+  },
+  {
+    id: "f6", title: "Saved card management for returning customers", productArea: "Payments", source: "customer",
+    submittedBy: "Multiple — 34 support tickets", submittedAt: "2026-04-14",
+    description: "Returning customers want to manage their saved cards — view, delete, or set a default — without re-entering details each transaction. Currently there's no self-serve card vault UI.",
+    businessContext: "Top requested feature in NPS surveys for 3 consecutive quarters. Directly impacts checkout conversion rate.",
+    prioritySignal: "critical", status: "new", tags: [], goalIds: [], comments: [], mergedFromIds: [], externalRef: null,
+    supportingLinks: ["https://nps-dashboard.example.com/q1-themes"],
+    votes: [
+      { stakeholderId: "s_f6_0", stakeholderName: "Ritika Sharma, Enterprise Customer",           comment: "I've entered my card details 12 times this month. A vault would save 30 seconds per checkout — and I'd actually complete more purchases.", votedAt: "2026-04-14" },
+      { stakeholderId: "s_f6_1", stakeholderName: "Pavan Kumar, VP Product @ FastCart",           comment: "Cart abandonment at the payment step is 34% above industry average. We attribute this directly to the lack of saved cards.", votedAt: "2026-04-14" },
+      { stakeholderId: "s_f6_2", stakeholderName: "Sonal Mehta, NPS Respondent",                  comment: "This is the single feature I'd pay a premium for. Every checkout feels like the first time, which erodes trust in the platform.", votedAt: "2026-04-14" },
+      { stakeholderId: "s_f6_3", stakeholderName: "Arjun Reddy, Head of Checkout @ BigBazaarOnline", comment: "Our A/B prototype with saved cards showed a 22% lift in completed transactions. The data is unambiguous.", votedAt: "2026-04-14" },
+      { stakeholderId: "s_f6_4", stakeholderName: "Isha Nair, Customer Experience Lead",          comment: "43% of our repeat-customer complaints this quarter were about re-entering payment details. Top NPS driver by far.", votedAt: "2026-04-14" },
+      { stakeholderId: "s_f6_5", stakeholderName: "Dev Mehta, VP Engineering @ ShopLocal",        comment: "We've jury-rigged browser autofill as a workaround, but it's fragile and breaks on mobile. Native card vault is the right fix.", votedAt: "2026-04-14" },
+    ],
+  },
+  {
+    id: "f7", title: "Refund SLA tracker with merchant-facing status page", productArea: "Disputes", source: "internal",
+    submittedBy: "Customer Success Team", submittedAt: "2026-04-01",
+    description: "Merchants have no visibility into refund processing timelines. A status page showing refund stages (initiated → bank processing → credited) would reduce support volume around refund queries.",
+    businessContext: "Refund-related tickets account for 28% of CS volume. A status page alone could deflect ~300 tickets/month.",
+    prioritySignal: "important", status: "new", tags: [], goalIds: [], comments: [], mergedFromIds: [], externalRef: null, supportingLinks: [],
+    votes: [
+      { stakeholderId: "s_f7_0", stakeholderName: "Customer Success Team",                   comment: "We field 300+ 'where's my refund' tickets monthly. A self-serve status page would deflect nearly all of them instantly.", votedAt: "2026-04-01" },
+      { stakeholderId: "s_f7_1", stakeholderName: "Madhuri P., Merchant @ HomeBrew",          comment: "Had to email every customer individually during a bank outage. A live refund tracker would have handled that automatically.", votedAt: "2026-04-01" },
+      { stakeholderId: "s_f7_2", stakeholderName: "Arjun Kapoor, CS Agent",                   comment: "25% of my shift is answering refund status questions. A status page would free me to work on higher-value issues.", votedAt: "2026-04-01" },
+      { stakeholderId: "s_f7_3", stakeholderName: "Preethi R., Operations Lead @ PayReceive", comment: "Merchants need transparency into refund timelines to manage their own customers. Right now they're completely in the dark.", votedAt: "2026-04-01" },
+    ],
+  },
+  {
+    id: "f8", title: "API rate limit visibility in dashboard", productArea: "API", source: "engineering",
+    submittedBy: "Developer community forum", submittedAt: "2026-03-20",
+    description: "Developers hitting rate limits get opaque 429 errors with no visibility into current usage vs limits. The dashboard should show live API consumption, remaining quota, and reset windows.",
+    businessContext: "Frequent complaint in developer community forum and onboarding calls. Affects developer experience score.",
+    prioritySignal: "important", status: "new", tags: [], goalIds: [], comments: [], mergedFromIds: [], externalRef: null,
+    supportingLinks: ["https://community.example.com/rate-limit-thread"],
+    votes: [
+      { stakeholderId: "s_f8_0", stakeholderName: "Suhail Ahmed, Developer @ Integrations.io",  comment: "Hit a 429 with zero warning and no dashboard indicator. Spent 45 minutes diagnosing an outage that was just a rate limit.", votedAt: "2026-03-20" },
+      { stakeholderId: "s_f8_1", stakeholderName: "Devraj N., Lead Engineer @ StartupPay",      comment: "Our monitoring is blind to rate limit headroom. We discover throttling after the fact, never before it causes an incident.", votedAt: "2026-03-20" },
+      { stakeholderId: "s_f8_2", stakeholderName: "Ankit Shah, Platform Engineer @ APIConnect", comment: "Live consumption with reset windows is table stakes for any API-first product. This is basic developer tooling.", votedAt: "2026-03-20" },
+      { stakeholderId: "s_f8_3", stakeholderName: "Pooja Jain, Developer Community Moderator",  comment: "Rate limit confusion is the most-asked topic in our forum. Visibility alone would cut 40% of support escalations.", votedAt: "2026-03-20" },
+    ],
+  },
+  {
+    id: "f9", title: "Scheduled payouts for marketplace sellers", productArea: "Payouts", source: "customer",
+    submittedBy: "Vikram Das, Enterprise Sales", submittedAt: "2026-03-05",
+    description: "Marketplace operators need to schedule payouts to sellers on weekly or monthly cycles rather than triggering them manually. This includes configurable payout dates, hold periods, and auto-split rules.",
+    businessContext: "Blocking a ₹1.8Cr ACV marketplace deal. Competitor already offers scheduled payouts.",
+    prioritySignal: "critical", status: "new", tags: [], goalIds: [], comments: [], mergedFromIds: [], externalRef: null,
+    supportingLinks: ["https://docs.example.com/payouts/scheduling"],
+    votes: [
+      { stakeholderId: "s_f9_0", stakeholderName: "Vikram Das, Enterprise Sales",                    comment: "A ₹1.8Cr ACV deal is blocked entirely on this. The competitor they're evaluating already ships weekly scheduled payouts.", votedAt: "2026-03-05" },
+      { stakeholderId: "s_f9_1", stakeholderName: "Sai Gopal, CTO @ MarketNow",                      comment: "Our sellers expect payouts every Friday. Manual triggering has failed twice this quarter, directly causing seller churn.", votedAt: "2026-03-05" },
+      { stakeholderId: "s_f9_2", stakeholderName: "Neha Gupta, Finance Lead @ HubSell",              comment: "200+ sellers, manual payout runs each cycle — takes a full workday. Automation would reclaim that time entirely.", votedAt: "2026-03-05" },
+      { stakeholderId: "s_f9_3", stakeholderName: "Rahul Kapoor, Head of Marketplace @ BazaarPro",   comment: "Scheduled payouts are how we build seller trust. Right now we're managing expectations over Slack instead of shipping a feature.", votedAt: "2026-03-05" },
+      { stakeholderId: "s_f9_4", stakeholderName: "Aisha Mehta, Seller @ CraftCircle",               comment: "I plan inventory purchases around payout dates. When a manual run gets delayed, my whole supply chain is affected.", votedAt: "2026-03-05" },
+    ],
+  },
+  {
+    id: "f10", title: "Dark mode for merchant dashboard", productArea: "Dashboard", source: "customer",
+    submittedBy: "NPS Responses Q1 — 47 mentions", submittedAt: "2026-02-18",
+    description: "Many merchants operate late-night shifts in warehouses and prefer dark UI to reduce eye strain. A system-preference-aware dark mode would improve usability and NPS among high-volume merchants.",
+    businessContext: "47 unprompted NPS mentions in Q1. Low engineering effort relative to sentiment impact.",
+    prioritySignal: "nice_to_have", status: "new", tags: [], goalIds: [], comments: [], mergedFromIds: [], externalRef: null, supportingLinks: [],
+    votes: [
+      { stakeholderId: "s_f10_0", stakeholderName: "Kavya Reddy, Warehouse Supervisor @ NightOps",  comment: "My team runs 10pm–6am shifts. The bright white dashboard is the first complaint every single night — eye strain is real.", votedAt: "2026-02-18" },
+      { stakeholderId: "s_f10_1", stakeholderName: "Amit Joshi, NPS Respondent",                    comment: "Dark mode is table stakes for any modern B2B tool. This would genuinely make me enjoy using the product more.", votedAt: "2026-02-18" },
+      { stakeholderId: "s_f10_2", stakeholderName: "Sriram V., Operations Manager @ 24x7Logistics", comment: "Night-shift staff use mobile with dark mode enabled just to avoid the bright UI. Please build this natively.", votedAt: "2026-02-18" },
+      { stakeholderId: "s_f10_3", stakeholderName: "Deepa Kumar, Merchant @ LateNightMart",         comment: "47 of us mentioned this unprompted in the Q1 NPS survey. It's a recurring pain point, not a niche request.", votedAt: "2026-02-18" },
+      { stakeholderId: "s_f10_4", stakeholderName: "Rajan P., Finance Controller @ NightOwlPharma", comment: "I do month-end close at midnight. A dark interface would reduce fatigue and help me work more accurately during late sessions.", votedAt: "2026-02-18" },
+    ],
+  },
+  {
+    id: "f11", title: "Inbox DLQ Capability", productArea: "Platform", source: "engineering",
+    submittedBy: "Platform Engineering Team", submittedAt: "2026-05-27",
+    description: "Add Dead Letter Queue support, RSDs (Retry Strategy Definitions), and Inbox Operator tooling to Hub Inbox. Enables developers to handle failed inbox messages without manual platform team intervention.",
+    businessContext: "All failed inbox messages currently require platform team intervention to investigate and replay. This is a growing support bottleneck — averaging 20+ escalations a week — and slows incident resolution across Hub tenants.",
+    prioritySignal: "critical", status: "new", tags: [], goalIds: [], comments: [], mergedFromIds: [], externalRef: null,
+    supportingLinks: ["https://github.com/example/issues/3102", "https://internal.wiki/hub-inbox-dlq-rfc"],
+    votes: [
+      { stakeholderId: "s_f11_0", stakeholderName: "Suresh Nair, Staff Engineer @ Hub Platform", comment: "We're manually replaying failed messages multiple times a week. DLQ support would let app teams own their own failure handling without paging us.", votedAt: "2026-05-27" },
+      { stakeholderId: "s_f11_1", stakeholderName: "Divya Krishnan, Engineering Manager",         comment: "The lack of RSDs means every retry strategy is bespoke per application. Standardising this would cut incident triage time by at least half.", votedAt: "2026-05-27" },
+      { stakeholderId: "s_f11_2", stakeholderName: "Aditya Rao, Backend Developer @ TenantOps",  comment: "Every time a message fails we raise a ticket and wait. With Inbox Operator tooling we could self-serve investigations and replays immediately.", votedAt: "2026-05-27" },
+      { stakeholderId: "s_f11_3", stakeholderName: "Priya Venkat, SRE Lead",                     comment: "Hub Inbox failures are in our top-5 on-call triggers. DLQ visibility would let us detect and resolve issues before they escalate to production incidents.", votedAt: "2026-05-27" },
+    ],
+  },
+  {
+    id: "f12", title: "Credentials Management", productArea: "Security", source: "engineering",
+    submittedBy: "Dia Platform Team", submittedAt: "2026-05-24",
+    description: "Secure handling of secrets and credentials for Hub applications via Dia. Provides a managed credential store that applications can reference without embedding secrets in manifests or source code.",
+    businessContext: "Secrets embedded in manifests are a security liability flagged in the last internal audit. Several Hub applications are currently non-compliant with the organisation's secret management policy, creating audit and breach risk.",
+    prioritySignal: "critical", status: "new", tags: [], goalIds: [], comments: [], mergedFromIds: [], externalRef: null,
+    supportingLinks: ["https://internal.wiki/dia-credentials-spec", "https://github.com/example/issues/2891"],
+    votes: [
+      { stakeholderId: "s_f12_0", stakeholderName: "Rohan Joshi, Security Architect",         comment: "Hardcoded secrets in manifests are the number-one finding in our quarterly security reviews. This needs to be solved at the platform level, not per-app.", votedAt: "2026-05-24" },
+      { stakeholderId: "s_f12_1", stakeholderName: "Ananya Rao, Compliance Lead",             comment: "We're carrying audit risk on every Hub application that still embeds credentials. A managed credential store would close the gap across the board.", votedAt: "2026-05-24" },
+      { stakeholderId: "s_f12_2", stakeholderName: "Kiran Mehta, Senior Developer @ AppHub", comment: "Rotating secrets manually across manifests is error-prone and has caused two outages. A centralised store with automatic rotation would remove that risk entirely.", votedAt: "2026-05-24" },
+      { stakeholderId: "s_f12_3", stakeholderName: "Siddharth V., DevOps Engineer",          comment: "Without managed credentials, every CI pipeline has its own bespoke secret injection. Dia-native support would standardise and secure the entire deploy chain.", votedAt: "2026-05-24" },
+      { stakeholderId: "s_f12_4", stakeholderName: "Nisha Patel, VP Engineering",            comment: "This is a pre-requisite for two enterprise customer certifications we're targeting in Q3. We can't proceed without it.", votedAt: "2026-05-24" },
+    ],
+  },
+  {
+    id: "f13", title: "Customer Onboarding Enablement", productArea: "Customer Success", source: "internal",
+    submittedBy: "Preethi Sharma, Head of Customer Success", submittedAt: "2026-05-20",
+    description: "Dedicated bandwidth to help customers onboard onto Hub applications. Root cause of onboarding friction is poor developer experience — this initiative bridges the gap with guided onboarding, enablement support, and activation tracking.",
+    businessContext: "Time-to-first-value for new Hub customers is averaging 6 weeks, double the 3-week target. Onboarding drop-off is the top contributor to early-stage churn and delayed revenue recognition.",
+    prioritySignal: "important", status: "new", tags: [], goalIds: [], comments: [], mergedFromIds: [], externalRef: null,
+    supportingLinks: ["https://internal.wiki/onboarding-metrics-q1", "https://internal.notion.so/hub-activation-report"],
+    votes: [
+      { stakeholderId: "s_f13_0", stakeholderName: "Preethi Sharma, Head of Customer Success", comment: "We're losing customers in the first 30 days not because the product is bad, but because the onboarding path is unclear. Guided enablement would change that.", votedAt: "2026-05-20" },
+      { stakeholderId: "s_f13_1", stakeholderName: "Lakshmi R., Customer Success Manager",     comment: "I spend 60% of my time filling gaps in the onboarding experience manually. Structured activation tracking would let me focus on relationship-building instead.", votedAt: "2026-05-20" },
+      { stakeholderId: "s_f13_2", stakeholderName: "Arvind Kumar, New Customer @ FinBridge",   comment: "We went 4 weeks without a working Hub integration because we couldn't figure out the correct setup sequence. A guided flow would have cut that to days.", votedAt: "2026-05-20" },
+      { stakeholderId: "s_f13_3", stakeholderName: "Tanvi Mehta, Solutions Engineer",          comment: "Activation data is scattered across spreadsheets and Slack threads. A proper tracking layer would give us early signals on at-risk accounts before they churn.", votedAt: "2026-05-20" },
+    ],
+  },
+  {
+    id: "f14", title: "PCI Data Management", productArea: "Compliance", source: "internal",
+    submittedBy: "Compliance & Security Team", submittedAt: "2026-05-22",
+    description: "Establish a framework for managing PCI-scoped data within Hub applications, including data classification, access controls, audit logging, and tokenisation support for cardholder data environments.",
+    businessContext: "PCI DSS v4.0 compliance deadline is approaching and formal data management controls are required. Three enterprise customers are blocked from production go-live pending PCI certification of the Hub platform.",
+    prioritySignal: "critical", status: "new", tags: [], goalIds: [], comments: [], mergedFromIds: [], externalRef: null,
+    supportingLinks: ["https://internal.wiki/pci-dss-v4-readiness", "https://internal.notion.so/hub-pci-gap-analysis"],
+    votes: [
+      { stakeholderId: "s_f14_0", stakeholderName: "Vikram Pillai, Chief Compliance Officer",      comment: "PCI DSS v4.0 requires controls we don't have today. Without this we cannot certify Hub for cardholder data environments — full stop.", votedAt: "2026-05-22" },
+      { stakeholderId: "s_f14_1", stakeholderName: "Ananya Rao, Compliance Lead",                  comment: "The gap analysis shows 7 open controls. Data classification and access controls are the two highest-risk items we need to close first.", votedAt: "2026-05-22" },
+      { stakeholderId: "s_f14_2", stakeholderName: "Rajesh Kumar, Enterprise Account @ PaySecure", comment: "Our legal team has put our Hub go-live on hold until PCI certification is confirmed. This is blocking ₹3Cr in contracted ARR.", votedAt: "2026-05-22" },
+      { stakeholderId: "s_f14_3", stakeholderName: "Sonal Iyer, Security Engineer",                comment: "Without tokenisation support, every team touching cardholder data is building their own controls. Standardising at the platform level is the only scalable fix.", votedAt: "2026-05-22" },
+      { stakeholderId: "s_f14_4", stakeholderName: "Deepak Nair, CTO @ CardVault Inc",             comment: "We chose Hub on the premise that PCI compliance would be handled at the infrastructure layer. That expectation needs to be met before we can go live.", votedAt: "2026-05-22" },
+    ],
+  },
+];
+
 const Q2_2026 = makeQuarterRef(2026, 2);
 const Q3_2026 = makeQuarterRef(2026, 3);
 const Q4_2026 = makeQuarterRef(2026, 4);

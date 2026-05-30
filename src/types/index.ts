@@ -22,6 +22,10 @@ export type PlanStatus = "draft" | "in_review" | "approved" | "locked";
 
 export type ScoringFramework = "rice" | "moscow" | "wsjf";
 
+export type WorkflowStage = "inbox" | "ideas" | "prioritization" | "roadmap";
+
+export type StageStatus = "not_started" | "active" | "completed" | "locked";
+
 export type MoSCoWLabel = "must" | "should" | "could" | "wont";
 
 export type RequestSource = "customer" | "engineering" | "internal";
@@ -41,6 +45,7 @@ export type ReviewDecision = "approved" | "changes_requested" | "declined";
 export interface FeatureRequest {
   id: string;
   teamId?: string;           // which team's inbox this belongs to
+  workflowStage?: WorkflowStage; // current workflow stage; undefined = inbox
   title: string;
   description: string;
   businessContext: string;

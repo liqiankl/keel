@@ -9,11 +9,10 @@ import { SourceBadge } from "@/components/inbox/SourceBadge";
 import { Check, ArrowRightCircle, Trash2, Search, X, Minus, ThumbsUp, Folder, FolderOpen, ExternalLink, Clock, Zap, Info, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useInboxStore } from "@/store/useInboxStore";
-import { useAppStore } from "@/store/useAppStore";
-import { TEAMS } from "@/lib/constants";
+import { useWorkflowStore } from "@/store/useWorkflowStore";
 import { getInitials, avatarColor } from "@/lib/format";
 import { Tooltip } from "@/components/ui/Tooltip";
-import type { FeatureRequest, PrioritySignal } from "@/types";
+import type { PrioritySignal } from "@/types";
 
 // ── Age helper ─────────────────────────────────
 
@@ -23,7 +22,6 @@ function waitingLabel(iso: string): { label: string; urgent: boolean } {
   return { label, urgent: days >= 30 };
 }
 
-
 // ── Priority signal config ─────────────────────
 
 const PRIORITY_CONFIG: Record<PrioritySignal, { label: string; color: string }> = {
@@ -32,110 +30,38 @@ const PRIORITY_CONFIG: Record<PrioritySignal, { label: string; color: string }> 
   nice_to_have: { label: "Nice to have", color: "#30a46c" },
 };
 
-// ── Move to team modal ────────────────────────
-
-function MoveToTeamModal({
-  feature,
-  onSelect,
-  onClose,
-}: {
-  feature:  { title: string };
-  onSelect: (teamId: string) => void;
-  onClose:  () => void;
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center animate-in fade-in duration-150"
-      style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
-      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div className={cn(
-        "w-[400px] rounded-xl border border-[var(--color-border-subtle)]",
-        "bg-[var(--color-bg-elevated)] shadow-xl p-6 flex flex-col gap-5",
-        "animate-in fade-in zoom-in-95 slide-in-from-bottom-3 duration-200",
-      )}>
-        <div>
-          <p className="text-[13px] font-semibold text-[var(--color-text-primary)] leading-snug">
-            Move to team
-          </p>
-          <p className="mt-1 text-[12px] text-[var(--color-text-muted)] truncate">
-            {feature.title}
-          </p>
-        </div>
-
-        <div className="flex gap-3">
-          {TEAMS.map((team) => (
-            <button
-              key={team.id}
-              onClick={() => onSelect(team.id)}
-              className={cn(
-                "flex-1 flex flex-col items-center gap-2.5 py-4 px-3 rounded-xl",
-                "border border-[var(--color-border-subtle)]",
-                "hover:border-[var(--color-border-strong)] hover:bg-[var(--color-bg-hover)]",
-                "transition-colors group",
-              )}
-            >
-              <span
-                className="h-10 w-10 rounded-lg flex items-center justify-center text-[17px] font-bold text-white"
-                style={{ backgroundColor: team.color }}
-              >
-                {team.name[0]}
-              </span>
-              <span className="text-[13px] font-medium text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]">
-                {team.name}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        <button
-          onClick={onClose}
-          className="text-[12px] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors self-center"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // ── Main page ──────────────────────────────────
 
 export default function InboxPage() {
-  const requests      = useInboxStore((s) => s.requests);
-  const updateRequest = useInboxStore((s) => s.updateRequest);
-  const removeRequest = useInboxStore((s) => s.removeRequest);
-  const phasesActed   = useAppStore((s) => s.phasesActed);
-  const markPhaseActed = useAppStore((s) => s.markPhaseActed);
-  const hasActed = phasesActed.includes("inbox");
+  const requests         = useInboxStore((s) => s.requests);
+  const updateRequest    = useInboxStore((s) => s.updateRequest);
+  const removeRequest    = useInboxStore((s) => s.removeRequest);
+  const setInboxCompleted = useWorkflowStore((s) => s.setInboxCompleted);
   const router = useRouter();
 
-  const [selected, setSelected]             = useState<Set<string>>(new Set());
-  const [movedItems, setMovedItems]         = useState<{ title: string; teamName: string }[]>([]);
-  const [hasMoved, setHasMoved]             = useState(false);
-  const [lastMovedTeamSlug, setLastMovedTeamSlug] = useState<string | null>(null);
-  const [moveModalFeature, setMoveModalFeature] = useState<FeatureRequest | null>(null);
-  const [search, setSearch]                 = useState("");
-  const [deletedToast, setDeletedToast]     = useState<string | null>(null);
-  const [bulkMoveOpen, setBulkMoveOpen]     = useState(false);
-  const [expandedId, setExpandedId]         = useState<string | null>(null);
-  const [ageSort, setAgeSort]               = useState<"asc" | "desc" | null>(null);
+  const [selected, setSelected]   = useState<Set<string>>(new Set());
+  const [hasMoved, setHasMoved]   = useState(false);
+  const [search, setSearch]       = useState("");
+  const [deletedToast, setDeletedToast] = useState<string | null>(null);
+  const [movedToast, setMovedToast]     = useState<number | null>(null);
+  const [expandedId, setExpandedId]     = useState<string | null>(null);
+  const [ageSort, setAgeSort]           = useState<"asc" | "desc" | null>(null);
 
-  // Global inbox = requests with no teamId
+  // Inbox = requests with no workflowStage set (or explicitly "inbox")
   const features = useMemo(
-    () => requests.filter((r) => r.teamId == null),
+    () => requests.filter((r) => !r.workflowStage || r.workflowStage === "inbox"),
     [requests],
   );
 
-  // Auto-navigate to the team's Ideas page when inbox is cleared after moves.
+  // Auto-navigate to Ideas once all inbox items have been moved
   const prevFeaturesLen = useRef(0);
   useEffect(() => {
-    if (prevFeaturesLen.current > 0 && features.length === 0 && hasMoved && lastMovedTeamSlug) {
-      const t = setTimeout(() => router.push(`/team/${lastMovedTeamSlug}/ideas`), 1200);
+    if (prevFeaturesLen.current > 0 && features.length === 0 && hasMoved) {
+      const t = setTimeout(() => router.push("/ideas"), 1200);
       return () => clearTimeout(t);
     }
     prevFeaturesLen.current = features.length;
-  }, [features.length, hasMoved, lastMovedTeamSlug, router]);
+  }, [features.length, hasMoved, router]);
 
   const oldestDays = features.length
     ? Math.max(...features.map((f) => Math.floor((Date.now() - new Date(f.submittedAt).getTime()) / 86_400_000)))
@@ -183,7 +109,6 @@ export default function InboxPage() {
     setSelected(new Set());
     setDeletedToast(`${count} feature${count !== 1 ? "s" : ""}`);
     setTimeout(() => setDeletedToast(null), 3500);
-    markPhaseActed("inbox");
   }
 
   function handleDelete(id: string) {
@@ -192,30 +117,16 @@ export default function InboxPage() {
     setSelected((prev) => { const next = new Set(prev); next.delete(id); return next; });
     setDeletedToast(title);
     setTimeout(() => setDeletedToast(null), 3500);
-    markPhaseActed("inbox");
   }
 
-  function moveFeatures(featureIds: string[], teamId: string) {
-    const team = TEAMS.find((t) => t.id === teamId);
-    if (!team) return;
-    const targets = features.filter((f) => featureIds.includes(f.id));
-    featureIds.forEach((id) => updateRequest(id, { teamId }));
+  function moveToIdeas(featureIds: string[]) {
+    featureIds.forEach((id) => updateRequest(id, { workflowStage: "ideas" }));
+    setInboxCompleted();
     setSelected((prev) => { const next = new Set(prev); featureIds.forEach((id) => next.delete(id)); return next; });
     setHasMoved(true);
-    setLastMovedTeamSlug(team.slug);
-    setMovedItems((prev) => [
-      ...prev,
-      { title: `${targets.length} idea${targets.length !== 1 ? "s" : ""}`, teamName: team.name },
-    ]);
-    setTimeout(() => setMovedItems((prev) => prev.slice(1)), 4000);
-    markPhaseActed("inbox");
+    setMovedToast(featureIds.length);
+    setTimeout(() => setMovedToast(null), 4000);
   }
-
-  function handleMoveToTeam(feature: FeatureRequest, teamId: string) {
-    moveFeatures([feature.id], teamId);
-  }
-
-  const lastMoved = movedItems[movedItems.length - 1] ?? null;
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -224,7 +135,6 @@ export default function InboxPage() {
 
       {/* ── Toolbar ── */}
       <div className="px-5 h-11 border-b border-[var(--color-border-subtle)] flex-shrink-0 flex items-center gap-4">
-        {/* Stats */}
         <p className="text-[12px] text-[var(--color-text-muted)] flex-shrink-0">
           <span className="text-[var(--color-text-secondary)] font-medium">{features.length} request{features.length !== 1 ? "s" : ""}</span>
           {features.length > 0 && (
@@ -234,7 +144,6 @@ export default function InboxPage() {
 
         <div className="flex-1" />
 
-        {/* Search */}
         <div className="relative flex items-center">
           <Search size={13} className="absolute left-2.5 text-[var(--color-text-muted)] pointer-events-none" />
           <input
@@ -272,38 +181,21 @@ export default function InboxPage() {
               </div>
               <div className="space-y-1">
                 <p className="text-[14px] font-semibold text-[var(--color-text-primary)]">Inbox cleared — great work!</p>
-                <p className="text-[13px] text-[var(--color-text-muted)]">All features have been moved to teams.</p>
+                <p className="text-[13px] text-[var(--color-text-muted)]">All feature requests have been moved to Ideas.</p>
                 <p className="text-[12px] text-[var(--color-text-muted)] leading-relaxed pt-1">
-                  Your next step is to score and prioritize those features so your teams know what to build first.
+                  Head to Ideas to review and decide which ones to prioritize.
                 </p>
               </div>
-              <div className="flex flex-col gap-2 w-full pt-1">
-                {TEAMS.map((team) => (
-                  <a
-                    key={team.id}
-                    href={`/team/${team.slug}/prioritization`}
-                    className={cn(
-                      "flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl border text-left w-full",
-                      "border-[var(--color-border-subtle)] bg-[var(--color-bg-elevated)]",
-                      "hover:border-[var(--color-border-strong)] hover:bg-[var(--color-bg-hover)]",
-                      "transition-colors group",
-                    )}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span
-                        className="flex h-5 w-5 items-center justify-center rounded-md text-[10px] font-bold text-white flex-shrink-0"
-                        style={{ backgroundColor: team.color }}
-                      >
-                        {team.name[0]}
-                      </span>
-                      <span className="text-[13px] font-medium text-[var(--color-text-primary)]">{team.name}</span>
-                    </div>
-                    <span className="text-[12px] text-[var(--color-text-muted)] group-hover:text-[var(--color-brand)] transition-colors">
-                      Prioritize →
-                    </span>
-                  </a>
-                ))}
-              </div>
+              <a
+                href="/ideas"
+                className={cn(
+                  "inline-flex items-center gap-2 h-9 px-4 rounded-lg text-[13px] font-medium",
+                  "bg-[var(--color-brand)] text-white",
+                  "hover:bg-[var(--color-brand-hover)] transition-colors",
+                )}
+              >
+                Go to Ideas →
+              </a>
             </div>
           </div>
         ) : filteredFeatures.length === 0 ? (
@@ -318,7 +210,6 @@ export default function InboxPage() {
                 <tr className="border-b border-[var(--color-border-subtle)]" style={{ background: "color-mix(in srgb, var(--color-brand) 6%, var(--color-bg-elevated))" }}>
                   <th colSpan={8}>
                     <div className="flex items-center gap-3 px-4 py-2">
-                      {/* Indeterminate / clear checkbox */}
                       <button
                         type="button"
                         onClick={clearSelection}
@@ -347,9 +238,8 @@ export default function InboxPage() {
 
                       <div className="flex-1" />
 
-                      {selected.size > 1 && (
+                      {selected.size >= 1 && (
                         <>
-                          {/* Bulk delete */}
                           <button
                             type="button"
                             onClick={handleBulkDelete}
@@ -363,10 +253,9 @@ export default function InboxPage() {
                             Delete
                           </button>
 
-                          {/* Bulk move */}
                           <button
                             type="button"
-                            onClick={() => setBulkMoveOpen(true)}
+                            onClick={() => moveToIdeas([...selected])}
                             className={cn(
                               "inline-flex items-center gap-1.5 h-7 px-3 rounded-md text-[12px] font-medium",
                               "text-[var(--color-brand)] border border-[var(--color-brand)]/30",
@@ -374,12 +263,11 @@ export default function InboxPage() {
                             )}
                           >
                             <ArrowRightCircle size={13} />
-                            Move to team
+                            Move to Ideas
                           </button>
                         </>
                       )}
 
-                      {/* Dismiss */}
                       <button
                         type="button"
                         onClick={clearSelection}
@@ -466,7 +354,7 @@ export default function InboxPage() {
                     <button
                       type="button"
                       onClick={() => setAgeSort((prev) => prev === "asc" ? "desc" : prev === "desc" ? null : "asc")}
-                      aria-label={ageSort === "asc" ? "Sort oldest first" : ageSort === "desc" ? "Clear sort" : "Sort newest first"}
+                      aria-label="Toggle age sort"
                       className={cn(
                         "flex items-center justify-center h-4 w-4 rounded transition-colors",
                         ageSort
@@ -474,15 +362,11 @@ export default function InboxPage() {
                           : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]",
                       )}
                     >
-                      {ageSort === "asc"
-                        ? <ArrowUp size={11} />
-                        : ageSort === "desc"
-                        ? <ArrowDown size={11} />
-                        : <ArrowUpDown size={11} />}
+                      {ageSort === "asc" ? <ArrowUp size={11} /> : ageSort === "desc" ? <ArrowDown size={11} /> : <ArrowUpDown size={11} />}
                     </button>
                   </span>
                 </th>
-                <th className="w-24" />
+                <th className="w-28" />
               </tr>
             </thead>
             <tbody>
@@ -496,12 +380,9 @@ export default function InboxPage() {
                     onClick={() => toggleRow(feature.id)}
                     className={cn(
                       "group border-b border-[var(--color-border-subtle)] cursor-pointer transition-colors",
-                      isSelected
-                        ? "bg-[var(--color-brand)]/5"
-                        : "hover:bg-[var(--color-bg-hover)]",
+                      isSelected ? "bg-[var(--color-brand)]/5" : "hover:bg-[var(--color-bg-hover)]",
                     )}
                   >
-                    {/* Checkbox */}
                     <td className="pl-4 w-10" onClick={(e) => e.stopPropagation()}>
                       <div
                         role="checkbox"
@@ -523,7 +404,6 @@ export default function InboxPage() {
                       </div>
                     </td>
 
-                    {/* Feature title */}
                     <td className="px-4 py-3.5">
                       <span className={cn(
                         "text-[14px] font-medium leading-snug",
@@ -533,65 +413,46 @@ export default function InboxPage() {
                       </span>
                     </td>
 
-                    {/* Product area */}
                     <td className="px-4 py-3.5 w-36">
-                      <span className="text-[13px] text-[var(--color-text-secondary)]">
-                        {feature.productArea}
-                      </span>
+                      <span className="text-[13px] text-[var(--color-text-secondary)]">{feature.productArea}</span>
                     </td>
 
-                    {/* Source badge */}
                     <td className="px-4 py-3.5 w-36">
                       <SourceBadge source={feature.source} />
                     </td>
 
-                    {/* Votes */}
                     <td className="px-4 py-3.5 w-20 text-right">
-                      {feature.votes.length > 0 ? (
-                        <div className="flex items-center justify-end gap-1" aria-label={`${feature.votes.length} votes`}>
+                      {feature.votes.length > 0 && (
+                        <div className="flex items-center justify-end gap-1">
                           <ThumbsUp size={11} className="text-[var(--color-text-muted)]" />
-                          <span className="text-[12px] text-[var(--color-text-muted)] tabular-nums">
-                            {feature.votes.length}
-                          </span>
+                          <span className="text-[12px] text-[var(--color-text-muted)] tabular-nums">{feature.votes.length}</span>
                         </div>
-                      ) : null}
+                      )}
                     </td>
 
-                    {/* Submitted by */}
                     <td className="px-4 py-3.5 w-56">
                       <div className="flex items-center gap-2 min-w-0">
                         <div
                           className="h-[22px] w-[22px] rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
                           style={{ backgroundColor: avatarColor(feature.submittedBy) }}
-                          aria-hidden="true"
                         >
                           {getInitials(feature.submittedBy)}
                         </div>
-                        <span className="text-[12px] text-[var(--color-text-secondary)] truncate">
-                          {feature.submittedBy}
-                        </span>
+                        <span className="text-[12px] text-[var(--color-text-secondary)] truncate">{feature.submittedBy}</span>
                       </div>
                     </td>
 
-                    {/* Waiting */}
                     <td className="px-4 py-3.5 w-28 text-right">
                       <span className={cn(
                         "text-[12px] font-medium tabular-nums",
-                        waitUrgent
-                          ? "text-[var(--color-warning)]"
-                          : "text-[var(--color-text-muted)]",
+                        waitUrgent ? "text-[var(--color-warning)]" : "text-[var(--color-text-muted)]",
                       )}>
                         {waitLabel}
                       </span>
                     </td>
 
-                    {/* Row actions */}
-                    <td
-                      className="pr-4 w-28 text-right"
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                    <td className="pr-4 w-28 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="inline-flex items-center gap-1">
-                        {/* Folder — always visible */}
                         <button
                           onClick={() => setExpandedId((prev) => prev === feature.id ? null : feature.id)}
                           className={cn(
@@ -601,15 +462,10 @@ export default function InboxPage() {
                               : "text-[var(--color-text-secondary)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/40 hover:bg-[var(--color-brand)]/6",
                           )}
                           aria-label="View details"
-                          aria-expanded={expandedId === feature.id}
                         >
-                          {expandedId === feature.id
-                            ? <FolderOpen size={13} />
-                            : <Folder size={13} />
-                          }
+                          {expandedId === feature.id ? <FolderOpen size={13} /> : <Folder size={13} />}
                           Details
                         </button>
-                        {/* Hover-only actions */}
                         <div className={cn(
                           "inline-flex items-center gap-1 transition-opacity",
                           "opacity-0 group-hover:opacity-100",
@@ -617,21 +473,15 @@ export default function InboxPage() {
                         )}>
                           <button
                             onClick={() => handleDelete(feature.id)}
-                            className={cn(
-                              "inline-flex items-center justify-center h-7 w-7 rounded-md transition-colors",
-                              "text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-bg-hover)]",
-                            )}
+                            className="inline-flex items-center justify-center h-7 w-7 rounded-md transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-bg-hover)]"
                             aria-label="Delete feature"
                           >
                             <Trash2 size={15} />
                           </button>
                           <button
-                            onClick={() => setMoveModalFeature(feature)}
-                            className={cn(
-                              "inline-flex items-center justify-center h-7 w-7 rounded-md transition-colors",
-                              "text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:bg-[var(--color-bg-hover)]",
-                            )}
-                            aria-label="Move to team"
+                            onClick={() => moveToIdeas([feature.id])}
+                            className="inline-flex items-center justify-center h-7 w-7 rounded-md transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:bg-[var(--color-bg-hover)]"
+                            aria-label="Move to Ideas"
                           >
                             <ArrowRightCircle size={15} />
                           </button>
@@ -640,7 +490,7 @@ export default function InboxPage() {
                     </td>
                   </tr>
 
-                  {/* ── Expanded decision panel ── */}
+                  {/* ── Expanded detail panel ── */}
                   {expandedId === feature.id && (() => {
                     const cfg = PRIORITY_CONFIG[feature.prioritySignal];
                     return (
@@ -652,13 +502,10 @@ export default function InboxPage() {
                             "shadow-[0_4px_24px_rgba(0,0,0,0.08)]",
                             "animate-in fade-in slide-in-from-top-1 duration-150",
                           )}>
-                            {/* Priority accent bar */}
                             <div className="h-[3px]" style={{ backgroundColor: cfg.color }} />
-
                             <div className="p-5">
-                              {/* ── Hero metrics row ── */}
+                              {/* Hero metrics */}
                               <div className="flex items-center gap-4 mb-5">
-                                {/* Priority badge */}
                                 <span
                                   className="inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-[12px] font-semibold border"
                                   style={{ color: cfg.color, backgroundColor: `${cfg.color}15`, borderColor: `${cfg.color}40` }}
@@ -666,32 +513,20 @@ export default function InboxPage() {
                                   <Zap size={11} fill={cfg.color} />
                                   {cfg.label}
                                 </span>
-
-                                {/* Vote count — prominent */}
                                 {feature.votes.length > 0 && (
                                   <div className="flex items-center gap-1.5">
                                     <ThumbsUp size={14} className="text-[var(--color-text-muted)]" />
-                                    <span className="text-[15px] font-bold text-[var(--color-text-primary)] tabular-nums leading-none">
-                                      {feature.votes.length}
-                                    </span>
+                                    <span className="text-[15px] font-bold text-[var(--color-text-primary)] tabular-nums leading-none">{feature.votes.length}</span>
                                     <span className="text-[12px] text-[var(--color-text-muted)]">votes</span>
                                   </div>
                                 )}
-
-                                {/* Waiting time */}
                                 <div className="flex items-center gap-1.5">
                                   <Clock size={13} className={waitUrgent ? "text-[var(--color-warning)]" : "text-[var(--color-text-muted)]"} />
-                                  <span className={cn(
-                                    "text-[12px] font-medium",
-                                    waitUrgent ? "text-[var(--color-warning)]" : "text-[var(--color-text-muted)]",
-                                  )}>
+                                  <span className={cn("text-[12px] font-medium", waitUrgent ? "text-[var(--color-warning)]" : "text-[var(--color-text-muted)]")}>
                                     {waitLabel} waiting
                                   </span>
                                 </div>
-
                                 <div className="flex-1" />
-
-                                {/* Submitter */}
                                 <div className="flex items-center gap-2">
                                   <div
                                     className="h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
@@ -703,32 +538,24 @@ export default function InboxPage() {
                                 </div>
                               </div>
 
-                              {/* ── Content cards ── */}
+                              {/* Content cards */}
                               <div className="grid grid-cols-2 gap-3 mb-4">
                                 <div className="rounded-lg bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] p-4">
-                                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)] mb-2">
-                                    Description
-                                  </p>
-                                  <p className="text-[13px] text-[var(--color-text-secondary)] leading-relaxed">
-                                    {feature.description}
-                                  </p>
+                                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)] mb-2">Description</p>
+                                  <p className="text-[13px] text-[var(--color-text-secondary)] leading-relaxed">{feature.description}</p>
                                 </div>
                                 <div className="rounded-lg border p-4" style={{ backgroundColor: `${cfg.color}08`, borderColor: `${cfg.color}25` }}>
-                                  <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: cfg.color }}>
-                                    Business Context
-                                  </p>
-                                  <p className="text-[13px] text-[var(--color-text-secondary)] leading-relaxed">
-                                    {feature.businessContext}
-                                  </p>
+                                  <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: cfg.color }}>Business Context</p>
+                                  <p className="text-[13px] text-[var(--color-text-secondary)] leading-relaxed">{feature.businessContext}</p>
                                 </div>
                               </div>
 
-                              {/* ── Supporting links ── */}
+                              {/* Supporting links */}
                               {feature.supportingLinks.length > 0 && (
                                 <div className="flex flex-wrap gap-2 mb-4">
-                                  {feature.supportingLinks.map((link, i) => (
+                                  {feature.supportingLinks.map((link, idx) => (
                                     <a
-                                      key={i}
+                                      key={idx}
                                       href={link}
                                       target="_blank"
                                       rel="noopener noreferrer"
@@ -747,7 +574,7 @@ export default function InboxPage() {
                                 </div>
                               )}
 
-                              {/* ── Decision footer ── */}
+                              {/* Decision footer */}
                               <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border-subtle)]">
                                 <button
                                   onClick={() => handleDelete(feature.id)}
@@ -761,36 +588,18 @@ export default function InboxPage() {
                                   <Trash2 size={13} />
                                   Dismiss
                                 </button>
-
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[11px] text-[var(--color-text-muted)] mr-1">Send to →</span>
-                                  {TEAMS.map((team) => (
-                                    <button
-                                      key={team.id}
-                                      onClick={() => { moveFeatures([feature.id], team.id); setExpandedId(null); }}
-                                      className={cn(
-                                        "inline-flex items-center gap-2 h-8 px-3.5 rounded-lg text-[12px] font-semibold",
-                                        "border transition-all duration-150",
-                                        "hover:scale-[1.03] active:scale-[0.98]",
-                                      )}
-                                      style={{
-                                        color: team.color,
-                                        backgroundColor: `${team.color}12`,
-                                        borderColor: `${team.color}40`,
-                                      }}
-                                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = `${team.color}22`; }}
-                                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = `${team.color}12`; }}
-                                    >
-                                      <span
-                                        className="h-4 w-4 rounded flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
-                                        style={{ backgroundColor: team.color }}
-                                      >
-                                        {team.name[0]}
-                                      </span>
-                                      {team.name}
-                                    </button>
-                                  ))}
-                                </div>
+                                <button
+                                  onClick={() => { moveToIdeas([feature.id]); setExpandedId(null); }}
+                                  className={cn(
+                                    "inline-flex items-center gap-2 h-8 px-4 rounded-lg text-[12px] font-semibold",
+                                    "bg-[var(--color-brand)]/10 text-[var(--color-brand)] border border-[var(--color-brand)]/30",
+                                    "hover:bg-[var(--color-brand)]/18 hover:border-[var(--color-brand)]/50",
+                                    "transition-colors",
+                                  )}
+                                >
+                                  <ArrowRightCircle size={13} />
+                                  Move to Ideas
+                                </button>
                               </div>
                             </div>
                           </div>
@@ -811,50 +620,19 @@ export default function InboxPage() {
       {hasMoved && features.length > 0 && (
         <NextPhaseBar
           nextPhase="Ideas"
-          options={TEAMS.map((t) => ({
-            label: `${t.name} · Ideas`,
-            href: `/team/${t.slug}/ideas`,
-            color: t.color,
-          }))}
-        />
-      )}
-
-      {/* ── Bulk move modal ── */}
-      {bulkMoveOpen && (
-        <MoveToTeamModal
-          feature={{ title: `${selected.size} feature${selected.size !== 1 ? "s" : ""}` }}
-          onSelect={(teamId) => {
-            moveFeatures([...selected], teamId);
-            setBulkMoveOpen(false);
-          }}
-          onClose={() => setBulkMoveOpen(false)}
-        />
-      )}
-
-      {/* ── Move to team modal ── */}
-      {moveModalFeature && (
-        <MoveToTeamModal
-          feature={moveModalFeature}
-          onSelect={(teamId) => {
-            handleMoveToTeam(moveModalFeature, teamId);
-            setMoveModalFeature(null);
-          }}
-          onClose={() => setMoveModalFeature(null)}
+          options={[{ label: "Go to Ideas", href: "/ideas", color: "var(--color-brand)" }]}
         />
       )}
 
       {/* ── Delete toast ── */}
       {deletedToast && (
-        <div
-          className={cn(
-            "fixed bottom-20 left-1/2 -translate-x-1/2 z-50",
-            "flex items-center gap-2.5 px-4 py-2.5 rounded-xl",
-            "bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)]",
-            "shadow-[0_8px_32px_rgba(0,0,0,0.18)]",
-            "text-[12px] text-[var(--color-text-secondary)] max-w-sm",
-            "animate-in fade-in slide-in-from-bottom-2 duration-200",
-          )}
-        >
+        <div className={cn(
+          "fixed bottom-20 left-1/2 -translate-x-1/2 z-50",
+          "flex items-center gap-2.5 px-4 py-2.5 rounded-xl",
+          "bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)]",
+          "shadow-[0_8px_32px_rgba(0,0,0,0.18)] text-[12px] text-[var(--color-text-secondary)] max-w-sm",
+          "animate-in fade-in slide-in-from-bottom-2 duration-200",
+        )}>
           <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[var(--color-danger)]/10">
             <Trash2 size={11} className="text-[var(--color-danger)]" />
           </div>
@@ -867,29 +645,21 @@ export default function InboxPage() {
       )}
 
       {/* ── Move toast ── */}
-      {lastMoved && (
-        <div
-          className={cn(
-            "fixed bottom-20 left-1/2 -translate-x-1/2 z-50 mt-2",
-            "flex items-center gap-2.5 px-4 py-2.5 rounded-xl",
-            "bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)]",
-            "shadow-[0_8px_32px_rgba(0,0,0,0.18)] text-[12px] text-[var(--color-text-secondary)]",
-            "animate-in fade-in slide-in-from-bottom-2 duration-200",
-          )}
-        >
+      {movedToast !== null && (
+        <div className={cn(
+          "fixed bottom-20 left-1/2 -translate-x-1/2 z-50",
+          "flex items-center gap-2.5 px-4 py-2.5 rounded-xl",
+          "bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)]",
+          "shadow-[0_8px_32px_rgba(0,0,0,0.18)] text-[12px] text-[var(--color-text-secondary)]",
+          "animate-in fade-in slide-in-from-bottom-2 duration-200",
+        )}>
           <Check size={13} className="text-[var(--color-success)]" />
           <span>
-            Moved to{" "}
-            <button
-              onClick={() => {
-                const team = TEAMS.find((t) => t.name === lastMoved.teamName);
-                if (team) router.push(`/team/${team.slug}/ideas`);
-              }}
-              className="font-semibold text-[var(--color-text-primary)] underline underline-offset-2 hover:no-underline"
-            >
-              {lastMoved.teamName}
-            </button>
-            {" "}· Ideas
+            <span className="font-medium text-[var(--color-text-primary)]">{movedToast} idea{movedToast !== 1 ? "s" : ""}</span>
+            {" moved to "}
+            <a href="/ideas" className="font-semibold text-[var(--color-brand)] underline underline-offset-2 hover:no-underline">
+              Ideas
+            </a>
           </span>
         </div>
       )}

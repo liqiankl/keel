@@ -11,9 +11,10 @@ import { cn } from "@/lib/cn";
 import { useAppStore } from "@/store/useAppStore";
 import { SIDEBAR_NAV, TEAM_NAV, TEAMS, type TeamConfig } from "@/lib/constants";
 import type { SidebarNavItem } from "@/types";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "@/hooks/useTheme";
 import { TourGuide, useTourAutoShow } from "@/components/tour/TourGuide";
+import { useToast } from "@/components/ui/Toast";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Pinned sidebar: expanded (220px) by default, collapses to icon-only (48px).
@@ -50,9 +51,18 @@ export function Sidebar() {
   const themeLabel = theme.charAt(0).toUpperCase() + theme.slice(1);
 
   const [resetPending, setResetPending] = useState(false);
+  const { showToast, ToastContainer } = useToast();
+
+  useEffect(() => {
+    if (sessionStorage.getItem("keel:data-reset") === "1") {
+      sessionStorage.removeItem("keel:data-reset");
+      showToast("Data has been reset successfully");
+    }
+  }, [showToast]);
 
   function handleResetClick() {
     if (!resetPending) { setResetPending(true); return; }
+    sessionStorage.setItem("keel:data-reset", "1");
     localStorage.clear();
     window.location.reload();
   }
@@ -232,6 +242,7 @@ export function Sidebar() {
       </aside>
 
       <TourGuide open={tourOpen} onClose={closeTour} />
+      <ToastContainer />
     </>
   );
 }

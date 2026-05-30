@@ -515,7 +515,7 @@ const STEPS = [
     icon: Target,
     color: "#f97316",
     title: "Plan",
-    body: "Drag initiatives into your quarterly plan. Watch the capacity bar fill up. Lock the plan when it's ready and kick off stakeholder review.",
+    body: "Drag initiatives into your quarterly plan roadmap. Watch the capacity bar fill up. Lock the plan roadmap when it's ready and kick off stakeholder review.",
   },
   {
     n: "04",

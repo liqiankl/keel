@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { Info } from "lucide-react";
+import { Info, Lock } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { FrameworkInfoPopover } from "./FrameworkInfoPopover";
+import { Tooltip } from "@/components/ui/Tooltip";
 import type { ScoringFramework } from "@/types";
 
 const FRAMEWORKS: { id: ScoringFramework; label: string; description: string }[] = [
@@ -15,9 +16,10 @@ const FRAMEWORKS: { id: ScoringFramework; label: string; description: string }[]
 interface FrameworkTabsProps {
   active: ScoringFramework;
   onChange: (f: ScoringFramework) => void;
+  locked?: boolean;
 }
 
-export function FrameworkTabs({ active, onChange }: FrameworkTabsProps) {
+export function FrameworkTabs({ active, onChange, locked = false }: FrameworkTabsProps) {
   const [openPopover, setOpenPopover] = useState<ScoringFramework | null>(null);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -50,26 +52,41 @@ export function FrameworkTabs({ active, onChange }: FrameworkTabsProps) {
           return (
             <div key={fw.id} className="relative flex items-center h-full">
               {/* Framework tab */}
-              <button
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => onChange(fw.id)}
-                className={cn(
-                  "relative flex items-center h-full px-3 text-[13px] transition-colors duration-100",
-                  "focus-visible:outline-2 focus-visible:outline-[var(--color-brand)] focus-visible:outline-offset-[-2px]",
-                  isActive
-                    ? "text-[var(--color-text-primary)] font-medium"
-                    : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]",
-                )}
-              >
-                {fw.label}
-                {isActive && (
+              {locked && !isActive ? (
+                <Tooltip content="Framework is locked while scoring is in progress." placement="bottom" width={240}>
                   <span
-                    className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-[var(--color-brand)]"
-                    aria-hidden="true"
-                  />
-                )}
-              </button>
+                    role="tab"
+                    aria-selected={false}
+                    className="relative flex items-center h-full px-3 text-[13px] text-[var(--color-text-muted)] cursor-not-allowed opacity-40"
+                  >
+                    {fw.label}
+                  </span>
+                </Tooltip>
+              ) : (
+                <button
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => !locked && onChange(fw.id)}
+                  className={cn(
+                    "relative flex items-center gap-1.5 h-full px-3 text-[13px] transition-colors duration-100",
+                    "focus-visible:outline-2 focus-visible:outline-[var(--color-brand)] focus-visible:outline-offset-[-2px]",
+                    locked
+                      ? "text-[var(--color-text-primary)] font-medium cursor-default"
+                      : isActive
+                      ? "text-[var(--color-text-primary)] font-medium"
+                      : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]",
+                  )}
+                >
+                  {fw.label}
+                  {isActive && locked && <Lock size={10} strokeWidth={2.5} className="text-[var(--color-text-muted)]" />}
+                  {isActive && (
+                    <span
+                      className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-[var(--color-brand)]"
+                      aria-hidden="true"
+                    />
+                  )}
+                </button>
+              )}
 
               {/* Info icon — hover to reveal popover */}
               <button

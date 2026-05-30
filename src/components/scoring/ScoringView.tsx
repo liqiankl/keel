@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "zustand";
-import { BarChart2, Check, Map as MapIcon } from "lucide-react";
+import { BarChart2, Check, Lock, Map as MapIcon, RotateCcw } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FrameworkTabs } from "./FrameworkTabs";
@@ -13,6 +13,8 @@ import { WorkflowBar } from "@/components/workflow/WorkflowBar";
 import { useScoringStore } from "@/store/useScoringStore";
 import { useRoadmapStore } from "@/store/useRoadmapStore";
 import { useAppStore } from "@/store/useAppStore";
+import { useWorkflowStore } from "@/store/useWorkflowStore";
+import { useInboxStore } from "@/store/useInboxStore";
 import { TEAMS, CURRENT_QUARTER } from "@/lib/constants";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
 import { cn } from "@/lib/cn";
@@ -87,6 +89,23 @@ function RoadmapButton({ onClick }: { onClick: (e: React.MouseEvent) => void }) 
   );
 }
 
+function BackToIdeasButton({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[12px] font-medium flex-shrink-0",
+        "border border-[var(--color-border-subtle)] text-[var(--color-text-muted)]",
+        "hover:border-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]",
+        "opacity-0 group-hover:opacity-100 transition-opacity duration-100",
+        "focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-[var(--color-brand)]",
+      )}
+    >
+      ← Ideas
+    </button>
+  );
+}
+
 // ─────────────────────────────────────────────
 // RICE
 // ─────────────────────────────────────────────
@@ -102,11 +121,12 @@ interface RICECardProps {
   onMouseEnter: () => void;
   onUpdateRICE: (id: string, patch: Partial<RICEScore>) => void;
   onSendToRoadmap?: (id: string) => void;
+  onSendBackToIdeas?: (id: string) => void;
 }
 
 function RICECard({
   item, rank, isOpen, isDragged, isDropTarget,
-  onOpen, onDragStart, onMouseEnter, onUpdateRICE, onSendToRoadmap,
+  onOpen, onDragStart, onMouseEnter, onUpdateRICE, onSendToRoadmap, onSendBackToIdeas,
 }: RICECardProps) {
   const rice = item.score?.rice;
   const score = rice?.score ?? 0;
@@ -204,9 +224,14 @@ function RICECard({
             </div>
           </div>
 
-          {onSendToRoadmap && (
-            <RoadmapButton onClick={(e) => { e.stopPropagation(); onSendToRoadmap(item.id); }} />
-          )}
+          <div className="flex items-end gap-1.5 ml-auto">
+            {onSendBackToIdeas && (
+              <BackToIdeasButton onClick={(e) => { e.stopPropagation(); onSendBackToIdeas(item.id); }} />
+            )}
+            {onSendToRoadmap && (
+              <RoadmapButton onClick={(e) => { e.stopPropagation(); onSendToRoadmap(item.id); }} />
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -224,11 +249,12 @@ interface ListViewProps {
   setOpenId: (id: string | null) => void;
   initialTeam?: string;
   handleSendToRoadmap: (id: string) => void;
+  handleSendBackToIdeas?: (id: string) => void;
 }
 
 function RICEView({
   orderedIds, initiativeMap, dragId, dragOverIdx, setDragOverIdx,
-  handleDragStart, openId, setOpenId, initialTeam, handleSendToRoadmap,
+  handleDragStart, openId, setOpenId, handleSendToRoadmap, handleSendBackToIdeas,
   updateRICE,
 }: ListViewProps & { updateRICE: (id: string, p: Partial<RICEScore>) => void }) {
   const scored = orderedIds.filter((id) => (initiativeMap.get(id)?.score?.rice?.score ?? 0) > 0).length;
@@ -256,7 +282,8 @@ function RICEView({
               onDragStart={handleDragStart}
               onMouseEnter={() => { if (dragId && dragId !== id) setDragOverIdx(idx); }}
               onUpdateRICE={updateRICE}
-              onSendToRoadmap={initialTeam ? handleSendToRoadmap : undefined}
+              onSendToRoadmap={handleSendToRoadmap}
+              onSendBackToIdeas={handleSendBackToIdeas}
             />
           );
         })}
@@ -280,11 +307,12 @@ interface WSJFCardProps {
   onMouseEnter: () => void;
   onUpdateWSJF: (id: string, patch: Partial<WSJFScore>) => void;
   onSendToRoadmap?: (id: string) => void;
+  onSendBackToIdeas?: (id: string) => void;
 }
 
 function WSJFCard({
   item, rank, isOpen, isDragged, isDropTarget,
-  onOpen, onDragStart, onMouseEnter, onUpdateWSJF, onSendToRoadmap,
+  onOpen, onDragStart, onMouseEnter, onUpdateWSJF, onSendToRoadmap, onSendBackToIdeas,
 }: WSJFCardProps) {
   const wsjf = item.score?.wsjf;
   const score = wsjf?.score ?? 0;
@@ -359,9 +387,14 @@ function WSJFCard({
             </span>
           </div>
 
-          {onSendToRoadmap && (
-            <RoadmapButton onClick={(e) => { e.stopPropagation(); onSendToRoadmap(item.id); }} />
-          )}
+          <div className="flex items-end gap-1.5 ml-auto">
+            {onSendBackToIdeas && (
+              <BackToIdeasButton onClick={(e) => { e.stopPropagation(); onSendBackToIdeas(item.id); }} />
+            )}
+            {onSendToRoadmap && (
+              <RoadmapButton onClick={(e) => { e.stopPropagation(); onSendToRoadmap(item.id); }} />
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -370,7 +403,7 @@ function WSJFCard({
 
 function WSJFView({
   orderedIds, initiativeMap, dragId, dragOverIdx, setDragOverIdx,
-  handleDragStart, openId, setOpenId, initialTeam, handleSendToRoadmap,
+  handleDragStart, openId, setOpenId, handleSendToRoadmap, handleSendBackToIdeas,
   updateWSJF,
 }: ListViewProps & { updateWSJF: (id: string, p: Partial<WSJFScore>) => void }) {
   const scored = orderedIds.filter((id) => (initiativeMap.get(id)?.score?.wsjf?.score ?? 0) > 0).length;
@@ -398,7 +431,8 @@ function WSJFView({
               onDragStart={handleDragStart}
               onMouseEnter={() => { if (dragId && dragId !== id) setDragOverIdx(idx); }}
               onUpdateWSJF={updateWSJF}
-              onSendToRoadmap={initialTeam ? handleSendToRoadmap : undefined}
+              onSendToRoadmap={handleSendToRoadmap}
+              onSendBackToIdeas={handleSendBackToIdeas}
             />
           );
         })}
@@ -798,6 +832,15 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
   const phaseKey        = initialTeam ? `prioritize:${initialTeam}` : null;
   const hasActed        = phaseKey ? phasesActed.includes(phaseKey) : false;
 
+  // Workflow store
+  const scoringStarted      = useWorkflowStore((s) => s.scoringStarted);
+  const startScoring        = useWorkflowStore((s) => s.startScoring);
+  const wfResetPrioritization = useWorkflowStore((s) => s.resetPrioritization);
+
+  // Inbox store (for workflow stage updates)
+  const inboxRequests  = useInboxStore((s) => s.requests);
+  const updateRequest  = useInboxStore((s) => s.updateRequest);
+
   useEffect(() => {
     if (initialTeam) {
       const team = TEAMS.find((t) => t.slug === initialTeam);
@@ -863,14 +906,15 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
   // Auto-navigate when all sent to roadmap
   const prevLen = useRef<number | null>(null);
   useEffect(() => {
-    if (!initialTeam) return;
     if (prevLen.current === null) { prevLen.current = initiatives.length; return; }
-    if (prevLen.current > 0 && initiatives.length === 0 && hasActed) {
-      const t = setTimeout(() => router.push(`/team/${initialTeam}/roadmap`), 1200);
+    const canNavigate = initialTeam ? hasActed : scoringStarted;
+    if (prevLen.current > 0 && initiatives.length === 0 && canNavigate) {
+      const target = initialTeam ? `/team/${initialTeam}/roadmap` : "/roadmap";
+      const t = setTimeout(() => router.push(target), 1200);
       return () => clearTimeout(t);
     }
     prevLen.current = initiatives.length;
-  }, [initiatives.length, hasActed, initialTeam, router]);
+  }, [initiatives.length, hasActed, initialTeam, scoringStarted, router]);
 
   // List drag (RICE / WSJF)
   useEffect(() => {
@@ -909,36 +953,70 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
 
   const handleSendToRoadmap = useCallback((id: string) => {
     const initiative = initiativeMap.get(id);
-    if (!initiative || !teamId) return;
-    let planId = activePlanId;
-    if (!planId) {
-      const newPlan: QuarterlyPlan = {
-        id: `plan_${teamId}_${CURRENT_QUARTER.year}q${CURRENT_QUARTER.quarter}_${Date.now()}`,
-        quarter: CURRENT_QUARTER,
-        workspaceId: "ws_01",
-        teamId,
-        status: "draft",
-        goals: [],
-        items: [],
-        capacity: { unit: "story_points", total: 80, committed: 0, warningThreshold: 0.9, byArea: {} },
-        reviewers: [],
-        lockedAt: null,
-        lockedBy: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        shareLink: null,
-      };
-      addPlan(newPlan);
-      planId = newPlan.id;
+    if (!initiative) return;
+
+    // Workflow flow: update workflowStage in inbox store
+    if (initiative.featureRequestId) {
+      updateRequest(initiative.featureRequestId, { workflowStage: "roadmap" });
     }
-    const alreadyInPlan = plans.find((p) => p.id === planId)?.items.some((i) => i.id === id);
-    if (!alreadyInPlan) addItemToPlan(planId, initiative);
+
+    // Team-based flow: add to roadmap plan
+    if (teamId) {
+      let planId = activePlanId;
+      if (!planId) {
+        const newPlan: QuarterlyPlan = {
+          id: `plan_${teamId}_${CURRENT_QUARTER.year}q${CURRENT_QUARTER.quarter}_${Date.now()}`,
+          quarter: CURRENT_QUARTER,
+          workspaceId: "ws_01",
+          teamId,
+          status: "draft",
+          goals: [],
+          items: [],
+          capacity: { unit: "story_points", total: 80, committed: 0, warningThreshold: 0.9, byArea: {} },
+          reviewers: [],
+          lockedAt: null,
+          lockedBy: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          shareLink: null,
+        };
+        addPlan(newPlan);
+        planId = newPlan.id;
+      }
+      const alreadyInPlan = plans.find((p) => p.id === planId)?.items.some((i) => i.id === id);
+      if (!alreadyInPlan) addItemToPlan(planId!, initiative);
+      if (phaseKey) markPhaseActed(phaseKey);
+    }
+
     removeInitiative(id);
     if (openId === id) setOpenId(null);
     setRoadmapToast(initiative.title);
     setTimeout(() => setRoadmapToast(null), 3500);
-    if (phaseKey) markPhaseActed(phaseKey);
-  }, [initiativeMap, teamId, activePlanId, plans, addPlan, addItemToPlan, removeInitiative, openId, phaseKey, markPhaseActed]);
+  }, [initiativeMap, teamId, activePlanId, plans, addPlan, addItemToPlan, removeInitiative, openId, phaseKey, markPhaseActed, updateRequest]);
+
+  const handleSendBackToIdeas = useCallback((id: string) => {
+    if (scoringStarted) return;
+    const initiative = initiativeMap.get(id);
+    if (!initiative) return;
+    if (initiative.featureRequestId) {
+      updateRequest(initiative.featureRequestId, { workflowStage: "ideas" });
+    }
+    removeInitiative(id);
+    if (openId === id) setOpenId(null);
+  }, [scoringStarted, initiativeMap, updateRequest, removeInitiative, openId]);
+
+  const handleResetPrioritization = useCallback(() => {
+    // Move all prioritization items back to ideas
+    const prioritizationItems = inboxRequests.filter((r) => r.workflowStage === "prioritization");
+    prioritizationItems.forEach((r) => updateRequest(r.id, { workflowStage: "ideas" }));
+    // Remove matching items from scoring store
+    const prioritizationIds = new Set(prioritizationItems.map((r) => r.id));
+    allInitiatives
+      .filter((i) => i.featureRequestId && prioritizationIds.has(i.featureRequestId))
+      .forEach((i) => removeInitiative(i.id));
+    // Reset workflow flags
+    wfResetPrioritization();
+  }, [inboxRequests, updateRequest, allInitiatives, removeInitiative, wfResetPrioritization]);
 
   useGlobalShortcuts({
     escape: () => { if (openId) setOpenId(null); },
@@ -946,12 +1024,34 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
     redo: () => temporal.redo(),
   });
 
+  // Wrap scoring updates to lock the framework on first action
+  const handleUpdateRICE = useCallback((id: string, patch: Partial<RICEScore>) => {
+    if (!scoringStarted) startScoring(activeFramework);
+    updateRICE(id, patch);
+  }, [scoringStarted, startScoring, activeFramework, updateRICE]);
+
+  const handleUpdateMoSCoW = useCallback((id: string, label: MoSCoWLabel) => {
+    if (!scoringStarted) startScoring(activeFramework);
+    updateMoSCoW(id, label);
+  }, [scoringStarted, startScoring, activeFramework, updateMoSCoW]);
+
+  const handleUpdateWSJF = useCallback((id: string, patch: Partial<WSJFScore>) => {
+    if (!scoringStarted) startScoring(activeFramework);
+    updateWSJF(id, patch);
+  }, [scoringStarted, startScoring, activeFramework, updateWSJF]);
+
+  const handleClearMoSCoW = useCallback((id: string) => {
+    if (!scoringStarted) startScoring(activeFramework);
+    clearMoSCoW(id);
+  }, [scoringStarted, startScoring, activeFramework, clearMoSCoW]);
+
   const openInitiative = openId ? initiativeMap.get(openId) ?? null : null;
   const hasDetail = !!openInitiative;
 
   const sharedListProps: ListViewProps = {
     orderedIds, initiativeMap, dragId, dragOverIdx, setDragOverIdx,
     handleDragStart, openId, setOpenId, initialTeam, handleSendToRoadmap,
+    handleSendBackToIdeas: !scoringStarted ? handleSendBackToIdeas : undefined,
   };
 
   return (
@@ -960,8 +1060,35 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
       <WorkflowBar currentStage="prioritization" teamSlug={initialTeam} />
 
       <div data-tour="scoring-framework-tabs" className="flex-shrink-0">
-        <FrameworkTabs active={activeFramework} onChange={(f) => setActiveFramework(f)} />
+        <FrameworkTabs
+          active={activeFramework}
+          locked={scoringStarted}
+          onChange={(f) => { if (!scoringStarted) setActiveFramework(f); }}
+        />
       </div>
+
+      {scoringStarted && (
+        <div className="flex items-center gap-3 px-5 py-2.5 border-b border-[var(--color-warning)]/30 bg-[var(--color-warning)]/8 flex-shrink-0">
+          <Lock size={14} className="text-[var(--color-warning)] flex-shrink-0" />
+          <p className="text-[13px] text-[var(--color-text-secondary)] flex-1 leading-snug">
+            <span className="font-semibold text-[var(--color-warning)]">
+              Framework locked: {activeFramework.toUpperCase()}
+            </span>
+            {" — Cannot be changed while scoring is in progress."}
+          </p>
+          <button
+            onClick={handleResetPrioritization}
+            className={cn(
+              "inline-flex items-center gap-1.5 h-7 px-3 rounded-md text-[12px] font-medium flex-shrink-0",
+              "text-[var(--color-text-secondary)] border border-[var(--color-border-subtle)]",
+              "hover:text-[var(--color-danger)] hover:border-[var(--color-danger)]/40 hover:bg-[var(--color-danger)]/6 transition-colors",
+            )}
+          >
+            <RotateCcw size={12} />
+            Reset Prioritization
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-1 overflow-hidden min-h-0">
         {/* Main content */}
@@ -977,25 +1104,28 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
               <EmptyState
                 Icon={BarChart2}
                 title="Nothing to prioritize yet"
-                description="Head to your team's Ideas and send a few to prioritization — then come back here to rank them."
+                description="Head to Ideas and move items here to start scoring."
                 action={initialTeam ? {
                   label: "Go to Ideas",
                   onClick: () => { window.location.href = `/team/${initialTeam}/ideas`; },
-                } : undefined}
+                } : {
+                  label: "Go to Ideas",
+                  onClick: () => router.push("/ideas"),
+                }}
               />
             </div>
           ) : (
             <>
-              {activeFramework === "rice"   && <RICEView   {...sharedListProps} updateRICE={updateRICE} />}
-              {activeFramework === "wsjf"   && <WSJFView   {...sharedListProps} updateWSJF={updateWSJF} />}
+              {activeFramework === "rice"   && <RICEView   {...sharedListProps} updateRICE={handleUpdateRICE} />}
+              {activeFramework === "wsjf"   && <WSJFView   {...sharedListProps} updateWSJF={handleUpdateWSJF} />}
               {activeFramework === "moscow" && (
                 <MoSCoWView
                   initiatives={initiatives}
                   openId={openId}
                   setOpenId={setOpenId}
-                  updateMoSCoW={updateMoSCoW}
-                  clearMoSCoW={clearMoSCoW}
-                  onSendToRoadmap={initialTeam ? handleSendToRoadmap : undefined}
+                  updateMoSCoW={handleUpdateMoSCoW}
+                  clearMoSCoW={handleClearMoSCoW}
+                  onSendToRoadmap={handleSendToRoadmap}
                 />
               )}
             </>
@@ -1010,13 +1140,13 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
               framework={activeFramework}
               goals={goals}
               onClose={() => setOpenId(null)}
-              onUpdateRICE={updateRICE}
-              onUpdateMoSCoW={updateMoSCoW}
-              onUpdateWSJF={updateWSJF}
+              onUpdateRICE={handleUpdateRICE}
+              onUpdateMoSCoW={handleUpdateMoSCoW}
+              onUpdateWSJF={handleUpdateWSJF}
               onUpdateEffort={updateEffort}
               onUpdateGoals={updateGoals}
               onUpdateGoalNotes={updateGoalNotes}
-              onSendToRoadmap={initialTeam ? handleSendToRoadmap : undefined}
+              onSendToRoadmap={handleSendToRoadmap}
             />
           </div>
         )}

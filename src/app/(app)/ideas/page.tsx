@@ -8,10 +8,40 @@ import { SourceBadge } from "@/components/inbox/SourceBadge";
 import { ArrowRightCircle, Lock, Search, X, Minus, ThumbsUp, Folder, FolderOpen, ExternalLink, Clock, Zap, Check, Trash2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useInboxStore } from "@/store/useInboxStore";
+import { useScoringStore } from "@/store/useScoringStore";
 import { useWorkflowStore } from "@/store/useWorkflowStore";
+import { CURRENT_QUARTER } from "@/lib/constants";
 import { getInitials, avatarColor } from "@/lib/format";
 import { Tooltip } from "@/components/ui/Tooltip";
-import type { PrioritySignal } from "@/types";
+import type { FeatureRequest, PrioritySignal, RoadmapItem } from "@/types";
+
+function toRoadmapItem(req: FeatureRequest): RoadmapItem {
+  return {
+    id: req.id,
+    featureRequestId: req.id,
+    title: req.title,
+    description: req.description,
+    businessContext: req.businessContext,
+    assignedPmId: "u_pm_01",
+    goalIds: req.goalIds,
+    productArea: req.productArea ?? "",
+    status: "todo",
+    priority:
+      req.prioritySignal === "critical" ? "urgent"
+      : req.prioritySignal === "important" ? "high"
+      : "low",
+    effort: { unit: "story_points", points: null, tshirt: null, weeks: null },
+    quarter: CURRENT_QUARTER,
+    score: null,
+    dependencies: [],
+    jiraEpicId: null,
+    linearProjectId: null,
+    createdAt: req.submittedAt,
+    updatedAt: req.submittedAt,
+    votes: req.votes,
+    supportingLinks: req.supportingLinks,
+  };
+}
 
 // ── Priority signal config ─────────────────────
 
@@ -27,6 +57,8 @@ export default function IdeasPage() {
   const requests         = useInboxStore((s) => s.requests);
   const updateRequest    = useInboxStore((s) => s.updateRequest);
   const removeRequest    = useInboxStore((s) => s.removeRequest);
+  const addInitiative    = useScoringStore((s) => s.addInitiative);
+  const scoringInitiatives = useScoringStore((s) => s.initiatives);
   const scoringStarted   = useWorkflowStore((s) => s.scoringStarted);
   const router           = useRouter();
 
@@ -75,6 +107,14 @@ export default function IdeasPage() {
   function moveToPrioritization(featureIds: string[]) {
     if (scoringStarted) return;
     featureIds.forEach((id) => updateRequest(id, { workflowStage: "prioritization" }));
+    // Sync into scoring store for items not already there
+    const existingIds = new Set(scoringInitiatives.map((i) => i.featureRequestId));
+    featureIds.forEach((id) => {
+      if (!existingIds.has(id)) {
+        const req = ideas.find((r) => r.id === id);
+        if (req) addInitiative(toRoadmapItem(req));
+      }
+    });
     setSelected((prev) => { const next = new Set(prev); featureIds.forEach((id) => next.delete(id)); return next; });
     setMovedToast(featureIds.length);
     setTimeout(() => setMovedToast(null), 4000);

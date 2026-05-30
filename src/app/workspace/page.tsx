@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowRight, Sparkles, Sun, Moon,
   MessageSquare, LayoutGrid, Compass,
@@ -18,6 +18,14 @@ export default function WorkspacePage() {
   const requests  = useInboxStore((s) => s.requests);
   const plans     = useRoadmapStore((s) => s.plans);
   const { theme, cycleTheme } = useTheme();
+  const [visitorCount, setVisitorCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch("/api/visitors", { method: "POST" })
+      .then((r) => r.json())
+      .then((d) => { if (typeof d.count === "number") setVisitorCount(d.count); })
+      .catch(() => {});
+  }, []);
 
   const initials = workspace.name
     .split(" ")
@@ -26,15 +34,10 @@ export default function WorkspacePage() {
     .slice(0, 2)
     .toUpperCase();
 
-  const totalRequests = useMemo(
-    () => requests.filter((r) => r.status !== "archived").length,
-    [requests],
-  );
-
-  const stats = [
-    { label: "Teams",    value: TEAMS.length             },
-    { label: "Members",  value: workspace.members.length },
-    { label: "Feature Requests", value: totalRequests            },
+const stats = [
+    { label: "Teams",            value: TEAMS.length },
+    { label: "Visitors",         value: visitorCount ?? "—" },
+    { label: "Feature Requests", value: 14 },
   ];
 
   return (

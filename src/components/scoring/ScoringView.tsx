@@ -813,6 +813,9 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
     updateRICE,
     updateMoSCoW,
     updateWSJF,
+    updateEffort,
+    updateGoals,
+    updateGoalNotes,
     clearMoSCoW,
     removeInitiative,
     setManualRank,
@@ -1010,6 +1013,9 @@ export function ScoringView({ initialTeam }: ScoringViewProps = {}) {
               onUpdateRICE={updateRICE}
               onUpdateMoSCoW={updateMoSCoW}
               onUpdateWSJF={updateWSJF}
+              onUpdateEffort={updateEffort}
+              onUpdateGoals={updateGoals}
+              onUpdateGoalNotes={updateGoalNotes}
               onSendToRoadmap={initialTeam ? handleSendToRoadmap : undefined}
             />
           </div>

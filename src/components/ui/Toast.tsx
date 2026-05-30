@@ -57,7 +57,7 @@ function ToastBubble({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => 
     <div
       className={cn(
         "pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg border shadow-xl",
-        "min-w-[220px] max-w-[360px]",
+        "min-w-[220px] max-w-[480px]",
         "bg-[var(--color-bg-elevated)] border-[var(--color-border-strong)]",
         "transition-all duration-300 ease-out",
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
@@ -76,7 +76,7 @@ function ToastBubble({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => 
           : <AlertCircle size={11} className="text-white" />
         }
       </span>
-      <p className="flex-1 text-sm text-[var(--color-text-primary)]">{toast.message}</p>
+      <p className="flex-1 text-sm text-[var(--color-text-primary)] whitespace-pre-line">{toast.message}</p>
       <button
         onClick={onDismiss}
         className="flex-shrink-0 text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"

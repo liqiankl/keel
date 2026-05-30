@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { useStore } from "zustand";
 import * as Dialog from "@radix-ui/react-dialog";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, Copy, Check as CheckIcon, Lock, Map, Share2 } from "lucide-react";
+import { ChevronRight, Copy, Check as CheckIcon, Lock, Map, Share2, AlertCircle } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { WorkflowBar } from "@/components/workflow/WorkflowBar";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -413,6 +413,83 @@ function LockConfirmDialog({
   );
 }
 
+function IncompleteItemsDialog({
+  open,
+  items,
+  onClose,
+  onOpenFirstItem,
+}: {
+  open: boolean;
+  items: { title: string; missing: string[] }[];
+  onClose: () => void;
+  onOpenFirstItem: () => void;
+}) {
+  return (
+    <Dialog.Root open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-150" />
+        <Dialog.Content
+          className={cn(
+            "fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2",
+            "w-[440px] rounded-2xl p-6",
+            "bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)]",
+            "shadow-[0_24px_48px_rgba(0,0,0,0.18)]",
+            "animate-in fade-in zoom-in-95 duration-150",
+          )}
+        >
+          {/* Icon */}
+          <div className="flex justify-center mb-4">
+            <div className="h-12 w-12 rounded-full flex items-center justify-center bg-red-500/10 border border-red-500/30">
+              <AlertCircle size={22} className="text-red-500" />
+            </div>
+          </div>
+
+          <Dialog.Title className="text-[16px] font-semibold text-[var(--color-text-primary)] text-center mb-1">
+            Plan incomplete
+          </Dialog.Title>
+          <Dialog.Description className="text-[13px] text-[var(--color-text-muted)] text-center leading-relaxed mb-5">
+            Complete the following required fields before locking the plan.
+          </Dialog.Description>
+
+          {/* Items list */}
+          <div className={cn(
+            "rounded-xl border border-[var(--color-border-subtle)] divide-y divide-[var(--color-border-subtle)]",
+            "max-h-[260px] overflow-y-auto mb-5",
+          )}>
+            {items.map((item, i) => (
+              <div key={i} className="px-4 py-3">
+                <p className="text-[13px] font-medium text-[var(--color-text-primary)] mb-1 truncate">
+                  {item.title}
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {item.missing.map((field) => (
+                    <span
+                      key={field}
+                      className="inline-flex items-center h-5 px-2 rounded-full text-[11px] font-medium bg-red-500/10 text-red-500 border border-red-500/20"
+                    >
+                      {field}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={onOpenFirstItem}
+            className={cn(
+              "w-full h-9 rounded-lg text-[13px] font-semibold transition-colors",
+              "bg-[#5e5ce6] text-white hover:bg-[#4f4de0]",
+            )}
+          >
+            Let&apos;s complete it — open first item
+          </button>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
 // ─────────────────────────────────────────────
 // Lock celebration
 // ─────────────────────────────────────────────
@@ -582,18 +659,31 @@ function LockCelebrationModal({
   );
 }
 
+function getMissingFields(item: RoadmapItem): string[] {
+  const missing: string[] = [];
+  if (item.status === "backlog") missing.push("Status");
+  if (item.effort.points == null || item.effort.points === 0) missing.push("Story points");
+  if (!item.quarter?.label) missing.push("Quarter");
+  if (!item.goalNotes?.trim()) missing.push("Goals");
+  return missing;
+}
+
 function PlanStatusControl({
   plan,
   onSetStatus,
   onLock,
+  onOpenItem,
 }: {
   plan: QuarterlyPlan;
   onSetStatus: (id: string, status: PlanStatus) => void;
   onLock: (id: string, userId: string) => void;
+  onOpenItem: (id: string) => void;
 }) {
-  const [confirmOpen, setConfirmOpen]         = useState(false);
-  const [celebrationOpen, setCelebrationOpen] = useState(false);
-  const [shareUrl, setShareUrl]               = useState("");
+  const [confirmOpen, setConfirmOpen]                                       = useState(false);
+  const [celebrationOpen, setCelebrationOpen]                               = useState(false);
+  const [shareUrl, setShareUrl]                                             = useState("");
+  const [incompleteItems, setIncompleteItems]                               = useState<{ title: string; missing: string[] }[]>([]);
+  const [incompleteOpen, setIncompleteOpen]                                 = useState(false);
 
   const createView  = useViewsStore((s) => s.createView);
   const existingViews = useViewsStore((s) => s.views);
@@ -638,7 +728,18 @@ function PlanStatusControl({
         {(plan.status === "in_review" || plan.status === "approved") && (
           <>
             <button
-              onClick={() => setConfirmOpen(true)}
+              onClick={() => {
+                const incomplete = plan.items
+                  .map((item) => ({ title: item.title, missing: getMissingFields(item) }))
+                  .filter((r) => r.missing.length > 0);
+
+                if (incomplete.length > 0) {
+                  setIncompleteItems(incomplete);
+                  setIncompleteOpen(true);
+                  return;
+                }
+                setConfirmOpen(true);
+              }}
               className={cn(
                 "inline-flex items-center gap-1 h-6 px-2.5 rounded-full text-[11px] font-semibold",
                 "border transition-colors",
@@ -707,6 +808,16 @@ function PlanStatusControl({
         plan={plan}
         shareUrl={shareUrl}
         onClose={() => setCelebrationOpen(false)}
+      />
+
+      <IncompleteItemsDialog
+        open={incompleteOpen}
+        items={incompleteItems}
+        onClose={() => setIncompleteOpen(false)}
+        onOpenFirstItem={() => {
+          setIncompleteOpen(false);
+          if (incompleteItems[0]) onOpenItem(plan.items.find((i) => i.title === incompleteItems[0].title)?.id ?? "");
+        }}
       />
     </>
   );
@@ -1014,6 +1125,7 @@ export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
                 plan={activePlan}
                 onSetStatus={setPlanStatus}
                 onLock={lockPlan}
+                onOpenItem={(id) => setOpenItemId(id)}
               />
             </span>
             <div className="h-4 w-px bg-[var(--color-border-subtle)]" />
@@ -1133,6 +1245,12 @@ export function RoadmapView({ initialTeam }: RoadmapViewProps = {}) {
                 onClose={() => setOpenItemId(null)}
                 onStatusChange={(itemId, planId, status) =>
                   updateItemInPlan(planId, itemId, { status })
+                }
+                onUpdateEffort={(itemId, planId, points) =>
+                  updateItemInPlan(planId, itemId, { effort: { ...openItem!.effort, points } })
+                }
+                onUpdateGoalNotes={(itemId, planId, notes) =>
+                  updateItemInPlan(planId, itemId, { goalNotes: notes })
                 }
                 onQuarterChange={(itemId, fromPlanId, quarter) => {
                   const sourcePlan = plans.find((p) => p.id === fromPlanId);

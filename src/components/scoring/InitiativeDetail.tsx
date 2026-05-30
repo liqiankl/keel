@@ -1,12 +1,13 @@
 "use client";
 
-import { X, ExternalLink, Clock, Map } from "lucide-react";
+import { X, ExternalLink, Clock, Map, ThumbsUp } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/Button";
 import { MoSCoWBadge } from "./MoSCoWCell";
 import { GoalTag } from "./GoalTag";
 import { InlineNumberCell } from "./InlineNumberCell";
 import { IMPACT_VALUES } from "./columns";
+import { avatarColor, getInitials, formatRelativeDate } from "@/lib/format";
 import type {
   RoadmapItem,
   QuarterlyGoal,
@@ -30,6 +31,9 @@ interface InitiativeDetailProps {
   onUpdateRICE: (id: string, patch: Partial<RICEScore>) => void;
   onUpdateMoSCoW: (id: string, label: MoSCoWLabel) => void;
   onUpdateWSJF: (id: string, patch: Partial<WSJFScore>) => void;
+  onUpdateEffort: (id: string, points: number | null) => void;
+  onUpdateGoals: (id: string, goalIds: string[]) => void;
+  onUpdateGoalNotes: (id: string, notes: string) => void;
   onSendToRoadmap?: (id: string) => void;
 }
 
@@ -71,6 +75,9 @@ export function InitiativeDetail({
   onUpdateRICE,
   onUpdateMoSCoW,
   onUpdateWSJF,
+  onUpdateEffort,
+  onUpdateGoals,
+  onUpdateGoalNotes,
   onSendToRoadmap,
 }: InitiativeDetailProps) {
   const score = initiative.score;
@@ -248,25 +255,32 @@ export function InitiativeDetail({
               </MetaRow>
             )}
             <MetaRow label="Goals">
-              {initiativeGoals.length > 0 ? (
-                <div className="flex flex-wrap gap-1">
-                  {initiativeGoals.map((g) => <GoalTag key={g.id} goal={g} />)}
-                </div>
-              ) : (
-                <span className="text-[var(--color-text-muted)] text-[12px]">None</span>
-              )}
+              <textarea
+                value={initiative.goalNotes ?? ""}
+                onChange={(e) => onUpdateGoalNotes(initiative.id, e.target.value)}
+                placeholder="Type goals here…"
+                rows={3}
+                className={cn(
+                  "w-full resize-none rounded-md px-2 py-1.5 text-[13px] leading-relaxed",
+                  "bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)]",
+                  "text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)]",
+                  "focus:outline-none focus:border-[var(--color-brand)] transition-colors",
+                )}
+              />
             </MetaRow>
             <MetaRow label="Status">
               <span className="capitalize text-[13px]">
                 {initiative.status.replace("_", " ")}
               </span>
             </MetaRow>
-            <MetaRow label="Effort">
-              <span className="text-[13px] font-mono">
-                {initiative.effort.points != null
-                  ? `${initiative.effort.points} pts`
-                  : "—"}
-              </span>
+            <MetaRow label="Story points">
+              <InlineNumberCell
+                value={initiative.effort.points ?? 0}
+                min={0}
+                step={1}
+                onChange={(v) => onUpdateEffort(initiative.id, v === 0 ? null : v)}
+                className="!h-7 !text-right text-[13px]"
+              />
             </MetaRow>
             {score?.scoredAt && (
               <MetaRow label="Last scored">
@@ -288,6 +302,43 @@ export function InitiativeDetail({
             )}
           </div>
         </section>
+
+        {/* Votes */}
+        {initiative.votes && initiative.votes.length > 0 && (
+          <section>
+            <h3 className="text-[12px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <ThumbsUp size={12} />
+              Stakeholder Votes · {initiative.votes.length}
+            </h3>
+            <ul className="space-y-3">
+              {initiative.votes.map((vote, idx) => (
+                <li key={idx} className="flex items-start gap-2.5">
+                  <div
+                    className="h-[22px] w-[22px] rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-semibold text-white mt-0.5"
+                    style={{ backgroundColor: avatarColor(vote.stakeholderName) }}
+                  >
+                    {getInitials(vote.stakeholderName)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[13px] font-medium text-[var(--color-text-primary)]">
+                        {vote.stakeholderName}
+                      </span>
+                      <span className="text-[12px] text-[var(--color-text-muted)]">
+                        {formatRelativeDate(vote.votedAt)}
+                      </span>
+                    </div>
+                    {vote.comment && (
+                      <p className="text-[13px] text-[var(--color-text-secondary)] mt-0.5 leading-relaxed">
+                        {vote.comment}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </div>
 
       {/* Footer */}
@@ -310,6 +361,7 @@ export function InitiativeDetail({
     </div>
   );
 }
+
 
 function InputRow({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (

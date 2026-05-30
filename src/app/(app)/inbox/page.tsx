@@ -567,10 +567,10 @@ export default function InboxPage() {
         ) : (
           <table className="w-full border-collapse">
             <thead className="sticky top-0 z-10">
-              {selected.size > 0 ? (
-                <tr className="border-b-2 border-[var(--color-border-subtle)]" style={{ background: "color-mix(in srgb, var(--color-brand) 6%, var(--color-bg-elevated))" }}>
+              {selected.size > 0 && (
+                <tr className="border-b border-[var(--color-border-subtle)]" style={{ background: "color-mix(in srgb, var(--color-brand) 6%, var(--color-bg-elevated))" }}>
                   <th colSpan={8}>
-                    <div className="flex items-center gap-3 px-4 py-2.5">
+                    <div className="flex items-center gap-3 px-4 py-2">
                       {/* Indeterminate / clear checkbox */}
                       <button
                         type="button"
@@ -644,87 +644,99 @@ export default function InboxPage() {
                     </div>
                   </th>
                 </tr>
-              ) : (
-                <tr className="bg-[var(--color-bg-elevated)] border-b-2 border-[var(--color-border-subtle)]">
-                  <th className="w-10 pl-4">
+              )}
+              <tr className="bg-[var(--color-bg-elevated)] border-b-2 border-[var(--color-border-subtle)]">
+                <th className="w-10 pl-4">
+                  <button
+                    type="button"
+                    onClick={selected.size > 0 ? clearSelection : selectAll}
+                    aria-label={selected.size > 0 ? "Clear selection" : "Select all"}
+                    className={cn(
+                      "h-4 w-4 rounded border-2 flex items-center justify-center transition-all",
+                      selected.size > 0
+                        ? "bg-[var(--color-brand)] border-[var(--color-brand)] opacity-100"
+                        : "border-[var(--color-border-strong)] opacity-0 hover:opacity-60",
+                    )}
+                  >
+                    {selected.size > 0 && selected.size < filteredFeatures.length && (
+                      <svg width="8" height="2" viewBox="0 0 8 2" fill="none">
+                        <path d="M1 1h6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                    )}
+                    {selected.size > 0 && selected.size === filteredFeatures.length && (
+                      <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
+                        <path d="M1 3l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </button>
+                </th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-text-secondary)]">
+                  <span className="inline-flex items-center gap-1">
+                    Feature Request
+                    <Tooltip content="The title and summary of the incoming feature request" placement="bottom" width={200}>
+                      <Info size={11} className="text-[var(--color-text-muted)] flex-shrink-0" />
+                    </Tooltip>
+                  </span>
+                </th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-text-secondary)] w-36">
+                  <span className="inline-flex items-center gap-1">
+                    Product Area
+                    <Tooltip content="The area of the product this request relates to" placement="bottom" width={200}>
+                      <Info size={11} className="text-[var(--color-text-muted)] flex-shrink-0" />
+                    </Tooltip>
+                  </span>
+                </th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-text-secondary)] w-36">
+                  <span className="inline-flex items-center gap-1">
+                    Source
+                    <Tooltip content="Where this request originated — customer, engineering, or internal" placement="bottom" width={200}>
+                      <Info size={11} className="text-[var(--color-text-muted)] flex-shrink-0" />
+                    </Tooltip>
+                  </span>
+                </th>
+                <th className="text-right px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-text-secondary)] w-20">
+                  <span className="inline-flex items-center justify-end gap-1">
+                    Votes
+                    <Tooltip content="Number of stakeholders who have upvoted this request" placement="bottom" width={200}>
+                      <Info size={11} className="text-[var(--color-text-muted)] flex-shrink-0" />
+                    </Tooltip>
+                  </span>
+                </th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-text-secondary)] w-56">
+                  <span className="inline-flex items-center gap-1">
+                    Submitted By
+                    <Tooltip content="The person or team who submitted this request" placement="bottom" width={200}>
+                      <Info size={11} className="text-[var(--color-text-muted)] flex-shrink-0" />
+                    </Tooltip>
+                  </span>
+                </th>
+                <th className="text-right px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-text-secondary)] w-28">
+                  <span className="inline-flex items-center justify-end gap-1">
+                    Age
+                    <Tooltip content="How long this request has been waiting in the inbox" placement="bottom" width={200}>
+                      <Info size={11} className="text-[var(--color-text-muted)] flex-shrink-0" />
+                    </Tooltip>
                     <button
                       type="button"
-                      onClick={selectAll}
-                      aria-label="Select all"
+                      onClick={() => setAgeSort((prev) => prev === "asc" ? "desc" : prev === "desc" ? null : "asc")}
+                      aria-label={ageSort === "asc" ? "Sort oldest first" : ageSort === "desc" ? "Clear sort" : "Sort newest first"}
                       className={cn(
-                        "h-4 w-4 rounded border-2 flex items-center justify-center transition-all",
-                        "border-[var(--color-border-strong)] opacity-0 hover:opacity-60",
+                        "flex items-center justify-center h-4 w-4 rounded transition-colors",
+                        ageSort
+                          ? "text-[var(--color-brand)]"
+                          : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]",
                       )}
-                    />
-                  </th>
-                  <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-text-secondary)]">
-                    <span className="inline-flex items-center gap-1">
-                      Feature Request
-                      <Tooltip content="The title and summary of the incoming feature request" placement="bottom" width={200}>
-                        <Info size={11} className="text-[var(--color-text-muted)] flex-shrink-0" />
-                      </Tooltip>
-                    </span>
-                  </th>
-                  <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-text-secondary)] w-36">
-                    <span className="inline-flex items-center gap-1">
-                      Product Area
-                      <Tooltip content="The area of the product this request relates to" placement="bottom" width={200}>
-                        <Info size={11} className="text-[var(--color-text-muted)] flex-shrink-0" />
-                      </Tooltip>
-                    </span>
-                  </th>
-                  <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-text-secondary)] w-36">
-                    <span className="inline-flex items-center gap-1">
-                      Source
-                      <Tooltip content="Where this request originated — customer, engineering, or internal" placement="bottom" width={200}>
-                        <Info size={11} className="text-[var(--color-text-muted)] flex-shrink-0" />
-                      </Tooltip>
-                    </span>
-                  </th>
-                  <th className="text-right px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-text-secondary)] w-20">
-                    <span className="inline-flex items-center justify-end gap-1">
-                      Votes
-                      <Tooltip content="Number of stakeholders who have upvoted this request" placement="bottom" width={200}>
-                        <Info size={11} className="text-[var(--color-text-muted)] flex-shrink-0" />
-                      </Tooltip>
-                    </span>
-                  </th>
-                  <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-text-secondary)] w-56">
-                    <span className="inline-flex items-center gap-1">
-                      Submitted By
-                      <Tooltip content="The person or team who submitted this request" placement="bottom" width={200}>
-                        <Info size={11} className="text-[var(--color-text-muted)] flex-shrink-0" />
-                      </Tooltip>
-                    </span>
-                  </th>
-                  <th className="text-right px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-text-secondary)] w-28">
-                    <span className="inline-flex items-center justify-end gap-1">
-                      Age
-                      <Tooltip content="How long this request has been waiting in the inbox" placement="bottom" width={200}>
-                        <Info size={11} className="text-[var(--color-text-muted)] flex-shrink-0" />
-                      </Tooltip>
-                      <button
-                        type="button"
-                        onClick={() => setAgeSort((prev) => prev === "asc" ? "desc" : prev === "desc" ? null : "asc")}
-                        aria-label={ageSort === "asc" ? "Sort oldest first" : ageSort === "desc" ? "Clear sort" : "Sort newest first"}
-                        className={cn(
-                          "flex items-center justify-center h-4 w-4 rounded transition-colors",
-                          ageSort
-                            ? "text-[var(--color-brand)]"
-                            : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]",
-                        )}
-                      >
-                        {ageSort === "asc"
-                          ? <ArrowUp size={11} />
-                          : ageSort === "desc"
-                          ? <ArrowDown size={11} />
-                          : <ArrowUpDown size={11} />}
-                      </button>
-                    </span>
-                  </th>
-                  <th className="w-24" />
-                </tr>
-              )}
+                    >
+                      {ageSort === "asc"
+                        ? <ArrowUp size={11} />
+                        : ageSort === "desc"
+                        ? <ArrowDown size={11} />
+                        : <ArrowUpDown size={11} />}
+                    </button>
+                  </span>
+                </th>
+                <th className="w-24" />
+              </tr>
             </thead>
             <tbody>
               {filteredFeatures.map((feature) => {

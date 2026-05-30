@@ -132,6 +132,9 @@ export interface RoadmapItem {
   title: string;
   description: string;
   businessContext?: string;
+  goalNotes?: string;
+  votes?: RequestVote[];
+  supportingLinks?: string[];
   assignedPmId: string;
   goalIds: string[];
   productArea: string;

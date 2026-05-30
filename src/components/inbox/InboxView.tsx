@@ -159,6 +159,8 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
       title:             request.title,
       description:       request.description,
       businessContext:   request.businessContext,
+      votes:             request.votes,
+      supportingLinks:   request.supportingLinks,
       assignedPmId:      "u_pm_01",
       goalIds:           request.goalIds,
       productArea:       request.productArea ?? "",

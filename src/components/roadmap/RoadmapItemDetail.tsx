@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { X, Clock, ChevronDown } from "lucide-react";
+import { X, Clock, ChevronDown, Pencil, ThumbsUp, Link2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { STATUS_CONFIG, PRIORITY_CONFIG, CURRENT_QUARTER, makeQuarterRef } from "@/lib/constants";
+import { avatarColor, getInitials, formatRelativeDate } from "@/lib/format";
 import type { RoadmapItem, QuarterlyGoal, InitiativeStatus, QuarterRef } from "@/types";
 
 const ALL_STATUSES: InitiativeStatus[] = [
@@ -38,6 +39,8 @@ interface RoadmapItemDetailProps {
   onClose: () => void;
   onStatusChange: (itemId: string, planId: string, status: InitiativeStatus) => void;
   onQuarterChange?: (itemId: string, planId: string, quarter: QuarterRef) => void;
+  onUpdateEffort?: (itemId: string, planId: string, points: number | null) => void;
+  onUpdateGoalNotes?: (itemId: string, planId: string, notes: string) => void;
 }
 
 export function RoadmapItemDetail({
@@ -47,8 +50,12 @@ export function RoadmapItemDetail({
   onClose,
   onStatusChange,
   onQuarterChange,
+  onUpdateEffort,
+  onUpdateGoalNotes,
 }: RoadmapItemDetailProps) {
   const [quarterOpen, setQuarterOpen] = useState(false);
+  const [editingPoints, setEditingPoints] = useState(false);
+  const [pointsInput, setPointsInput] = useState("");
   const [pendingQuarter, setPendingQuarter] = useState<QuarterRef | null>(null);
   const quarterRef = useRef<HTMLDivElement>(null);
 
@@ -177,10 +184,43 @@ export function RoadmapItemDetail({
               </span>
             </MetaCard>
 
-            <MetaCard label="Effort">
-              <span className="text-[13px] font-mono text-[var(--color-text-primary)]">
-                {item.effort.points != null ? `${item.effort.points} pts` : "—"}
-              </span>
+            <MetaCard label="Story points">
+              {item.effort.points != null ? (
+                <span className="text-[13px] font-mono text-[var(--color-text-primary)]">
+                  {item.effort.points} pts
+                </span>
+              ) : editingPoints ? (
+                <input
+                  autoFocus
+                  type="number"
+                  min={0}
+                  value={pointsInput}
+                  onChange={(e) => setPointsInput(e.target.value)}
+                  onBlur={() => {
+                    const v = parseInt(pointsInput, 10);
+                    if (!isNaN(v) && v >= 0) onUpdateEffort?.(item.id, planId, v);
+                    setEditingPoints(false);
+                    setPointsInput("");
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                    if (e.key === "Escape") { setEditingPoints(false); setPointsInput(""); }
+                  }}
+                  className={cn(
+                    "w-full h-6 rounded px-1.5 text-[13px] font-mono",
+                    "bg-[var(--color-bg-base)] border border-[var(--color-brand)]",
+                    "text-[var(--color-text-primary)] focus:outline-none",
+                  )}
+                />
+              ) : (
+                <button
+                  onClick={() => { setEditingPoints(true); setPointsInput(""); }}
+                  className="flex items-center gap-1 text-[13px] text-[var(--color-text-muted)] hover:text-[var(--color-brand)] transition-colors"
+                >
+                  <Pencil size={11} />
+                  Add
+                </button>
+              )}
             </MetaCard>
 
             {item.productArea && (
@@ -291,6 +331,89 @@ export function RoadmapItemDetail({
                 </span>
               )}
             </div>
+          </section>
+        )}
+
+        {/* Goals */}
+        <section>
+          <SectionLabel>Goals</SectionLabel>
+          <textarea
+            value={item.goalNotes ?? ""}
+            onChange={(e) => onUpdateGoalNotes?.(item.id, planId, e.target.value)}
+            placeholder="Type goals here…"
+            rows={3}
+            className={cn(
+              "w-full resize-none rounded-md px-2 py-1.5 text-[13px] leading-relaxed",
+              "bg-[var(--color-bg-elevated)] border border-[var(--color-border-subtle)]",
+              "text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)]",
+              "focus:outline-none focus:border-[var(--color-brand)] transition-colors",
+            )}
+          />
+        </section>
+
+        {/* Votes */}
+        {item.votes && item.votes.length > 0 && (
+          <section>
+            <SectionLabel>
+              <span className="flex items-center gap-1.5">
+                <ThumbsUp size={11} />
+                Stakeholder Votes · {item.votes.length}
+              </span>
+            </SectionLabel>
+            <ul className="space-y-3">
+              {item.votes.map((vote, idx) => (
+                <li key={idx} className="flex items-start gap-2.5">
+                  <div
+                    className="h-[22px] w-[22px] rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-semibold text-white mt-0.5"
+                    style={{ backgroundColor: avatarColor(vote.stakeholderName) }}
+                  >
+                    {getInitials(vote.stakeholderName)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[13px] font-medium text-[var(--color-text-primary)]">
+                        {vote.stakeholderName}
+                      </span>
+                      <span className="text-[12px] text-[var(--color-text-muted)]">
+                        {formatRelativeDate(vote.votedAt)}
+                      </span>
+                    </div>
+                    {vote.comment && (
+                      <p className="text-[13px] text-[var(--color-text-secondary)] mt-0.5 leading-relaxed">
+                        {vote.comment}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {/* Supporting links */}
+        {item.supportingLinks && item.supportingLinks.length > 0 && (
+          <section>
+            <SectionLabel>
+              <span className="flex items-center gap-1.5">
+                <Link2 size={11} />
+                Links
+              </span>
+            </SectionLabel>
+            <ul className="space-y-1.5">
+              {item.supportingLinks.map((link, idx) => (
+                <li key={idx}>
+                  <a
+                    href={link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-[13px] text-[var(--color-brand)] hover:underline break-all"
+                  >
+                    <Link2 size={13} className="flex-shrink-0" />
+                    {link}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </section>
         )}
       </div>

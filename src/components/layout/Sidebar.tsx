@@ -29,6 +29,8 @@ const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: 
 const NAV_TOUR_IDS: Record<string, string>      = { inbox: "nav-inbox", views: "nav-views" };
 const TEAM_NAV_TOUR_IDS: Record<string, string> = { scoring: "nav-prioritize", roadmap: "nav-roadmap" };
 
+const PHASE_LABELS: Record<string, string> = {};
+
 function labelCn(expanded: boolean) {
   return cn(
     "transition-opacity duration-150 whitespace-nowrap",
@@ -290,9 +292,14 @@ function NavItem({
           />
         )}
       </div>
-      <span className={cn("text-[14px] font-medium flex-1 pr-2", LABEL)}>
-        {item.label}
-      </span>
+      <div className={cn("flex flex-col flex-1 pr-2 min-w-0", LABEL)}>
+        <span className="text-[14px] font-medium leading-tight">{item.label}</span>
+        {PHASE_LABELS[item.id] && (
+          <span className={cn("text-[10px] leading-tight", active ? "text-white/60" : "text-[var(--color-text-muted)]")}>
+            {PHASE_LABELS[item.id]}
+          </span>
+        )}
+      </div>
       {item.badge != null && item.badge > 0 && (
         <span className={cn("mr-2 text-[12px]", LABEL, active ? "text-white/70" : "text-[var(--color-text-muted)]")}>
           {item.badge}
@@ -399,9 +406,14 @@ function TeamNavItem({
           />
         )}
       </div>
-      <span className={cn("text-[13px] font-medium flex-1 pr-2", LABEL)}>
-        {item.label}
-      </span>
+      <div className={cn("flex flex-col flex-1 pr-2 min-w-0", LABEL)}>
+        <span className="text-[13px] font-medium leading-tight">{item.label}</span>
+        {PHASE_LABELS[item.id] && (
+          <span className={cn("text-[10px] leading-tight", active ? "text-[var(--color-brand)]/60" : "text-[var(--color-text-muted)]")}>
+            {PHASE_LABELS[item.id]}
+          </span>
+        )}
+      </div>
     </Link>
   );
 }

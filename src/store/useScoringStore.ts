@@ -29,6 +29,9 @@ interface ScoringState {
   updateRICE: (id: string, patch: Partial<RICEScore>) => void;
   updateMoSCoW: (id: string, label: MoSCoWLabel) => void;
   updateWSJF: (id: string, patch: Partial<WSJFScore>) => void;
+  updateEffort: (id: string, points: number | null) => void;
+  updateGoals: (id: string, goalIds: string[]) => void;
+  updateGoalNotes: (id: string, notes: string) => void;
   addInitiative: (item: RoadmapItem) => void;
   removeInitiative: (id: string) => void;
   clearMoSCoW: (id: string) => void;
@@ -107,6 +110,27 @@ export const useScoringStore = create<ScoringState>()(
             next.score = computeWSJF(next);
             return patchScore(item, { wsjf: next, framework: "wsjf" });
           }),
+        })),
+
+      updateEffort: (id, points) =>
+        set((s) => ({
+          initiatives: s.initiatives.map((item) =>
+            item.id !== id ? item : { ...item, effort: { ...item.effort, points } },
+          ),
+        })),
+
+      updateGoals: (id, goalIds) =>
+        set((s) => ({
+          initiatives: s.initiatives.map((item) =>
+            item.id !== id ? item : { ...item, goalIds },
+          ),
+        })),
+
+      updateGoalNotes: (id, notes) =>
+        set((s) => ({
+          initiatives: s.initiatives.map((item) =>
+            item.id !== id ? item : { ...item, goalNotes: notes },
+          ),
         })),
 
       addInitiative: (item) =>

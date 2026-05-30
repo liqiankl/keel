@@ -131,6 +131,7 @@ export interface RoadmapItem {
   featureRequestId: string | null;  // linked intake request
   title: string;
   description: string;
+  businessContext?: string;
   assignedPmId: string;
   goalIds: string[];
   productArea: string;

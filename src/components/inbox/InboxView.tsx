@@ -158,6 +158,7 @@ export function InboxView({ initialTeam, initialTab, title = "Inbox", visibleTab
       featureRequestId:  id,
       title:             request.title,
       description:       request.description,
+      businessContext:   request.businessContext,
       assignedPmId:      "u_pm_01",
       goalIds:           request.goalIds,
       productArea:       request.productArea ?? "",

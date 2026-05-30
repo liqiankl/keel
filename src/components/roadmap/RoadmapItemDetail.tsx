@@ -150,6 +150,16 @@ export function RoadmapItemDetail({
           </section>
         )}
 
+        {/* Business Context */}
+        {item.businessContext && (
+          <section>
+            <SectionLabel>Business Context</SectionLabel>
+            <p className="text-[13px] text-[var(--color-text-secondary)] leading-relaxed">
+              {item.businessContext}
+            </p>
+          </section>
+        )}
+
         {/* Meta grid */}
         <section>
           <SectionLabel>Details</SectionLabel>

@@ -240,6 +240,13 @@ export function InitiativeDetail({
                 </span>
               </MetaRow>
             )}
+            {initiative.businessContext && (
+              <MetaRow label="Business Context">
+                <span className="text-[var(--color-text-secondary)] leading-relaxed text-[13px]">
+                  {initiative.businessContext}
+                </span>
+              </MetaRow>
+            )}
             <MetaRow label="Goals">
               {initiativeGoals.length > 0 ? (
                 <div className="flex flex-wrap gap-1">
